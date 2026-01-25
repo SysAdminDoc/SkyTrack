@@ -17,11 +17,20 @@
             --selected: #00ffff;
         }
 
+        body.day-mode {
+            --bg: #e8e8e8;
+            --bg-panel: rgba(255, 255, 255, 0.95);
+            --border: rgba(0, 0, 0, 0.15);
+            --text: #222;
+            --text-dim: #555;
+            --text-muted: #888;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         html, body {
             height: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg);
             color: var(--text);
             overflow: hidden;
@@ -31,12 +40,11 @@
             position: absolute; 
             inset: 0; 
             z-index: 1; 
-            background: #1a1a2e;
         }
 
-        /* Aircraft marker styles */
+        /* Aircraft markers */
         .aircraft-marker {
-            transition: transform 0.1s linear;
+            transition: none;
         }
         .aircraft-marker.selected {
             z-index: 10000 !important;
@@ -60,6 +68,10 @@
             background: rgba(0,0,0,0.6);
             pointer-events: none;
         }
+        body.day-mode .aircraft-label {
+            background: rgba(255,255,255,0.8);
+            color: #000;
+        }
 
         /* Header */
         .header {
@@ -73,30 +85,30 @@
             border-radius: 8px;
             display: flex;
             align-items: center;
-            padding: 0 16px;
-            gap: 16px;
+            padding: 0 12px;
+            gap: 12px;
             z-index: 1000;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             font-weight: 700;
             font-size: 18px;
             color: var(--accent);
         }
         .logo svg {
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
             fill: var(--accent);
         }
 
         .search-box {
             flex: 1;
-            max-width: 300px;
+            max-width: 280px;
             padding: 8px 12px;
-            background: rgba(255,255,255,0.05);
+            background: rgba(128,128,128,0.15);
             border: 1px solid var(--border);
             border-radius: 6px;
             color: var(--text);
@@ -112,8 +124,9 @@
 
         .stats {
             display: flex;
-            gap: 20px;
-            font-size: 13px;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-dim);
         }
         .stat-value {
             font-weight: 700;
@@ -126,23 +139,19 @@
             font-size: 11px;
             font-weight: 600;
         }
-        .status-badge.connected {
-            background: #22c55e;
-            color: #000;
-        }
-        .status-badge.loading {
-            background: #f59e0b;
-            color: #000;
-        }
-        .status-badge.error {
-            background: #ef4444;
-            color: #fff;
+        .status-badge.connected { background: #22c55e; color: #000; }
+        .status-badge.loading { background: #f59e0b; color: #000; }
+        .status-badge.error { background: #ef4444; color: #fff; }
+
+        .btn-group {
+            display: flex;
+            gap: 4px;
         }
 
         .header-btn {
             width: 36px;
             height: 36px;
-            background: rgba(255,255,255,0.05);
+            background: rgba(128,128,128,0.15);
             border: 1px solid var(--border);
             border-radius: 6px;
             color: var(--text-dim);
@@ -152,7 +161,7 @@
             justify-content: center;
         }
         .header-btn:hover {
-            background: rgba(255,255,255,0.1);
+            background: rgba(128,128,128,0.25);
             color: var(--text);
         }
         .header-btn.active {
@@ -165,11 +174,50 @@
             height: 18px;
         }
 
+        /* Filter Bar */
+        .filter-bar {
+            position: absolute;
+            top: 70px;
+            left: 10px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            display: flex;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .filter-btn {
+            padding: 6px 12px;
+            background: rgba(128,128,128,0.15);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            color: var(--text-dim);
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .filter-btn:hover {
+            background: rgba(128,128,128,0.25);
+            color: var(--text);
+        }
+        .filter-btn.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+        .filter-btn .count {
+            margin-left: 4px;
+            opacity: 0.7;
+        }
+
         /* Info Panel */
         .info-panel {
             position: absolute;
             top: 70px;
-            left: 10px;
+            right: 10px;
             width: 320px;
             background: var(--bg-panel);
             border: 1px solid var(--border);
@@ -179,9 +227,7 @@
             max-height: calc(100vh - 90px);
             overflow-y: auto;
         }
-        .info-panel.show {
-            display: block;
-        }
+        .info-panel.show { display: block; }
 
         .info-header {
             padding: 16px;
@@ -205,20 +251,16 @@
             border: none;
             color: var(--text-muted);
             cursor: pointer;
-            font-size: 20px;
+            font-size: 24px;
             line-height: 1;
         }
-        .info-close:hover {
-            color: var(--text);
-        }
+        .info-close:hover { color: var(--text); }
 
         .info-section {
             padding: 12px 16px;
             border-bottom: 1px solid var(--border);
         }
-        .info-section:last-child {
-            border-bottom: none;
-        }
+        .info-section:last-child { border-bottom: none; }
 
         .info-row {
             display: flex;
@@ -226,34 +268,29 @@
             padding: 6px 0;
             font-size: 13px;
         }
-        .info-label {
-            color: var(--text-muted);
-        }
-        .info-value {
-            font-weight: 500;
-            text-align: right;
-        }
+        .info-label { color: var(--text-muted); }
+        .info-value { font-weight: 500; text-align: right; }
 
         .info-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+            gap: 10px;
         }
         .info-stat {
-            background: rgba(255,255,255,0.03);
-            padding: 12px;
+            background: rgba(128,128,128,0.1);
+            padding: 10px;
             border-radius: 6px;
             text-align: center;
         }
         .info-stat-value {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
         }
         .info-stat-label {
             font-size: 10px;
             color: var(--text-muted);
             text-transform: uppercase;
-            margin-top: 4px;
+            margin-top: 2px;
         }
 
         .squawk-code {
@@ -262,12 +299,60 @@
             padding: 2px 6px;
             border-radius: 3px;
         }
-        .squawk-normal { background: rgba(255,255,255,0.1); }
-        .squawk-7500 { background: #ef4444; color: #fff; }
-        .squawk-7600 { background: #f59e0b; color: #000; }
-        .squawk-7700 { background: #ef4444; color: #fff; }
+        .squawk-normal { background: rgba(128,128,128,0.2); }
+        .squawk-7500, .squawk-7600, .squawk-7700 { background: #ef4444; color: #fff; }
 
-        /* Altitude Legend */
+        /* Settings Panel */
+        .settings-panel {
+            position: absolute;
+            top: 70px;
+            right: 10px;
+            width: 280px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            z-index: 1001;
+            display: none;
+        }
+        .settings-panel.show { display: block; }
+        .settings-title {
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+        .setting-label { font-size: 13px; }
+        
+        .toggle {
+            width: 44px;
+            height: 24px;
+            background: rgba(128,128,128,0.3);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+        }
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: transform 0.2s;
+        }
+        .toggle.on { background: var(--accent); }
+        .toggle.on::after { transform: translateX(20px); }
+
+        /* Legend */
         .legend {
             position: absolute;
             bottom: 30px;
@@ -300,24 +385,19 @@
             border-radius: 2px;
         }
 
-        /* Map controls override */
-        .leaflet-control-zoom {
-            border: none !important;
-        }
+        /* Leaflet overrides */
+        .leaflet-control-zoom { border: none !important; }
         .leaflet-control-zoom a {
             background: var(--bg-panel) !important;
             color: var(--text) !important;
             border: 1px solid var(--border) !important;
         }
         .leaflet-control-zoom a:hover {
-            background: rgba(255,255,255,0.1) !important;
+            background: rgba(128,128,128,0.2) !important;
         }
         .leaflet-control-attribution {
-            background: rgba(26, 26, 46, 0.8) !important;
+            background: var(--bg-panel) !important;
             color: var(--text-muted) !important;
-        }
-        .leaflet-control-attribution a {
-            color: var(--text-dim) !important;
         }
 
         /* Loading */
@@ -331,9 +411,7 @@
             justify-content: center;
             z-index: 2000;
         }
-        .loading-overlay.hidden {
-            display: none;
-        }
+        .loading-overlay.hidden { display: none; }
         .spinner {
             width: 40px;
             height: 40px;
@@ -342,9 +420,7 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .loading-text {
             margin-top: 16px;
             color: var(--text-dim);
@@ -369,15 +445,11 @@
             opacity: 1;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .stats { display: none; }
-            .info-panel {
-                left: 10px;
-                right: 10px;
-                width: auto;
-            }
+            .info-panel, .settings-panel { left: 10px; right: 10px; width: auto; }
             .legend { display: none; }
+            .filter-bar { flex-wrap: wrap; right: 10px; }
         }
     </style>
 </head>
@@ -395,25 +467,42 @@
             <span>SkyTrack</span>
         </div>
 
-        <input type="text" class="search-box" id="searchInput" placeholder="Search callsign, hex, or type...">
+        <input type="text" class="search-box" id="searchInput" placeholder="Search callsign, hex, type...">
 
         <div class="stats">
             <span>Aircraft: <span class="stat-value" id="aircraftCount">0</span></span>
-            <span>With Pos: <span class="stat-value" id="posCount">0</span></span>
+            <span>Visible: <span class="stat-value" id="visibleCount">0</span></span>
         </div>
 
         <div class="status-badge loading" id="statusBadge">Connecting</div>
 
-        <button class="header-btn" id="radarBtn" title="Toggle Weather Radar">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-        </button>
-        <button class="header-btn" id="labelBtn" title="Toggle Labels">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
-        </button>
-        <button class="header-btn" id="locateBtn" title="My Location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>
-        </button>
+        <div class="btn-group">
+            <button class="header-btn" id="dayNightBtn" title="Toggle Day/Night Mode">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            </button>
+            <button class="header-btn active" id="labelBtn" title="Toggle Labels">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+            </button>
+            <button class="header-btn" id="radarBtn" title="Toggle Radar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            </button>
+            <button class="header-btn" id="locateBtn" title="My Location">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>
+            </button>
+            <button class="header-btn" id="settingsBtn" title="Settings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            </button>
+        </div>
     </header>
+
+    <div class="filter-bar" id="filterBar">
+        <button class="filter-btn active" data-filter="all">All <span class="count" id="countAll">0</span></button>
+        <button class="filter-btn" data-filter="commercial">Commercial <span class="count" id="countComm">0</span></button>
+        <button class="filter-btn" data-filter="military">Military <span class="count" id="countMil">0</span></button>
+        <button class="filter-btn" data-filter="cargo">Cargo <span class="count" id="countCargo">0</span></button>
+        <button class="filter-btn" data-filter="helicopter">Heli <span class="count" id="countHeli">0</span></button>
+        <button class="filter-btn" data-filter="ground">Ground <span class="count" id="countGnd">0</span></button>
+    </div>
 
     <div class="info-panel" id="infoPanel">
         <div class="info-header">
@@ -436,7 +525,7 @@
                 </div>
                 <div class="info-stat">
                     <div class="info-stat-value" id="infoTrack">---</div>
-                    <div class="info-stat-label">Track (&deg;)</div>
+                    <div class="info-stat-label">Track</div>
                 </div>
                 <div class="info-stat">
                     <div class="info-stat-value" id="infoVRate">---</div>
@@ -455,6 +544,10 @@
                 <span class="info-value" id="infoType">---</span>
             </div>
             <div class="info-row">
+                <span class="info-label">Category</span>
+                <span class="info-value" id="infoCat">---</span>
+            </div>
+            <div class="info-row">
                 <span class="info-label">Squawk</span>
                 <span class="info-value"><span class="squawk-code squawk-normal" id="infoSquawk">----</span></span>
             </div>
@@ -462,17 +555,33 @@
                 <span class="info-label">Position</span>
                 <span class="info-value" id="infoPos">---</span>
             </div>
-            <div class="info-row">
-                <span class="info-label">Distance</span>
-                <span class="info-value" id="infoDist">---</span>
-            </div>
+        </div>
+    </div>
+
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-title">Settings</div>
+        <div class="setting-row">
+            <span class="setting-label">Show Labels</span>
+            <div class="toggle on" id="toggleLabels"></div>
+        </div>
+        <div class="setting-row">
+            <span class="setting-label">Show Trails</span>
+            <div class="toggle on" id="toggleTrails"></div>
+        </div>
+        <div class="setting-row">
+            <span class="setting-label">Day Mode</span>
+            <div class="toggle" id="toggleDayMode"></div>
+        </div>
+        <div class="setting-row">
+            <span class="setting-label">Weather Radar</span>
+            <div class="toggle" id="toggleRadar"></div>
         </div>
     </div>
 
     <div class="legend">
         <div class="legend-title">Altitude</div>
         <div class="legend-items">
-            <div class="legend-item"><div class="legend-color" style="background:#ff0000"></div>&gt;40,000 ft</div>
+            <div class="legend-item"><div class="legend-color" style="background:#ff0000"></div>&gt; 40,000 ft</div>
             <div class="legend-item"><div class="legend-color" style="background:#ff8000"></div>30-40,000 ft</div>
             <div class="legend-item"><div class="legend-color" style="background:#f8f800"></div>20-30,000 ft</div>
             <div class="legend-item"><div class="legend-color" style="background:#00c000"></div>10-20,000 ft</div>
@@ -488,37 +597,44 @@
     <script>
     // ============================================================
     // SKYTRACK - Real-time Flight Tracker
-    // Data from airplanes.live API
     // ============================================================
 
     const CONFIG = {
         center: [39.8, -98.5],
         zoom: 5,
         refreshInterval: 5000,
-        apiUrl: 'https://api.airplanes.live/v2',
-        proxyUrls: [
-            'https://api.allorigins.win/raw?url=',
-            'https://corsproxy.io/?'
-        ]
+        apiUrl: 'https://api.airplanes.live/v2'
     };
 
     // State
     let map;
+    let darkTileLayer, lightTileLayer;
     let aircraftData = {};
     let markers = {};
+    let trailLines = {};
     let selectedHex = null;
-    let showLabels = true;
     let radarLayer = null;
-    let userLocation = null;
-    let useProxy = false;
-    let currentProxyIndex = 0;
+    let lastFetchTime = 0;
+    let fetchInProgress = false;
+    let pendingFetch = false;
 
-    // Aircraft SVG icon path (tar1090 style)
-    const AIRCRAFT_SVG = `<svg viewBox="0 0 36 36" width="SIZE" height="SIZE" style="transform:rotate(ROTATIONdeg)">
-        <path fill="COLOR" stroke="#000" stroke-width="0.5" d="M18 3 L20 14 L32 18 L20 20 L20 30 L24 33 L24 34 L18 32 L12 34 L12 33 L16 30 L16 20 L4 18 L16 14 Z"/>
-    </svg>`;
+    // Settings
+    const settings = {
+        showLabels: true,
+        showTrails: true,
+        dayMode: false,
+        showRadar: false,
+        filter: 'all'
+    };
 
-    // Altitude to color mapping (tar1090 style)
+    // Aircraft categories - improved detection
+    const MILITARY_HEX_PREFIXES = ['AE', 'AF']; // US Military
+    const MILITARY_TYPES = ['F16', 'F15', 'F18', 'F22', 'F35', 'C17', 'C130', 'C5', 'KC135', 'KC10', 'KC46', 'E3', 'E6', 'E8', 'B52', 'B1', 'B2', 'A10', 'P8', 'P3', 'EP3', 'RC135', 'U2', 'RQ4', 'MQ9', 'V22', 'H60', 'UH60', 'MH60', 'HH60', 'CH47', 'AH64'];
+    const CARGO_CALLSIGNS = ['FDX', 'UPS', 'GTI', 'ABX', 'ATN', 'CLX', 'BOX', 'MPH'];
+    const CARGO_TYPES = ['B74F', 'B77F', 'B76F', 'A30F', 'A33F', 'MD11', 'B763'];
+    const HELI_TYPES = ['EC35', 'EC45', 'EC55', 'EC30', 'A109', 'A139', 'A169', 'B06', 'B05', 'B07', 'B47', 'AS50', 'AS55', 'AS65', 'S76', 'S92', 'S70', 'S61', 'R22', 'R44', 'R66', 'MD52', 'MD60', 'H160', 'H175', 'H145', 'H135', 'H125', 'H225', 'H215', 'BK17', 'B412', 'B429', 'B407'];
+
+    // Altitude colors (tar1090 style)
     function getAltitudeColor(alt) {
         if (alt === 'ground' || alt === null || alt === undefined || alt <= 0) return '#808080';
         if (alt < 1000) return '#0040ff';
@@ -530,15 +646,52 @@
         return '#ff0000';
     }
 
+    // Aircraft classification
+    function classifyAircraft(ac) {
+        const hex = (ac.hex || '').toUpperCase();
+        const type = (ac.t || '').toUpperCase();
+        const callsign = (ac.flight || '').toUpperCase().trim();
+        const alt = ac.alt_baro;
+        const cat = ac.category || '';
+
+        // Ground check first
+        if (alt === 'ground' || alt === 0 || (ac.gs !== undefined && ac.gs < 30 && (!alt || alt < 500))) {
+            return 'ground';
+        }
+
+        // Military - check hex prefix (US military aircraft have AE/AF prefixes)
+        if (MILITARY_HEX_PREFIXES.some(p => hex.startsWith(p))) return 'military';
+        
+        // Military - check type
+        if (MILITARY_TYPES.some(t => type.includes(t))) return 'military';
+        
+        // Military - check dbFlags (bit 0 = military in airplanes.live)
+        if (ac.dbFlags && (ac.dbFlags & 1)) return 'military';
+
+        // Helicopter - check category first (A7 = Rotorcraft)
+        if (cat === 'A7') return 'helicopter';
+        
+        // Helicopter - check type
+        if (HELI_TYPES.some(t => type.startsWith(t) || type === t)) return 'helicopter';
+
+        // Cargo - check callsign prefix
+        if (CARGO_CALLSIGNS.some(c => callsign.startsWith(c))) return 'cargo';
+        
+        // Cargo - check freighter types
+        if (CARGO_TYPES.some(t => type.includes(t))) return 'cargo';
+        if (type.endsWith('F') && type.length === 4) return 'cargo'; // B77F, A33F, etc.
+
+        // Default commercial
+        return 'commercial';
+    }
+
     // ============ INITIALIZATION ============
     document.addEventListener('DOMContentLoaded', init);
 
-    async function init() {
+    function init() {
         initMap();
         initUI();
-        await loadAircraft();
-        
-        // Start refresh loop
+        loadAircraft();
         setInterval(loadAircraft, CONFIG.refreshInterval);
     }
 
@@ -550,95 +703,90 @@
             preferCanvas: true
         });
 
-        // Dark map style
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        darkTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OSM &copy; CARTO | Data: airplanes.live',
             maxZoom: 18
-        }).addTo(map);
+        });
 
-        // Events
-        map.on('moveend', loadAircraft);
-        map.on('click', () => deselectAircraft());
+        lightTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OSM &copy; CARTO | Data: airplanes.live',
+            maxZoom: 18
+        });
+
+        darkTileLayer.addTo(map);
+
+        // Heavy debounce on map move
+        let moveTimeout;
+        map.on('moveend', () => {
+            clearTimeout(moveTimeout);
+            moveTimeout = setTimeout(loadAircraft, 800);
+        });
+
+        map.on('click', () => {
+            deselectAircraft();
+            document.getElementById('settingsPanel').classList.remove('show');
+        });
     }
 
-    // ============ API LOADING ============
+    // ============ DATA LOADING ============
     async function loadAircraft() {
+        // Strict rate limiting
+        const now = Date.now();
+        if (now - lastFetchTime < 3000) {
+            return;
+        }
+        if (fetchInProgress) {
+            return;
+        }
+
+        fetchInProgress = true;
+        lastFetchTime = now;
+
         const bounds = map.getBounds();
         const center = map.getCenter();
-        
-        // Calculate radius based on viewport (in nm)
         const latDiff = bounds.getNorth() - bounds.getSouth();
         const radius = Math.min(250, Math.max(25, Math.round(latDiff * 60 / 2)));
 
         updateStatus('loading', 'Loading...');
 
         try {
-            let data;
+            const url = `${CONFIG.apiUrl}/point/${center.lat}/${center.lng}/${radius}`;
+            const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
             
-            // Try direct API first
-            if (!useProxy) {
-                try {
-                    const resp = await fetch(`${CONFIG.apiUrl}/point/${center.lat}/${center.lng}/${radius}`, {
-                        signal: AbortSignal.timeout(8000)
-                    });
-                    if (resp.ok) {
-                        data = await resp.json();
-                    }
-                } catch (e) {
-                    console.log('Direct API failed, trying proxy...');
-                    useProxy = true;
-                }
-            }
-
-            // Try proxy if direct failed
-            if (!data && useProxy) {
-                data = await fetchWithProxy(`${CONFIG.apiUrl}/point/${center.lat}/${center.lng}/${radius}`);
-            }
-
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            
+            const data = await resp.json();
+            
             if (data && data.ac) {
                 processAircraftData(data.ac);
                 updateStatus('connected', 'Live');
                 document.getElementById('loading').classList.add('hidden');
             } else {
-                throw new Error('No data received');
+                throw new Error('No data');
             }
 
         } catch (err) {
-            console.error('Failed to load aircraft:', err);
+            console.error('Load failed:', err);
             updateStatus('error', 'Error');
-            
-            // Try next proxy on failure
-            if (useProxy) {
-                currentProxyIndex = (currentProxyIndex + 1) % CONFIG.proxyUrls.length;
-            }
         }
-    }
 
-    async function fetchWithProxy(url) {
-        const proxyUrl = CONFIG.proxyUrls[currentProxyIndex];
-        const fullUrl = proxyUrl + encodeURIComponent(url);
-        
-        const resp = await fetch(fullUrl, {
-            signal: AbortSignal.timeout(10000)
-        });
-        
-        if (!resp.ok) throw new Error('Proxy request failed');
-        return await resp.json();
+        fetchInProgress = false;
     }
 
     function processAircraftData(aircraft) {
-        const newData = {};
-        let withPos = 0;
+        const counts = { all: 0, commercial: 0, military: 0, cargo: 0, helicopter: 0, ground: 0 };
+        const currentHexes = new Set();
 
         aircraft.forEach(ac => {
             if (!ac.hex) return;
             
             const hex = ac.hex.toUpperCase();
-            
-            // Merge with existing data for smoother updates
+            currentHexes.add(hex);
             const existing = aircraftData[hex] || {};
-            
-            newData[hex] = {
+
+            // Merge data
+            aircraftData[hex] = {
+                ...existing,
                 hex: hex,
                 flight: ac.flight?.trim() || existing.flight || '',
                 r: ac.r || existing.r || '',
@@ -646,59 +794,98 @@
                 lat: ac.lat ?? existing.lat,
                 lon: ac.lon ?? existing.lon,
                 alt_baro: ac.alt_baro ?? existing.alt_baro,
-                alt_geom: ac.alt_geom ?? existing.alt_geom,
                 gs: ac.gs ?? existing.gs,
                 track: ac.track ?? existing.track,
                 baro_rate: ac.baro_rate ?? existing.baro_rate,
                 squawk: ac.squawk || existing.squawk || '',
                 category: ac.category || existing.category || '',
-                nav_modes: ac.nav_modes || existing.nav_modes,
-                seen: ac.seen ?? 0,
-                seen_pos: ac.seen_pos ?? existing.seen_pos ?? 999,
-                rssi: ac.rssi ?? existing.rssi
+                seen_pos: ac.seen_pos ?? 0,
+                dbFlags: ac.dbFlags ?? existing.dbFlags
             };
 
-            if (newData[hex].lat !== undefined && newData[hex].lon !== undefined) {
-                withPos++;
+            // Store position history for trails
+            if (ac.lat !== undefined && ac.lon !== undefined) {
+                if (!aircraftData[hex].history) {
+                    aircraftData[hex].history = [];
+                }
+                const hist = aircraftData[hex].history;
+                const lastPos = hist[hist.length - 1];
+                if (!lastPos || lastPos[0] !== ac.lat || lastPos[1] !== ac.lon) {
+                    hist.push([ac.lat, ac.lon]);
+                    if (hist.length > 100) hist.shift();
+                }
+            }
+
+            // Classify and count
+            const category = classifyAircraft(aircraftData[hex]);
+            aircraftData[hex].category_type = category;
+            counts.all++;
+            if (counts[category] !== undefined) counts[category]++;
+        });
+
+        // Remove stale aircraft
+        Object.keys(aircraftData).forEach(hex => {
+            if (!currentHexes.has(hex)) {
+                delete aircraftData[hex];
+                if (markers[hex]) {
+                    map.removeLayer(markers[hex]);
+                    delete markers[hex];
+                }
+                if (trailLines[hex]) {
+                    map.removeLayer(trailLines[hex]);
+                    delete trailLines[hex];
+                }
             }
         });
 
-        aircraftData = newData;
-        
-        // Update stats
-        document.getElementById('aircraftCount').textContent = Object.keys(aircraftData).length;
-        document.getElementById('posCount').textContent = withPos;
+        // Update UI counts
+        document.getElementById('countAll').textContent = counts.all;
+        document.getElementById('countComm').textContent = counts.commercial;
+        document.getElementById('countMil').textContent = counts.military;
+        document.getElementById('countCargo').textContent = counts.cargo;
+        document.getElementById('countHeli').textContent = counts.helicopter;
+        document.getElementById('countGnd').textContent = counts.ground;
+        document.getElementById('aircraftCount').textContent = counts.all;
 
-        // Update markers
         updateMarkers();
     }
 
     // ============ MARKERS ============
     function updateMarkers() {
-        const validHexes = new Set();
+        let visibleCount = 0;
 
         Object.values(aircraftData).forEach(ac => {
             if (ac.lat === undefined || ac.lon === undefined) return;
-            if (ac.seen_pos > 60) return; // Skip stale positions
-            
-            validHexes.add(ac.hex);
+            if (ac.seen_pos > 60) return;
+
+            // Apply filter
+            if (settings.filter !== 'all' && ac.category_type !== settings.filter) {
+                if (markers[ac.hex]) {
+                    map.removeLayer(markers[ac.hex]);
+                    delete markers[ac.hex];
+                }
+                if (trailLines[ac.hex] && ac.hex !== selectedHex) {
+                    map.removeLayer(trailLines[ac.hex]);
+                    delete trailLines[ac.hex];
+                }
+                return;
+            }
+
+            visibleCount++;
 
             if (markers[ac.hex]) {
-                // Update existing marker
                 updateMarker(ac);
             } else {
-                // Create new marker
                 createMarker(ac);
+            }
+
+            // Update trail for selected aircraft
+            if (ac.hex === selectedHex && settings.showTrails) {
+                updateTrail(ac);
             }
         });
 
-        // Remove stale markers
-        Object.keys(markers).forEach(hex => {
-            if (!validHexes.has(hex)) {
-                map.removeLayer(markers[hex]);
-                delete markers[hex];
-            }
-        });
+        document.getElementById('visibleCount').textContent = visibleCount;
     }
 
     function createMarker(ac) {
@@ -727,24 +914,21 @@
     }
 
     function createIcon(ac) {
-        const alt = ac.alt_baro === 'ground' ? 0 : (ac.alt_baro || 0);
         const color = getAltitudeColor(ac.alt_baro);
         const rotation = ac.track || 0;
         const isSelected = ac.hex === selectedHex;
         const size = isSelected ? 32 : 24;
 
         let labelHtml = '';
-        if (showLabels && (ac.flight || ac.hex)) {
+        if (settings.showLabels && (ac.flight || ac.hex)) {
             const labelText = ac.flight || ac.hex;
-            const labelColor = isSelected ? '#00ffff' : color;
-            labelHtml = `<div class="aircraft-label" style="color:${labelColor}">${labelText}</div>`;
+            labelHtml = `<div class="aircraft-label" style="color:${isSelected ? '#00ffff' : color}">${labelText}</div>`;
         }
 
-        const svg = AIRCRAFT_SVG
-            .replace('SIZE', size)
-            .replace('SIZE', size)
-            .replace('ROTATION', rotation)
-            .replace('COLOR', color);
+        const strokeColor = settings.dayMode ? '#333' : '#000';
+        const svg = `<svg viewBox="0 0 36 36" width="${size}" height="${size}" style="transform:rotate(${rotation}deg)">
+            <path fill="${color}" stroke="${strokeColor}" stroke-width="0.5" d="M18 3 L20 14 L32 18 L20 20 L20 30 L24 33 L24 34 L18 32 L12 34 L12 33 L16 30 L16 20 L4 18 L16 14 Z"/>
+        </svg>`;
 
         return L.divIcon({
             className: `aircraft-marker ${isSelected ? 'selected' : ''}`,
@@ -759,8 +943,38 @@
         return ac.hex === selectedHex ? 50000 : alt;
     }
 
+    // ============ TRAILS ============
+    function updateTrail(ac) {
+        if (!ac.history || ac.history.length < 2) return;
+
+        const color = getAltitudeColor(ac.alt_baro);
+
+        if (trailLines[ac.hex]) {
+            trailLines[ac.hex].setLatLngs(ac.history);
+            trailLines[ac.hex].setStyle({ color: color });
+        } else {
+            trailLines[ac.hex] = L.polyline(ac.history, {
+                color: color,
+                weight: 3,
+                opacity: 0.8
+            }).addTo(map);
+        }
+    }
+
+    function clearTrail(hex) {
+        if (trailLines[hex]) {
+            map.removeLayer(trailLines[hex]);
+            delete trailLines[hex];
+        }
+    }
+
     // ============ SELECTION ============
     function selectAircraft(hex) {
+        // Clear previous trail
+        if (selectedHex && selectedHex !== hex) {
+            clearTrail(selectedHex);
+        }
+
         selectedHex = hex;
         const ac = aircraftData[hex];
         if (!ac) return;
@@ -771,42 +985,39 @@
         document.getElementById('infoReg').textContent = ac.r || 'N/A';
         document.getElementById('infoType').textContent = ac.t || 'N/A';
         
-        const alt = ac.alt_baro === 'ground' ? 'Ground' : 
-                    (ac.alt_baro ? ac.alt_baro.toLocaleString() : '---');
+        // Category with proper capitalization
+        const catMap = { commercial: 'Commercial', military: 'Military', cargo: 'Cargo', helicopter: 'Helicopter', ground: 'Ground' };
+        document.getElementById('infoCat').textContent = catMap[ac.category_type] || 'Unknown';
+        
+        const alt = ac.alt_baro === 'ground' ? 'Ground' : (ac.alt_baro ? ac.alt_baro.toLocaleString() : '---');
         document.getElementById('infoAlt').textContent = alt;
         document.getElementById('infoSpeed').textContent = ac.gs ? Math.round(ac.gs) : '---';
-        document.getElementById('infoTrack').textContent = ac.track ? Math.round(ac.track) : '---';
-        document.getElementById('infoVRate').textContent = ac.baro_rate ? 
-            (ac.baro_rate > 0 ? '+' : '') + ac.baro_rate : '---';
+        document.getElementById('infoTrack').textContent = ac.track ? Math.round(ac.track) + '°' : '---';
+        document.getElementById('infoVRate').textContent = ac.baro_rate ? (ac.baro_rate > 0 ? '+' : '') + ac.baro_rate : '---';
 
         const squawkEl = document.getElementById('infoSquawk');
         squawkEl.textContent = ac.squawk || '----';
-        squawkEl.className = 'squawk-code squawk-' + (
-            ac.squawk === '7500' || ac.squawk === '7600' || ac.squawk === '7700' 
-                ? ac.squawk : 'normal'
-        );
+        squawkEl.className = 'squawk-code squawk-' + (['7500', '7600', '7700'].includes(ac.squawk) ? ac.squawk : 'normal');
 
-        document.getElementById('infoPos').textContent = 
-            ac.lat !== undefined ? `${ac.lat.toFixed(4)}, ${ac.lon.toFixed(4)}` : '---';
-
-        // Calculate distance from user if available
-        if (userLocation && ac.lat !== undefined) {
-            const dist = getDistance(userLocation.lat, userLocation.lng, ac.lat, ac.lon);
-            document.getElementById('infoDist').textContent = dist.toFixed(1) + ' nm';
-        } else {
-            document.getElementById('infoDist').textContent = '---';
-        }
+        document.getElementById('infoPos').textContent = ac.lat !== undefined ? `${ac.lat.toFixed(4)}, ${ac.lon.toFixed(4)}` : '---';
 
         document.getElementById('infoPanel').classList.add('show');
+        document.getElementById('settingsPanel').classList.remove('show');
         
-        // Update markers to show selection
         updateMarkers();
-        
-        // Center map on aircraft
+
+        // Show trail
+        if (settings.showTrails && ac.history) {
+            updateTrail(ac);
+        }
+
         map.panTo([ac.lat, ac.lon]);
     }
 
     function deselectAircraft() {
+        if (selectedHex) {
+            clearTrail(selectedHex);
+        }
         selectedHex = null;
         document.getElementById('infoPanel').classList.remove('show');
         updateMarkers();
@@ -814,36 +1025,53 @@
 
     // ============ UI ============
     function initUI() {
+        // Close button
         document.getElementById('infoClose').addEventListener('click', deselectAircraft);
 
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                settings.filter = btn.dataset.filter;
+                updateMarkers();
+            });
+        });
+
+        // Header buttons
+        document.getElementById('dayNightBtn').addEventListener('click', toggleDayMode);
         document.getElementById('labelBtn').addEventListener('click', function() {
-            showLabels = !showLabels;
-            this.classList.toggle('active', showLabels);
+            settings.showLabels = !settings.showLabels;
+            this.classList.toggle('active', settings.showLabels);
+            document.getElementById('toggleLabels').classList.toggle('on', settings.showLabels);
             updateMarkers();
         });
-        document.getElementById('labelBtn').classList.add('active');
+        document.getElementById('radarBtn').addEventListener('click', toggleRadar);
+        document.getElementById('locateBtn').addEventListener('click', geolocate);
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            document.getElementById('settingsPanel').classList.toggle('show');
+            document.getElementById('infoPanel').classList.remove('show');
+        });
 
-        document.getElementById('radarBtn').addEventListener('click', async function() {
-            const isActive = this.classList.toggle('active');
-            if (isActive) {
-                await loadRadar();
-            } else if (radarLayer) {
-                map.removeLayer(radarLayer);
-                radarLayer = null;
+        // Settings toggles
+        document.getElementById('toggleLabels').addEventListener('click', function() {
+            settings.showLabels = !settings.showLabels;
+            this.classList.toggle('on', settings.showLabels);
+            document.getElementById('labelBtn').classList.toggle('active', settings.showLabels);
+            updateMarkers();
+        });
+        document.getElementById('toggleTrails').addEventListener('click', function() {
+            settings.showTrails = !settings.showTrails;
+            this.classList.toggle('on', settings.showTrails);
+            if (!settings.showTrails && selectedHex) {
+                clearTrail(selectedHex);
+            } else if (settings.showTrails && selectedHex) {
+                const ac = aircraftData[selectedHex];
+                if (ac) updateTrail(ac);
             }
         });
-
-        document.getElementById('locateBtn').addEventListener('click', () => {
-            navigator.geolocation?.getCurrentPosition(
-                pos => {
-                    userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                    map.setView([userLocation.lat, userLocation.lng], 9);
-                    loadAircraft();
-                    toast('Location updated');
-                },
-                () => toast('Location access denied')
-            );
-        });
+        document.getElementById('toggleDayMode').addEventListener('click', toggleDayMode);
+        document.getElementById('toggleRadar').addEventListener('click', toggleRadar);
 
         // Search
         let searchTimeout;
@@ -854,7 +1082,6 @@
             searchTimeout = setTimeout(() => {
                 if (!query) return;
 
-                // Search through aircraft
                 const match = Object.values(aircraftData).find(ac => 
                     ac.hex.includes(query) ||
                     (ac.flight && ac.flight.toUpperCase().includes(query)) ||
@@ -869,43 +1096,66 @@
         });
     }
 
-    async function loadRadar() {
-        try {
-            const resp = await fetch('https://api.rainviewer.com/public/weather-maps.json');
-            const data = await resp.json();
-            
-            const frame = data.radar?.past?.slice(-1)[0];
-            if (!frame) return;
+    function toggleDayMode() {
+        settings.dayMode = !settings.dayMode;
+        document.body.classList.toggle('day-mode', settings.dayMode);
+        document.getElementById('toggleDayMode').classList.toggle('on', settings.dayMode);
 
-            if (radarLayer) map.removeLayer(radarLayer);
-
-            radarLayer = L.tileLayer(`${data.host}${frame.path}/256/{z}/{x}/{y}/4/1_1.png`, {
-                opacity: 0.4,
-                maxNativeZoom: 12
-            }).addTo(map);
-
-            radarLayer.setZIndex(50);
-            toast('Radar loaded');
-        } catch (err) {
-            console.error('Radar failed:', err);
-            toast('Radar unavailable');
+        if (settings.dayMode) {
+            map.removeLayer(darkTileLayer);
+            lightTileLayer.addTo(map);
+        } else {
+            map.removeLayer(lightTileLayer);
+            darkTileLayer.addTo(map);
         }
+
+        updateMarkers();
+    }
+
+    async function toggleRadar() {
+        settings.showRadar = !settings.showRadar;
+        document.getElementById('radarBtn').classList.toggle('active', settings.showRadar);
+        document.getElementById('toggleRadar').classList.toggle('on', settings.showRadar);
+
+        if (settings.showRadar) {
+            try {
+                const resp = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+                const data = await resp.json();
+                
+                const frame = data.radar?.past?.slice(-1)[0];
+                if (!frame) return;
+
+                if (radarLayer) map.removeLayer(radarLayer);
+
+                radarLayer = L.tileLayer(`${data.host}${frame.path}/256/{z}/{x}/{y}/4/1_1.png`, {
+                    opacity: 0.4,
+                    maxNativeZoom: 12
+                }).addTo(map);
+                radarLayer.setZIndex(50);
+                toast('Radar loaded');
+            } catch (err) {
+                toast('Radar unavailable');
+            }
+        } else if (radarLayer) {
+            map.removeLayer(radarLayer);
+            radarLayer = null;
+        }
+    }
+
+    function geolocate() {
+        navigator.geolocation?.getCurrentPosition(
+            pos => {
+                map.setView([pos.coords.latitude, pos.coords.longitude], 9);
+                toast('Location updated');
+            },
+            () => toast('Location denied')
+        );
     }
 
     function updateStatus(type, text) {
         const badge = document.getElementById('statusBadge');
         badge.className = 'status-badge ' + type;
         badge.textContent = text;
-    }
-
-    function getDistance(lat1, lon1, lat2, lon2) {
-        const R = 3440.065; // Earth radius in nm
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
 
     function toast(msg) {
