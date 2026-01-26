@@ -1,6 +1,6 @@
 # ✈️ SkyTrack - Live Flight Tracker
 
-A real-time aircraft tracking application built as a single HTML file. Track commercial flights, military aircraft, helicopters, cargo planes, and private aircraft on an interactive map.
+A real-time aircraft tracker. Track commercial flights, military aircraft, helicopters, cargo planes, and private aircraft on an interactive map.
 
 ![SkyTrack Screenshot](screenshot.png)
 
