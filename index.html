@@ -585,10 +585,11 @@
         zoom: 5,
         refreshInterval: 6000,
         
-        // CORS Proxies (will cycle through on failure)
+        // CORS Proxies for API calls
         corsProxies: [
+            url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
             url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-            url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+            url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
         ],
         
         // Silhouette images (img tag, no CORS issues)
@@ -1062,6 +1063,15 @@
                             .filter(p => p[1] !== null && p[2] !== null)
                             .map(p => [p[1], p[2]]);
                         
+                        // Add current aircraft position to close the gap
+                        if (ac.lat !== undefined && ac.lon !== undefined) {
+                            const lastPoint = points[points.length - 1];
+                            // Only add if it's different from the last trace point
+                            if (!lastPoint || lastPoint[0] !== ac.lat || lastPoint[1] !== ac.lon) {
+                                points.push([ac.lat, ac.lon]);
+                            }
+                        }
+                        
                         if (points.length > 1) {
                             const color = getAltitudeColor(ac.alt_baro);
                             
@@ -1101,6 +1111,15 @@
         // Fallback: Local history
         if (ac.history && ac.history.length > 1) {
             const points = ac.history.map(p => [p[0], p[1]]);
+            
+            // Add current position to close the gap
+            if (ac.lat !== undefined && ac.lon !== undefined) {
+                const lastPoint = points[points.length - 1];
+                if (!lastPoint || lastPoint[0] !== ac.lat || lastPoint[1] !== ac.lon) {
+                    points.push([ac.lat, ac.lon]);
+                }
+            }
+            
             const color = getAltitudeColor(ac.alt_baro);
             
             trailLine = L.polyline(points, {
@@ -1172,52 +1191,100 @@
         return trace.slice(takeoffIndex);
     }
 
-    // ============ PHOTO LOADING WITH CORS PROXY ============
+    // ============ PHOTO LOADING ============
     const photoCache = {};
+    const photoFailCache = {}; // Cache failed lookups to avoid retrying
     
     async function loadAircraftPhoto(hex, registration, type) {
         const photoDiv = document.getElementById('aircraftPhoto');
         
-        // Check cache first
+        // Check positive cache first
         if (photoCache[hex]) {
             displayPhoto(photoCache[hex]);
+            return;
+        }
+        
+        // Check fail cache - don't retry if we already failed
+        if (photoFailCache[hex]) {
+            showFallbackPhoto(type, photoDiv);
             return;
         }
 
         photoDiv.innerHTML = '<div class="no-photo">Loading photo...</div>';
 
-        // Try Planespotters.net via CORS proxy
+        // Try Planespotters.net via CORS proxies
         const planespottersUrl = `https://api.planespotters.net/pub/photos/hex/${hex}`;
         
+        // Try each proxy with short timeout
         for (let i = 0; i < CONFIG.corsProxies.length; i++) {
-            const proxyFn = CONFIG.corsProxies[(currentProxyIndex + i) % CONFIG.corsProxies.length];
+            const proxyFn = CONFIG.corsProxies[i];
             const proxiedUrl = proxyFn(planespottersUrl);
             
             try {
-                const resp = await fetch(proxiedUrl, { signal: AbortSignal.timeout(8000) });
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4000);
                 
-                if (resp.ok) {
-                    const data = await resp.json();
-                    if (data.photos && data.photos.length > 0) {
-                        const photo = data.photos[0];
+                const resp = await fetch(proxiedUrl, { 
+                    signal: controller.signal,
+                    headers: { 'Accept': 'application/json' }
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!resp.ok) {
+                    console.log(`Photo proxy ${i}: HTTP ${resp.status}`);
+                    continue;
+                }
+                
+                const text = await resp.text();
+                
+                // Validate it's JSON
+                if (!text.startsWith('{') && !text.startsWith('[')) {
+                    console.log(`Photo proxy ${i}: Not JSON response`);
+                    continue;
+                }
+                
+                const data = JSON.parse(text);
+                
+                if (data.photos && data.photos.length > 0) {
+                    const photo = data.photos[0];
+                    const photoUrl = photo.thumbnail_large?.src || photo.thumbnail?.src;
+                    
+                    if (photoUrl) {
                         const result = {
-                            url: photo.thumbnail_large?.src || photo.thumbnail?.src,
+                            url: photoUrl,
                             credit: photo.photographer,
                             source: 'Planespotters.net'
                         };
-                        if (result.url) {
-                            photoCache[hex] = result;
-                            displayPhoto(result);
-                            return;
-                        }
+                        photoCache[hex] = result;
+                        displayPhoto(result);
+                        console.log(`Photo loaded for ${hex} via proxy ${i}`);
+                        return;
                     }
                 }
+                
+                // API returned successfully but no photos - this aircraft has no photos
+                console.log(`No photos available for ${hex}`);
+                photoFailCache[hex] = true;
+                showFallbackPhoto(type, photoDiv);
+                return;
+                
             } catch (e) {
-                console.log(`Photo proxy ${i} failed:`, e.message);
+                if (e.name === 'AbortError') {
+                    console.log(`Photo proxy ${i}: Timeout`);
+                } else {
+                    console.log(`Photo proxy ${i}: ${e.message}`);
+                }
             }
         }
 
-        // Fallback: Silhouette (img tag, no CORS issues)
+        // All proxies failed - cache the failure and show fallback
+        console.log(`All photo proxies failed for ${hex}`);
+        photoFailCache[hex] = true;
+        showFallbackPhoto(type, photoDiv);
+    }
+    
+    function showFallbackPhoto(type, photoDiv) {
         if (type) {
             displayPhoto({
                 url: `${CONFIG.silhouetteUrl}${type.toUpperCase()}.png`,
@@ -1226,7 +1293,14 @@
                 isSilhouette: true
             });
         } else {
-            photoDiv.innerHTML = '<div class="no-photo">No photo available</div>';
+            photoDiv.innerHTML = `
+                <div class="no-photo" style="flex-direction: column; gap: 8px;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="#666">
+                        <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                    </svg>
+                    <span>No photo available</span>
+                </div>
+            `;
         }
     }
 
