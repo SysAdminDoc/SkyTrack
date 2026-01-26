@@ -2,7 +2,8 @@
 
 A real-time aircraft tracker. Track commercial flights, military aircraft, helicopters, cargo planes, and private aircraft on an interactive map.
 
-![SkyTrack Screenshot](screenshot.png)
+<img width="1683" height="918" alt="2026-01-25 21_34_01-SkyTrack - Live Flight Tracker - Chromium" src="https://github.com/user-attachments/assets/4252b34a-de6d-4ee2-8ac5-97b60d0b26fb" />
+
 
 ## 🌟 Features
 
@@ -19,7 +20,7 @@ A real-time aircraft tracker. Track commercial flights, military aircraft, helic
 
 ## 🚀 Live Demo
 
-[View Live Demo](https://yourusername.github.io/skytrack/)
+[View Live Demo](https://sysadmindoc.github.io/SkyTrack/)
 
 ## 🛠️ Technologies
 
