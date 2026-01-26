@@ -19,7 +19,7 @@
 
         body.day-mode {
             --bg: #e8e8e8;
-            --bg-panel: rgba(255, 255, 255, 0.95);
+            --bg-panel: rgba(255, 255, 255, 0.92);
             --border: rgba(0, 0, 0, 0.15);
             --text: #222;
             --text-dim: #555;
@@ -36,13 +36,8 @@
             overflow: hidden;
         }
 
-        #map { 
-            position: absolute; 
-            inset: 0; 
-            z-index: 1; 
-        }
+        #map { position: absolute; inset: 0; z-index: 1; }
 
-        /* Hide attribution, move zoom to bottom right */
         .leaflet-control-attribution { display: none !important; }
         .leaflet-top.leaflet-left { top: auto !important; bottom: 30px !important; left: auto !important; right: 10px !important; }
         .leaflet-control-zoom { margin-bottom: 0 !important; }
@@ -180,7 +175,7 @@
             position: absolute;
             top: 70px;
             left: 10px;
-            width: 280px;
+            width: 300px;
             background: var(--bg-panel);
             border: 1px solid var(--border);
             border-radius: 8px;
@@ -193,7 +188,7 @@
 
         .aircraft-photo {
             width: 100%;
-            height: 140px;
+            height: 160px;
             background: #111;
             border-radius: 8px 8px 0 0;
             overflow: hidden;
@@ -217,6 +212,16 @@
             bottom: 4px;
             right: 6px;
             font-size: 9px;
+            color: rgba(255,255,255,0.9);
+            background: rgba(0,0,0,0.7);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        .photo-source {
+            position: absolute;
+            bottom: 4px;
+            left: 6px;
+            font-size: 8px;
             color: rgba(255,255,255,0.7);
             background: rgba(0,0,0,0.5);
             padding: 2px 5px;
@@ -225,7 +230,7 @@
 
         .airline-banner {
             width: 100%;
-            height: 50px;
+            height: 45px;
             background: #222;
             display: flex;
             align-items: center;
@@ -239,26 +244,26 @@
         }
 
         .info-header {
-            padding: 12px 16px;
+            padding: 12px 14px;
             border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
         }
-        .info-callsign { font-size: 22px; font-weight: 700; color: var(--selected); }
+        .info-callsign { font-size: 20px; font-weight: 700; color: var(--selected); }
         .info-hex { font-size: 11px; color: var(--text-muted); font-family: monospace; }
         .info-close {
             background: none;
             border: none;
             color: var(--text-muted);
             cursor: pointer;
-            font-size: 22px;
+            font-size: 20px;
             line-height: 1;
         }
         .info-close:hover { color: var(--text); }
 
         .info-section {
-            padding: 10px 16px;
+            padding: 10px 14px;
             border-bottom: 1px solid var(--border);
         }
         .info-section:last-child { border-bottom: none; }
@@ -283,7 +288,7 @@
             border-radius: 6px;
             text-align: center;
         }
-        .info-stat-value { font-size: 16px; font-weight: 700; }
+        .info-stat-value { font-size: 15px; font-weight: 700; }
         .info-stat-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
 
         .squawk-code { font-family: monospace; font-weight: 700; padding: 2px 6px; border-radius: 3px; }
@@ -402,6 +407,15 @@
         }
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
+        .data-source {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 4px;
+            background: rgba(128,128,128,0.1);
+            border-radius: 0 0 8px 8px;
+        }
+
         @media (max-width: 768px) {
             .stats { display: none; }
             .info-panel, .settings-panel { width: calc(100% - 20px); }
@@ -413,7 +427,7 @@
 <body>
     <div class="loading-overlay" id="loading">
         <div class="spinner"></div>
-        <div class="loading-text">Connecting to airplanes.live...</div>
+        <div class="loading-text">Connecting to ADSB.lol...</div>
     </div>
 
     <div id="map"></div>
@@ -434,7 +448,7 @@
         <div class="status-badge loading" id="statusBadge">Connecting</div>
 
         <div class="btn-group">
-            <button class="header-btn" id="dayNightBtn" title="Toggle Day/Night Mode">
+            <button class="header-btn" id="dayNightBtn" title="Toggle Satellite View">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
             </button>
             <button class="header-btn active" id="labelBtn" title="Toggle Labels">
@@ -516,6 +530,7 @@
             </div>
             <div class="trail-status" id="trailStatus">Loading trail...</div>
         </div>
+        <div class="data-source" id="dataSource">Data: ADSB.lol</div>
     </div>
 
     <div class="settings-panel" id="settingsPanel">
@@ -525,7 +540,7 @@
             <div class="toggle on" id="toggleLabels"></div>
         </div>
         <div class="setting-row">
-            <span class="setting-label">Day Mode</span>
+            <span class="setting-label">Satellite View</span>
             <div class="toggle" id="toggleDayMode"></div>
         </div>
         <div class="setting-row">
@@ -552,28 +567,65 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
     // ============================================================
-    // SKYTRACK - Real-time Flight Tracker
+    // SKYTRACK v7 - Real-time Flight Tracker
+    // 
+    // DATA SOURCE PRIORITY:
+    // ----------------------
+    // Aircraft Data:
+    //   1. ADSB.lol (free, no rate limits)
+    //   2. Airplanes.live (fallback, 1 req/sec)
+    //
+    // Aircraft Photos:
+    //   1. Planespotters.net API (1M+ high-quality photos)
+    //   2. Airport-Data.com (700k+ photos)
+    //   3. Aircraft silhouettes (type-based SVG fallback)
+    //
+    // Flight Trails:
+    //   1. Globe.airplanes.live trace files (full history)
+    //   2. Local position history (built from live updates)
+    //
+    // Airline Banners:
+    //   1. Globe.airplanes.live banners (3-letter ICAO codes)
     // ============================================================
 
     const CONFIG = {
         center: [39.8, -98.5],
         zoom: 5,
         refreshInterval: 5000,
-        apiUrl: 'https://api.airplanes.live/v2',
-        globeUrl: 'https://globe.airplanes.live'
+        
+        // Aircraft data APIs (priority order)
+        apis: [
+            { name: 'ADSB.lol', url: 'https://api.adsb.lol/v2' },
+            { name: 'Airplanes.live', url: 'https://api.airplanes.live/v2' }
+        ],
+        
+        // Photo sources (priority order)
+        photoSources: {
+            planespotters: 'https://api.planespotters.net/pub/photos/hex/',
+            airportData: 'https://www.airport-data.com/api/ac_thumb.json',
+            silhouette: 'https://globe.airplanes.live/aircraft_sil/'
+        },
+        
+        // Trail source
+        traceUrl: 'https://globe.airplanes.live/data/traces/',
+        
+        // Airline banners
+        airlineBannerUrl: 'https://globe.airplanes.live/airline_banners/'
     };
 
-    // State - GLOBAL CACHE keeps all aircraft data
+    // State
     let map;
-    let darkTileLayer, lightTileLayer;
-    let aircraftCache = {}; // Global cache - persists across map movements
+    let darkTileLayer, satelliteTileLayer;
+    let aircraftCache = {};
     let markers = {};
     let trailLine = null;
     let selectedHex = null;
     let radarLayer = null;
     let lastFetchTime = 0;
     let fetchInProgress = false;
-    let photoCache = {}; // Cache aircraft photos
+    let photoCache = {};
+    let currentApiIndex = 0;
+    let apiFailures = {};
 
     const settings = {
         showLabels: true,
@@ -582,13 +634,14 @@
         filter: 'all'
     };
 
-    // Aircraft categories
+    // Aircraft classification data
     const MILITARY_HEX_PREFIXES = ['AE', 'AF'];
     const MILITARY_TYPES = ['F16', 'F15', 'F18', 'F22', 'F35', 'C17', 'C130', 'C5', 'KC135', 'KC10', 'KC46', 'E3', 'E6', 'E8', 'B52', 'B1', 'B2', 'A10', 'P8', 'P3', 'EP3', 'RC135', 'U2', 'RQ4', 'MQ9', 'V22', 'H60', 'UH60', 'MH60', 'HH60', 'CH47', 'AH64'];
     const CARGO_CALLSIGNS = ['FDX', 'UPS', 'GTI', 'ABX', 'ATN', 'CLX', 'BOX', 'MPH'];
     const CARGO_TYPES = ['B74F', 'B77F', 'B76F', 'A30F', 'A33F', 'MD11', 'B763'];
     const HELI_TYPES = ['EC35', 'EC45', 'EC55', 'EC30', 'A109', 'A139', 'A169', 'B06', 'B05', 'B07', 'B47', 'AS50', 'AS55', 'AS65', 'S76', 'S92', 'S70', 'S61', 'R22', 'R44', 'R66', 'MD52', 'MD60', 'H160', 'H175', 'H145', 'H135', 'H125', 'H225', 'H215', 'BK17', 'B412', 'B429', 'B407'];
 
+    // ============ UTILITIES ============
     function getAltitudeColor(alt) {
         if (alt === 'ground' || alt === null || alt === undefined || alt <= 0) return '#808080';
         if (alt < 1000) return '#0040ff';
@@ -619,11 +672,9 @@
         return 'commercial';
     }
 
-    // Get airline code from callsign (first 3 letters)
     function getAirlineCode(callsign) {
         if (!callsign || callsign.length < 3) return null;
         const code = callsign.substring(0, 3).toUpperCase();
-        // Check if it looks like an airline code (letters only)
         if (/^[A-Z]{3}$/.test(code)) return code;
         return null;
     }
@@ -646,8 +697,8 @@
             preferCanvas: true
         });
 
-        darkTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 });
-        lightTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 });
+        darkTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
+        satelliteTileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
 
         darkTileLayer.addTo(map);
 
@@ -661,6 +712,40 @@
             deselectAircraft();
             document.getElementById('settingsPanel').classList.remove('show');
         });
+    }
+
+    // ============ API WITH FAILOVER CHAIN ============
+    async function fetchWithFallback(endpoint) {
+        for (let i = 0; i < CONFIG.apis.length; i++) {
+            const apiIndex = (currentApiIndex + i) % CONFIG.apis.length;
+            const api = CONFIG.apis[apiIndex];
+            
+            // Skip if recently failed (30 second cooldown)
+            if (apiFailures[api.name] && Date.now() - apiFailures[api.name] < 30000) {
+                continue;
+            }
+            
+            try {
+                const url = api.url + endpoint;
+                const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
+                
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                
+                const data = await resp.json();
+                
+                // Success - make this the primary API
+                currentApiIndex = apiIndex;
+                delete apiFailures[api.name];
+                document.getElementById('dataSource').textContent = `Data: ${api.name}`;
+                
+                return data;
+            } catch (err) {
+                console.log(`${api.name} failed:`, err.message);
+                apiFailures[api.name] = Date.now();
+            }
+        }
+        
+        throw new Error('All APIs failed');
     }
 
     // ============ DATA LOADING ============
@@ -680,12 +765,7 @@
         updateStatus('loading', 'Loading...');
 
         try {
-            const url = `${CONFIG.apiUrl}/point/${center.lat}/${center.lng}/${radius}`;
-            const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
-            
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            
-            const data = await resp.json();
+            const data = await fetchWithFallback(`/point/${center.lat}/${center.lng}/${radius}`);
             
             if (data && data.ac) {
                 processAircraftData(data.ac);
@@ -709,7 +789,16 @@
             const hex = ac.hex.toUpperCase();
             const existing = aircraftCache[hex] || {};
 
-            // Update/merge into global cache
+            // Build local position history for trail fallback
+            let history = existing.history || [];
+            if (ac.lat !== undefined && ac.lon !== undefined) {
+                const lastPos = history[history.length - 1];
+                if (!lastPos || lastPos[0] !== ac.lat || lastPos[1] !== ac.lon) {
+                    history.push([ac.lat, ac.lon, ac.alt_baro]);
+                    if (history.length > 300) history.shift();
+                }
+            }
+
             aircraftCache[hex] = {
                 ...existing,
                 hex: hex,
@@ -724,16 +813,16 @@
                 baro_rate: ac.baro_rate ?? existing.baro_rate,
                 squawk: ac.squawk || existing.squawk || '',
                 category: ac.category || existing.category || '',
-                seen_pos: ac.seen_pos ?? 0,
                 dbFlags: ac.dbFlags ?? existing.dbFlags,
                 lastSeen: now,
-                category_type: null // Will be set below
+                history: history,
+                category_type: null
             };
 
             aircraftCache[hex].category_type = classifyAircraft(aircraftCache[hex]);
         });
 
-        // Remove aircraft not seen for 5 minutes (but keep more than current view)
+        // Remove stale aircraft (5 minutes)
         const staleTime = now - 300000;
         Object.keys(aircraftCache).forEach(hex => {
             if (aircraftCache[hex].lastSeen < staleTime) {
@@ -774,7 +863,6 @@
         Object.values(aircraftCache).forEach(ac => {
             if (ac.lat === undefined || ac.lon === undefined) return;
 
-            // Check if in current viewport (with padding)
             const inView = bounds.pad(0.2).contains([ac.lat, ac.lon]);
 
             if (settings.filter !== 'all' && ac.category_type !== settings.filter) {
@@ -786,7 +874,6 @@
             }
 
             if (!inView) {
-                // Keep marker but don't count as visible
                 if (markers[ac.hex]) {
                     map.removeLayer(markers[ac.hex]);
                     delete markers[ac.hex];
@@ -843,7 +930,7 @@
             labelHtml = `<div class="aircraft-label" style="color:${isSelected ? '#00ffff' : color}">${labelText}</div>`;
         }
 
-        const strokeColor = settings.dayMode ? '#333' : '#000';
+        const strokeColor = settings.dayMode ? '#fff' : '#000';
         const svg = `<svg viewBox="0 0 36 36" width="${size}" height="${size}" style="transform:rotate(${rotation}deg)">
             <path fill="${color}" stroke="${strokeColor}" stroke-width="0.5" d="M18 3 L20 14 L32 18 L20 20 L20 30 L24 33 L24 34 L18 32 L12 34 L12 33 L16 30 L16 20 L4 18 L16 14 Z"/>
         </svg>`;
@@ -861,7 +948,7 @@
         return ac.hex === selectedHex ? 50000 : alt;
     }
 
-    // ============ TRAIL LOADING (from globe.airplanes.live) ============
+    // ============ TRAIL LOADING WITH FALLBACK ============
     async function loadTrail(hex) {
         const trailStatus = document.getElementById('trailStatus');
         trailStatus.textContent = 'Loading trail...';
@@ -871,51 +958,60 @@
             trailLine = null;
         }
 
+        const ac = aircraftCache[hex];
+        if (!ac) return;
+
+        // Source 1: Globe.airplanes.live trace files (best - full history)
         try {
-            // Use the trace endpoint format from globe.airplanes.live
-            // XX = last 2 characters of hex
-            const hexSuffix = hex.slice(-2).toUpperCase();
-            const traceUrl = `${CONFIG.globeUrl}/data/traces/${hexSuffix}/trace_recent_${hex}.json`;
+            const hexSuffix = hex.slice(-2).toLowerCase();
+            const traceUrl = `${CONFIG.traceUrl}${hexSuffix}/trace_recent_${hex.toLowerCase()}.json`;
             
-            const resp = await fetch(traceUrl, { signal: AbortSignal.timeout(8000) });
+            const resp = await fetch(traceUrl, { signal: AbortSignal.timeout(5000) });
             
-            if (!resp.ok) {
-                throw new Error(`HTTP ${resp.status}`);
-            }
-            
-            const data = await resp.json();
-            
-            if (data && data.trace && data.trace.length > 1) {
-                // trace format: [seconds_offset, lat, lon, alt, gs, track, flags, vrate, details]
-                const points = data.trace
-                    .filter(p => p[1] !== null && p[2] !== null)
-                    .map(p => [p[1], p[2]]);
+            if (resp.ok) {
+                const data = await resp.json();
                 
-                if (points.length > 1) {
-                    const ac = aircraftCache[hex];
-                    const color = getAltitudeColor(ac?.alt_baro);
+                if (data && data.trace && data.trace.length > 1) {
+                    const points = data.trace
+                        .filter(p => p[1] !== null && p[2] !== null)
+                        .map(p => [p[1], p[2]]);
                     
-                    trailLine = L.polyline(points, {
-                        color: color,
-                        weight: 3,
-                        opacity: 0.85
-                    }).addTo(map);
-                    
-                    trailStatus.textContent = `Trail: ${points.length} points`;
-                } else {
-                    trailStatus.textContent = 'Insufficient trail data';
+                    if (points.length > 1) {
+                        const color = getAltitudeColor(ac.alt_baro);
+                        trailLine = L.polyline(points, {
+                            color: color,
+                            weight: 3,
+                            opacity: 0.85
+                        }).addTo(map);
+                        
+                        trailStatus.textContent = `Trail: ${points.length} pts (globe)`;
+                        return;
+                    }
                 }
-            } else {
-                trailStatus.textContent = 'No trail data available';
             }
         } catch (err) {
-            console.error('Trail load failed:', err);
-            trailStatus.textContent = 'Trail unavailable';
+            console.log('Globe trace failed:', err.message);
+        }
+
+        // Fallback: Local position history (built from live updates)
+        if (ac.history && ac.history.length > 1) {
+            const points = ac.history.map(p => [p[0], p[1]]);
+            const color = getAltitudeColor(ac.alt_baro);
+            
+            trailLine = L.polyline(points, {
+                color: color,
+                weight: 3,
+                opacity: 0.85
+            }).addTo(map);
+            
+            trailStatus.textContent = `Trail: ${points.length} pts (local)`;
+        } else {
+            trailStatus.textContent = 'Trail: Building...';
         }
     }
 
-    // ============ AIRCRAFT PHOTO LOADING ============
-    async function loadAircraftPhoto(hex, registration) {
+    // ============ PHOTO LOADING WITH FALLBACK CHAIN ============
+    async function loadAircraftPhoto(hex, registration, type) {
         const photoDiv = document.getElementById('aircraftPhoto');
         
         // Check cache first
@@ -926,31 +1022,88 @@
 
         photoDiv.innerHTML = '<div class="no-photo">Loading photo...</div>';
 
+        // Source 1: Planespotters.net (best quality - 1M+ photos)
         try {
-            // Try airport-data.com API
-            const url = `https://airport-data.com/api/ac_thumb.json?m=${hex}&n=1`;
-            const resp = await fetch(url, { signal: AbortSignal.timeout(5000) });
-            const data = await resp.json();
+            const psUrl = `${CONFIG.photoSources.planespotters}${hex}`;
+            const resp = await fetch(psUrl, { signal: AbortSignal.timeout(5000) });
             
-            if (data.status === 200 && data.count > 0 && data.data && data.data[0]) {
-                const photo = data.data[0];
-                photoCache[hex] = photo;
-                displayPhoto(photo);
-            } else {
-                photoDiv.innerHTML = '<div class="no-photo">No photo available</div>';
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.photos && data.photos.length > 0) {
+                    const photo = data.photos[0];
+                    const result = {
+                        url: photo.thumbnail_large?.src || photo.thumbnail?.src,
+                        credit: photo.photographer,
+                        source: 'Planespotters.net'
+                    };
+                    if (result.url) {
+                        photoCache[hex] = result;
+                        displayPhoto(result);
+                        return;
+                    }
+                }
             }
         } catch (err) {
-            console.log('Photo load failed:', err);
+            console.log('Planespotters failed:', err.message);
+        }
+
+        // Source 2: Airport-Data.com (700k+ photos)
+        try {
+            const adUrl = `${CONFIG.photoSources.airportData}?m=${hex}&n=1`;
+            const resp = await fetch(adUrl, { signal: AbortSignal.timeout(5000) });
+            
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.status === 200 && data.count > 0 && data.data?.[0]) {
+                    const photo = data.data[0];
+                    if (photo.image) {
+                        const result = {
+                            url: photo.image,
+                            credit: photo.photographer,
+                            source: 'Airport-Data.com'
+                        };
+                        photoCache[hex] = result;
+                        displayPhoto(result);
+                        return;
+                    }
+                }
+            }
+        } catch (err) {
+            console.log('Airport-data failed:', err.message);
+        }
+
+        // Fallback: Aircraft type silhouette
+        if (type) {
+            const silUrl = `${CONFIG.photoSources.silhouette}${type.toUpperCase()}.png`;
+            displayPhoto({
+                url: silUrl,
+                credit: null,
+                source: 'Silhouette',
+                isSilhouette: true
+            });
+        } else {
             photoDiv.innerHTML = '<div class="no-photo">No photo available</div>';
         }
     }
 
     function displayPhoto(photo) {
         const photoDiv = document.getElementById('aircraftPhoto');
-        const credit = photo.photographer || 'Unknown';
+        
+        const style = photo.isSilhouette ? 
+            'object-fit: contain; background: #1a1a2e; padding: 20px;' : 
+            'object-fit: cover;';
+        
+        const creditHtml = photo.credit ? 
+            `<div class="photo-credit">&copy; ${photo.credit}</div>` : '';
+        
+        const sourceHtml = photo.source ? 
+            `<div class="photo-source">${photo.source}</div>` : '';
+        
         photoDiv.innerHTML = `
-            <img src="${photo.image}" alt="Aircraft" onerror="this.parentElement.innerHTML='<div class=\\'no-photo\\'>Photo unavailable</div>'">
-            <div class="photo-credit">${credit}</div>
+            <img src="${photo.url}" alt="Aircraft" style="${style}"
+                 onerror="this.parentElement.innerHTML='<div class=\\'no-photo\\'>Photo unavailable</div>'">
+            ${creditHtml}
+            ${sourceHtml}
         `;
     }
 
@@ -964,8 +1117,7 @@
             return;
         }
 
-        // Try to load airline banner
-        const bannerUrl = `${CONFIG.globeUrl}/airline_banners/${airlineCode}.png`;
+        const bannerUrl = `${CONFIG.airlineBannerUrl}${airlineCode}.png`;
         const img = bannerDiv.querySelector('img');
         
         img.onload = () => { bannerDiv.style.display = 'flex'; };
@@ -1005,8 +1157,8 @@
         document.getElementById('infoPanel').classList.add('show');
         document.getElementById('settingsPanel').classList.remove('show');
         
-        // Load photo, banner, and trail
-        loadAircraftPhoto(hex, ac.r);
+        // Load enrichment data with fallback chains
+        loadAircraftPhoto(hex, ac.r, ac.t);
         loadAirlineBanner(ac.flight);
         loadTrail(hex);
         
@@ -1089,9 +1241,9 @@
 
         if (settings.dayMode) {
             map.removeLayer(darkTileLayer);
-            lightTileLayer.addTo(map);
+            satelliteTileLayer.addTo(map);
         } else {
-            map.removeLayer(lightTileLayer);
+            map.removeLayer(satelliteTileLayer);
             darkTileLayer.addTo(map);
         }
 
