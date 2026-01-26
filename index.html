@@ -1014,12 +1014,16 @@
         return ac.hex === selectedHex ? 50000 : alt;
     }
 
-    // ============ TRAIL LOADING ============
+    // ============ TRAIL LOADING (FULL FLIGHT FROM ORIGIN) ============
     async function loadTrail(hex) {
         const trailStatus = document.getElementById('trailStatus');
-        trailStatus.textContent = 'Loading trail...';
+        trailStatus.textContent = 'Loading full trail...';
         
         if (trailLine) {
+            // Clean up origin marker if it exists
+            if (trailLine._originMarker) {
+                map.removeLayer(trailLine._originMarker);
+            }
             map.removeLayer(trailLine);
             trailLine = null;
         }
@@ -1027,45 +1031,71 @@
         const ac = aircraftCache[hex];
         if (!ac) return;
 
-        // Try globe traces via proxy
-        try {
-            const hexSuffix = hex.slice(-2).toLowerCase();
-            const traceUrl = `${CONFIG.traceUrl}${hexSuffix}/trace_recent_${hex.toLowerCase()}.json`;
+        const hexSuffix = hex.slice(-2).toLowerCase();
+        const hexLower = hex.toLowerCase();
+        
+        // Try trace endpoints in order: full (complete flight) -> recent -> local
+        const traceEndpoints = [
+            { url: `${CONFIG.traceUrl}${hexSuffix}/trace_full_${hexLower}.json`, name: 'full' },
+            { url: `${CONFIG.traceUrl}${hexSuffix}/trace_recent_${hexLower}.json`, name: 'recent' }
+        ];
+
+        for (const endpoint of traceEndpoints) {
+            trailStatus.textContent = `Loading ${endpoint.name} trail...`;
             
-            // Try each proxy
+            // Try each proxy for this endpoint
             for (let i = 0; i < CONFIG.corsProxies.length; i++) {
                 const proxyFn = CONFIG.corsProxies[(currentProxyIndex + i) % CONFIG.corsProxies.length];
-                const proxiedUrl = proxyFn(traceUrl);
+                const proxiedUrl = proxyFn(endpoint.url);
                 
                 try {
-                    const resp = await fetch(proxiedUrl, { signal: AbortSignal.timeout(8000) });
+                    const resp = await fetch(proxiedUrl, { signal: AbortSignal.timeout(15000) });
                     if (!resp.ok) continue;
                     
                     const data = await resp.json();
                     
                     if (data && data.trace && data.trace.length > 1) {
-                        const points = data.trace
+                        // Filter to current flight only (from most recent takeoff)
+                        const currentFlightTrace = filterToCurrentFlight(data.trace);
+                        
+                        const points = currentFlightTrace
                             .filter(p => p[1] !== null && p[2] !== null)
                             .map(p => [p[1], p[2]]);
                         
                         if (points.length > 1) {
                             const color = getAltitudeColor(ac.alt_baro);
+                            
+                            // Draw the trail
                             trailLine = L.polyline(points, {
                                 color: color,
                                 weight: 3,
                                 opacity: 0.85
                             }).addTo(map);
                             
-                            trailStatus.textContent = `Trail: ${points.length} pts (globe)`;
+                            // Add origin marker (takeoff point)
+                            const originPoint = points[0];
+                            const originMarker = L.circleMarker(originPoint, {
+                                radius: 6,
+                                color: '#fff',
+                                fillColor: '#00ff00',
+                                fillOpacity: 1,
+                                weight: 2
+                            }).addTo(map);
+                            originMarker.bindTooltip('Takeoff', { permanent: false, direction: 'top' });
+                            
+                            // Store origin marker for cleanup
+                            trailLine._originMarker = originMarker;
+                            
+                            trailStatus.textContent = `Trail: ${points.length} pts (${endpoint.name})`;
+                            console.log(`Loaded ${endpoint.name} trail with ${points.length} points (filtered from ${data.trace.length})`);
                             return;
                         }
                     }
                 } catch (e) {
+                    console.log(`Trail proxy failed: ${e.message}`);
                     continue;
                 }
             }
-        } catch (err) {
-            console.log('Globe trace failed:', err.message);
         }
 
         // Fallback: Local history
@@ -1085,21 +1115,140 @@
         }
     }
 
-    // ============ PHOTO LOADING (img tag - no CORS) ============
-    function loadAircraftPhoto(hex, registration, type) {
+    // Filter trace data to only include the current flight (from most recent takeoff)
+    function filterToCurrentFlight(trace) {
+        if (!trace || trace.length < 2) return trace;
+        
+        // Trace format: [seconds_offset, lat, lon, altitude, ground_speed, track, flags, vert_rate, ...]
+        // Find the last point where aircraft was on ground (takeoff point)
+        // Work backwards to find the start of the current flight
+        
+        let takeoffIndex = 0;
+        
+        for (let i = trace.length - 1; i >= 0; i--) {
+            const point = trace[i];
+            const altitude = point[3]; // altitude in feet (can be "ground" string or number)
+            const groundSpeed = point[4]; // ground speed in knots
+            
+            // Detect ground/takeoff conditions:
+            // - altitude is "ground" or very low (< 500 ft)
+            // - AND ground speed is low (< 50 knots) indicating taxiing/stopped
+            const isOnGround = (
+                altitude === 'ground' || 
+                altitude === null ||
+                (typeof altitude === 'number' && altitude < 500 && groundSpeed < 50)
+            );
+            
+            if (isOnGround) {
+                // Found a ground point - this could be takeoff
+                // Look for where the aircraft started climbing after this
+                for (let j = i; j < trace.length; j++) {
+                    const nextPoint = trace[j];
+                    const nextAlt = nextPoint[3];
+                    const nextSpeed = nextPoint[4];
+                    
+                    // Find first point where aircraft is clearly airborne
+                    if (typeof nextAlt === 'number' && nextAlt > 500 && nextSpeed > 80) {
+                        // Start the trail a few points before liftoff to show takeoff roll
+                        takeoffIndex = Math.max(0, i - 2);
+                        break;
+                    }
+                }
+                break;
+            }
+            
+            // Also check for large time gaps (> 30 min) which indicate separate flights
+            if (i > 0) {
+                const currentTime = trace[i][0];
+                const prevTime = trace[i-1][0];
+                if (currentTime - prevTime > 1800) { // 30 minute gap
+                    takeoffIndex = i;
+                    break;
+                }
+            }
+        }
+        
+        // Return only the current flight portion
+        return trace.slice(takeoffIndex);
+    }
+
+    // ============ PHOTO LOADING WITH CORS PROXY ============
+    const photoCache = {};
+    
+    async function loadAircraftPhoto(hex, registration, type) {
         const photoDiv = document.getElementById('aircraftPhoto');
         
-        if (type) {
-            const silUrl = `${CONFIG.silhouetteUrl}${type.toUpperCase()}.png`;
-            photoDiv.innerHTML = `
-                <img src="${silUrl}" alt="${type}" 
-                     style="object-fit: contain; background: #1a1a2e; padding: 20px;"
-                     onerror="this.parentElement.innerHTML='<div class=\\'no-photo\\'>No image</div>'">
-                <div class="photo-source">Silhouette</div>
-            `;
-        } else {
-            photoDiv.innerHTML = '<div class="no-photo">No type data</div>';
+        // Check cache first
+        if (photoCache[hex]) {
+            displayPhoto(photoCache[hex]);
+            return;
         }
+
+        photoDiv.innerHTML = '<div class="no-photo">Loading photo...</div>';
+
+        // Try Planespotters.net via CORS proxy
+        const planespottersUrl = `https://api.planespotters.net/pub/photos/hex/${hex}`;
+        
+        for (let i = 0; i < CONFIG.corsProxies.length; i++) {
+            const proxyFn = CONFIG.corsProxies[(currentProxyIndex + i) % CONFIG.corsProxies.length];
+            const proxiedUrl = proxyFn(planespottersUrl);
+            
+            try {
+                const resp = await fetch(proxiedUrl, { signal: AbortSignal.timeout(8000) });
+                
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.photos && data.photos.length > 0) {
+                        const photo = data.photos[0];
+                        const result = {
+                            url: photo.thumbnail_large?.src || photo.thumbnail?.src,
+                            credit: photo.photographer,
+                            source: 'Planespotters.net'
+                        };
+                        if (result.url) {
+                            photoCache[hex] = result;
+                            displayPhoto(result);
+                            return;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log(`Photo proxy ${i} failed:`, e.message);
+            }
+        }
+
+        // Fallback: Silhouette (img tag, no CORS issues)
+        if (type) {
+            displayPhoto({
+                url: `${CONFIG.silhouetteUrl}${type.toUpperCase()}.png`,
+                credit: null,
+                source: 'Silhouette',
+                isSilhouette: true
+            });
+        } else {
+            photoDiv.innerHTML = '<div class="no-photo">No photo available</div>';
+        }
+    }
+
+    function displayPhoto(photo) {
+        const photoDiv = document.getElementById('aircraftPhoto');
+        
+        const style = photo.isSilhouette ? 
+            'object-fit: contain; background: #1a1a2e; padding: 20px;' : 
+            'object-fit: cover;';
+        
+        const creditHtml = photo.credit ? 
+            `<div class="photo-credit">&copy; ${photo.credit}</div>` : '';
+        
+        const sourceHtml = photo.source ? 
+            `<div class="photo-source">${photo.source}</div>` : '';
+        
+        photoDiv.innerHTML = `
+            <img src="${photo.url}" alt="Aircraft" style="${style}"
+                 onerror="this.parentElement.innerHTML='<div class=\\'no-photo\\'>Photo unavailable</div>'">
+            ${creditHtml}
+            ${sourceHtml}
+        `;
     }
 
     // ============ AIRLINE BANNER (img tag - no CORS) ============
@@ -1123,6 +1272,10 @@
     // ============ SELECTION ============
     function selectAircraft(hex) {
         if (trailLine) {
+            // Clean up origin marker if it exists
+            if (trailLine._originMarker) {
+                map.removeLayer(trailLine._originMarker);
+            }
             map.removeLayer(trailLine);
             trailLine = null;
         }
@@ -1162,6 +1315,10 @@
 
     function deselectAircraft() {
         if (trailLine) {
+            // Clean up origin marker if it exists
+            if (trailLine._originMarker) {
+                map.removeLayer(trailLine._originMarker);
+            }
             map.removeLayer(trailLine);
             trailLine = null;
         }
