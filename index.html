@@ -592,6 +592,10 @@
     let fetchInProgress = false;
     let currentProxyIndex = 0;
     let lastSuccessfulMethod = null;
+    
+    // Animation system
+    let animationRunning = false;
+    const aircraftAnimation = {}; // Store animation state per aircraft
 
     const settings = {
         showLabels: true,
@@ -963,6 +967,7 @@
                 if (markers[ac.hex]) {
                     map.removeLayer(markers[ac.hex]);
                     delete markers[ac.hex];
+                    delete aircraftAnimation[ac.hex];
                 }
                 return;
             }
@@ -971,6 +976,7 @@
                 if (markers[ac.hex]) {
                     map.removeLayer(markers[ac.hex]);
                     delete markers[ac.hex];
+                    delete aircraftAnimation[ac.hex];
                 }
                 return;
             }
@@ -1003,9 +1009,78 @@
         const marker = markers[ac.hex];
         if (!marker) return;
 
-        marker.setLatLng([ac.lat, ac.lon]);
+        const currentPos = marker.getLatLng();
+        const distance = Math.abs(currentPos.lat - ac.lat) + Math.abs(currentPos.lng - ac.lon);
+        
+        // Skip animation if barely moved (reduces CPU for parked aircraft)
+        if (distance < 0.00001) {
+            marker.setIcon(createIcon(ac));
+            marker.setZIndexOffset(getZIndex(ac));
+            return;
+        }
+
+        // Set up animation target
+        aircraftAnimation[ac.hex] = {
+            startLat: currentPos.lat,
+            startLon: currentPos.lng,
+            targetLat: ac.lat,
+            targetLon: ac.lon,
+            startTime: performance.now(),
+            duration: CONFIG.refreshInterval * 0.95 // Animate over 95% of refresh interval
+        };
+
         marker.setIcon(createIcon(ac));
         marker.setZIndexOffset(getZIndex(ac));
+        
+        // Start animation loop if not running
+        if (!animationRunning) {
+            animationRunning = true;
+            requestAnimationFrame(animateAircraft);
+        }
+    }
+
+    function animateAircraft(timestamp) {
+        let hasActiveAnimations = false;
+
+        Object.entries(aircraftAnimation).forEach(([hex, anim]) => {
+            const marker = markers[hex];
+            if (!marker) {
+                delete aircraftAnimation[hex];
+                return;
+            }
+
+            const elapsed = timestamp - anim.startTime;
+            const progress = Math.min(elapsed / anim.duration, 1);
+            
+            if (progress < 1) {
+                hasActiveAnimations = true;
+                
+                // Linear interpolation for constant speed appearance
+                const lat = anim.startLat + (anim.targetLat - anim.startLat) * progress;
+                const lon = anim.startLon + (anim.targetLon - anim.startLon) * progress;
+                
+                marker.setLatLng([lat, lon]);
+                
+                // Update trail endpoint for selected aircraft
+                if (hex === selectedHex && trailLine) {
+                    const latlngs = trailLine.getLatLngs();
+                    if (latlngs.length > 0) {
+                        latlngs[latlngs.length - 1] = L.latLng(lat, lon);
+                        trailLine.setLatLngs(latlngs);
+                    }
+                }
+            } else {
+                // Animation complete - set final position
+                marker.setLatLng([anim.targetLat, anim.targetLon]);
+                delete aircraftAnimation[hex];
+            }
+        });
+
+        if (hasActiveAnimations) {
+            requestAnimationFrame(animateAircraft);
+        } else {
+            animationRunning = false;
+        }
     }
 
     function createIcon(ac) {
