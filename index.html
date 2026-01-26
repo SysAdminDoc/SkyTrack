@@ -42,19 +42,21 @@
             z-index: 1; 
         }
 
-        /* Aircraft markers */
-        .aircraft-marker {
-            transition: none;
+        /* Hide attribution, move zoom to bottom right */
+        .leaflet-control-attribution { display: none !important; }
+        .leaflet-top.leaflet-left { top: auto !important; bottom: 30px !important; left: auto !important; right: 10px !important; }
+        .leaflet-control-zoom { margin-bottom: 0 !important; }
+        .leaflet-control-zoom a {
+            background: var(--bg-panel) !important;
+            color: var(--text) !important;
+            border: 1px solid var(--border) !important;
         }
-        .aircraft-marker.selected {
-            z-index: 10000 !important;
-        }
-        .aircraft-marker svg {
-            filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.5));
-        }
-        .aircraft-marker.selected svg {
-            filter: drop-shadow(0 0 6px var(--selected)) drop-shadow(0 0 12px var(--selected));
-        }
+        .leaflet-control-zoom a:hover { background: rgba(128,128,128,0.3) !important; }
+
+        .aircraft-marker { transition: none; }
+        .aircraft-marker.selected { z-index: 10000 !important; }
+        .aircraft-marker svg { filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.5)); }
+        .aircraft-marker.selected svg { filter: drop-shadow(0 0 6px var(--selected)) drop-shadow(0 0 12px var(--selected)); }
         .aircraft-label {
             position: absolute;
             top: 100%;
@@ -68,12 +70,8 @@
             background: rgba(0,0,0,0.6);
             pointer-events: none;
         }
-        body.day-mode .aircraft-label {
-            background: rgba(255,255,255,0.8);
-            color: #000;
-        }
+        body.day-mode .aircraft-label { background: rgba(255,255,255,0.85); color: #000; }
 
-        /* Header */
         .header {
             position: absolute;
             top: 10px;
@@ -98,11 +96,7 @@
             font-size: 18px;
             color: var(--accent);
         }
-        .logo svg {
-            width: 26px;
-            height: 26px;
-            fill: var(--accent);
-        }
+        .logo svg { width: 26px; height: 26px; fill: var(--accent); }
 
         .search-box {
             flex: 1;
@@ -115,12 +109,8 @@
             font-size: 13px;
             outline: none;
         }
-        .search-box:focus {
-            border-color: var(--accent);
-        }
-        .search-box::placeholder {
-            color: var(--text-muted);
-        }
+        .search-box:focus { border-color: var(--accent); }
+        .search-box::placeholder { color: var(--text-muted); }
 
         .stats {
             display: flex;
@@ -128,10 +118,7 @@
             font-size: 12px;
             color: var(--text-dim);
         }
-        .stat-value {
-            font-weight: 700;
-            color: var(--accent);
-        }
+        .stat-value { font-weight: 700; color: var(--accent); }
 
         .status-badge {
             padding: 4px 10px;
@@ -143,10 +130,7 @@
         .status-badge.loading { background: #f59e0b; color: #000; }
         .status-badge.error { background: #ef4444; color: #fff; }
 
-        .btn-group {
-            display: flex;
-            gap: 4px;
-        }
+        .btn-group { display: flex; gap: 4px; }
 
         .header-btn {
             width: 36px;
@@ -160,21 +144,10 @@
             align-items: center;
             justify-content: center;
         }
-        .header-btn:hover {
-            background: rgba(128,128,128,0.25);
-            color: var(--text);
-        }
-        .header-btn.active {
-            background: var(--accent);
-            color: #000;
-            border-color: var(--accent);
-        }
-        .header-btn svg {
-            width: 18px;
-            height: 18px;
-        }
+        .header-btn:hover { background: rgba(128,128,128,0.25); color: var(--text); }
+        .header-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+        .header-btn svg { width: 18px; height: 18px; }
 
-        /* Filter Bar */
         .filter-bar {
             position: absolute;
             top: 70px;
@@ -199,26 +172,15 @@
             cursor: pointer;
             transition: all 0.15s;
         }
-        .filter-btn:hover {
-            background: rgba(128,128,128,0.25);
-            color: var(--text);
-        }
-        .filter-btn.active {
-            background: var(--accent);
-            color: #000;
-            border-color: var(--accent);
-        }
-        .filter-btn .count {
-            margin-left: 4px;
-            opacity: 0.7;
-        }
+        .filter-btn:hover { background: rgba(128,128,128,0.25); color: var(--text); }
+        .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+        .filter-btn .count { margin-left: 4px; opacity: 0.7; }
 
-        /* Info Panel */
         .info-panel {
             position: absolute;
             top: 70px;
-            right: 10px;
-            width: 320px;
+            left: 10px;
+            width: 280px;
             background: var(--bg-panel);
             border: 1px solid var(--border);
             border-radius: 8px;
@@ -229,35 +191,74 @@
         }
         .info-panel.show { display: block; }
 
+        .aircraft-photo {
+            width: 100%;
+            height: 140px;
+            background: #111;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            position: relative;
+        }
+        .aircraft-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .aircraft-photo .no-photo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+        .photo-credit {
+            position: absolute;
+            bottom: 4px;
+            right: 6px;
+            font-size: 9px;
+            color: rgba(255,255,255,0.7);
+            background: rgba(0,0,0,0.5);
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .airline-banner {
+            width: 100%;
+            height: 50px;
+            background: #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid var(--border);
+        }
+        .airline-banner img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
         .info-header {
-            padding: 16px;
+            padding: 12px 16px;
             border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
         }
-        .info-callsign {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--selected);
-        }
-        .info-hex {
-            font-size: 12px;
-            color: var(--text-muted);
-            font-family: monospace;
-        }
+        .info-callsign { font-size: 22px; font-weight: 700; color: var(--selected); }
+        .info-hex { font-size: 11px; color: var(--text-muted); font-family: monospace; }
         .info-close {
             background: none;
             border: none;
             color: var(--text-muted);
             cursor: pointer;
-            font-size: 24px;
+            font-size: 22px;
             line-height: 1;
         }
         .info-close:hover { color: var(--text); }
 
         .info-section {
-            padding: 12px 16px;
+            padding: 10px 16px;
             border-bottom: 1px solid var(--border);
         }
         .info-section:last-child { border-bottom: none; }
@@ -265,8 +266,8 @@
         .info-row {
             display: flex;
             justify-content: space-between;
-            padding: 6px 0;
-            font-size: 13px;
+            padding: 4px 0;
+            font-size: 12px;
         }
         .info-label { color: var(--text-muted); }
         .info-value { font-weight: 500; text-align: right; }
@@ -274,40 +275,36 @@
         .info-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            gap: 8px;
         }
         .info-stat {
             background: rgba(128,128,128,0.1);
-            padding: 10px;
+            padding: 8px;
             border-radius: 6px;
             text-align: center;
         }
-        .info-stat-value {
-            font-size: 18px;
-            font-weight: 700;
-        }
-        .info-stat-label {
-            font-size: 10px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin-top: 2px;
-        }
+        .info-stat-value { font-size: 16px; font-weight: 700; }
+        .info-stat-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
 
-        .squawk-code {
-            font-family: monospace;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 3px;
-        }
+        .squawk-code { font-family: monospace; font-weight: 700; padding: 2px 6px; border-radius: 3px; }
         .squawk-normal { background: rgba(128,128,128,0.2); }
         .squawk-7500, .squawk-7600, .squawk-7700 { background: #ef4444; color: #fff; }
 
-        /* Settings Panel */
+        .trail-status {
+            padding: 6px 10px;
+            background: rgba(128,128,128,0.1);
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--text-dim);
+            text-align: center;
+            margin-top: 6px;
+        }
+
         .settings-panel {
             position: absolute;
             top: 70px;
             right: 10px;
-            width: 280px;
+            width: 260px;
             background: var(--bg-panel);
             border: 1px solid var(--border);
             border-radius: 8px;
@@ -352,7 +349,6 @@
         .toggle.on { background: var(--accent); }
         .toggle.on::after { transform: translateX(20px); }
 
-        /* Legend */
         .legend {
             position: absolute;
             bottom: 30px;
@@ -360,47 +356,15 @@
             background: var(--bg-panel);
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 12px;
+            padding: 10px;
             z-index: 900;
-            font-size: 11px;
+            font-size: 10px;
         }
-        .legend-title {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--text-dim);
-        }
-        .legend-items {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .legend-color {
-            width: 20px;
-            height: 12px;
-            border-radius: 2px;
-        }
+        .legend-title { font-weight: 600; margin-bottom: 6px; color: var(--text-dim); }
+        .legend-items { display: flex; flex-direction: column; gap: 3px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 18px; height: 10px; border-radius: 2px; }
 
-        /* Leaflet overrides */
-        .leaflet-control-zoom { border: none !important; }
-        .leaflet-control-zoom a {
-            background: var(--bg-panel) !important;
-            color: var(--text) !important;
-            border: 1px solid var(--border) !important;
-        }
-        .leaflet-control-zoom a:hover {
-            background: rgba(128,128,128,0.2) !important;
-        }
-        .leaflet-control-attribution {
-            background: var(--bg-panel) !important;
-            color: var(--text-muted) !important;
-        }
-
-        /* Loading */
         .loading-overlay {
             position: absolute;
             inset: 0;
@@ -421,12 +385,8 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text {
-            margin-top: 16px;
-            color: var(--text-dim);
-        }
+        .loading-text { margin-top: 16px; color: var(--text-dim); }
 
-        /* Toast */
         .toast {
             position: fixed;
             bottom: 20px;
@@ -440,14 +400,11 @@
             opacity: 0;
             transition: all 0.3s;
         }
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
         @media (max-width: 768px) {
             .stats { display: none; }
-            .info-panel, .settings-panel { left: 10px; right: 10px; width: auto; }
+            .info-panel, .settings-panel { width: calc(100% - 20px); }
             .legend { display: none; }
             .filter-bar { flex-wrap: wrap; right: 10px; }
         }
@@ -470,7 +427,7 @@
         <input type="text" class="search-box" id="searchInput" placeholder="Search callsign, hex, type...">
 
         <div class="stats">
-            <span>Aircraft: <span class="stat-value" id="aircraftCount">0</span></span>
+            <span>Tracking: <span class="stat-value" id="aircraftCount">0</span></span>
             <span>Visible: <span class="stat-value" id="visibleCount">0</span></span>
         </div>
 
@@ -505,6 +462,12 @@
     </div>
 
     <div class="info-panel" id="infoPanel">
+        <div class="aircraft-photo" id="aircraftPhoto">
+            <div class="no-photo">Loading photo...</div>
+        </div>
+        <div class="airline-banner" id="airlineBanner" style="display:none;">
+            <img src="" alt="Airline">
+        </div>
         <div class="info-header">
             <div>
                 <div class="info-callsign" id="infoCallsign">---</div>
@@ -517,11 +480,11 @@
             <div class="info-grid">
                 <div class="info-stat">
                     <div class="info-stat-value" id="infoAlt">---</div>
-                    <div class="info-stat-label">Altitude (ft)</div>
+                    <div class="info-stat-label">Altitude</div>
                 </div>
                 <div class="info-stat">
                     <div class="info-stat-value" id="infoSpeed">---</div>
-                    <div class="info-stat-label">Speed (kts)</div>
+                    <div class="info-stat-label">Speed</div>
                 </div>
                 <div class="info-stat">
                     <div class="info-stat-value" id="infoTrack">---</div>
@@ -529,7 +492,7 @@
                 </div>
                 <div class="info-stat">
                     <div class="info-stat-value" id="infoVRate">---</div>
-                    <div class="info-stat-label">Vert Rate</div>
+                    <div class="info-stat-label">V/S</div>
                 </div>
             </div>
         </div>
@@ -551,10 +514,7 @@
                 <span class="info-label">Squawk</span>
                 <span class="info-value"><span class="squawk-code squawk-normal" id="infoSquawk">----</span></span>
             </div>
-            <div class="info-row">
-                <span class="info-label">Position</span>
-                <span class="info-value" id="infoPos">---</span>
-            </div>
+            <div class="trail-status" id="trailStatus">Loading trail...</div>
         </div>
     </div>
 
@@ -563,10 +523,6 @@
         <div class="setting-row">
             <span class="setting-label">Show Labels</span>
             <div class="toggle on" id="toggleLabels"></div>
-        </div>
-        <div class="setting-row">
-            <span class="setting-label">Show Trails</span>
-            <div class="toggle on" id="toggleTrails"></div>
         </div>
         <div class="setting-row">
             <span class="setting-label">Day Mode</span>
@@ -581,12 +537,12 @@
     <div class="legend">
         <div class="legend-title">Altitude</div>
         <div class="legend-items">
-            <div class="legend-item"><div class="legend-color" style="background:#ff0000"></div>&gt; 40,000 ft</div>
-            <div class="legend-item"><div class="legend-color" style="background:#ff8000"></div>30-40,000 ft</div>
-            <div class="legend-item"><div class="legend-color" style="background:#f8f800"></div>20-30,000 ft</div>
-            <div class="legend-item"><div class="legend-color" style="background:#00c000"></div>10-20,000 ft</div>
-            <div class="legend-item"><div class="legend-color" style="background:#00c0c0"></div>5-10,000 ft</div>
-            <div class="legend-item"><div class="legend-color" style="background:#0080ff"></div>1-5,000 ft</div>
+            <div class="legend-item"><div class="legend-color" style="background:#ff0000"></div>&gt; 40k ft</div>
+            <div class="legend-item"><div class="legend-color" style="background:#ff8000"></div>30-40k</div>
+            <div class="legend-item"><div class="legend-color" style="background:#f8f800"></div>20-30k</div>
+            <div class="legend-item"><div class="legend-color" style="background:#00c000"></div>10-20k</div>
+            <div class="legend-item"><div class="legend-color" style="background:#00c0c0"></div>5-10k</div>
+            <div class="legend-item"><div class="legend-color" style="background:#0080ff"></div>&lt;5k</div>
             <div class="legend-item"><div class="legend-color" style="background:#808080"></div>Ground</div>
         </div>
     </div>
@@ -603,38 +559,36 @@
         center: [39.8, -98.5],
         zoom: 5,
         refreshInterval: 5000,
-        apiUrl: 'https://api.airplanes.live/v2'
+        apiUrl: 'https://api.airplanes.live/v2',
+        globeUrl: 'https://globe.airplanes.live'
     };
 
-    // State
+    // State - GLOBAL CACHE keeps all aircraft data
     let map;
     let darkTileLayer, lightTileLayer;
-    let aircraftData = {};
+    let aircraftCache = {}; // Global cache - persists across map movements
     let markers = {};
-    let trailLines = {};
+    let trailLine = null;
     let selectedHex = null;
     let radarLayer = null;
     let lastFetchTime = 0;
     let fetchInProgress = false;
-    let pendingFetch = false;
+    let photoCache = {}; // Cache aircraft photos
 
-    // Settings
     const settings = {
         showLabels: true,
-        showTrails: true,
         dayMode: false,
         showRadar: false,
         filter: 'all'
     };
 
-    // Aircraft categories - improved detection
-    const MILITARY_HEX_PREFIXES = ['AE', 'AF']; // US Military
+    // Aircraft categories
+    const MILITARY_HEX_PREFIXES = ['AE', 'AF'];
     const MILITARY_TYPES = ['F16', 'F15', 'F18', 'F22', 'F35', 'C17', 'C130', 'C5', 'KC135', 'KC10', 'KC46', 'E3', 'E6', 'E8', 'B52', 'B1', 'B2', 'A10', 'P8', 'P3', 'EP3', 'RC135', 'U2', 'RQ4', 'MQ9', 'V22', 'H60', 'UH60', 'MH60', 'HH60', 'CH47', 'AH64'];
     const CARGO_CALLSIGNS = ['FDX', 'UPS', 'GTI', 'ABX', 'ATN', 'CLX', 'BOX', 'MPH'];
     const CARGO_TYPES = ['B74F', 'B77F', 'B76F', 'A30F', 'A33F', 'MD11', 'B763'];
     const HELI_TYPES = ['EC35', 'EC45', 'EC55', 'EC30', 'A109', 'A139', 'A169', 'B06', 'B05', 'B07', 'B47', 'AS50', 'AS55', 'AS65', 'S76', 'S92', 'S70', 'S61', 'R22', 'R44', 'R66', 'MD52', 'MD60', 'H160', 'H175', 'H145', 'H135', 'H125', 'H225', 'H215', 'BK17', 'B412', 'B429', 'B407'];
 
-    // Altitude colors (tar1090 style)
     function getAltitudeColor(alt) {
         if (alt === 'ground' || alt === null || alt === undefined || alt <= 0) return '#808080';
         if (alt < 1000) return '#0040ff';
@@ -646,7 +600,6 @@
         return '#ff0000';
     }
 
-    // Aircraft classification
     function classifyAircraft(ac) {
         const hex = (ac.hex || '').toUpperCase();
         const type = (ac.t || '').toUpperCase();
@@ -654,35 +607,25 @@
         const alt = ac.alt_baro;
         const cat = ac.category || '';
 
-        // Ground check first
-        if (alt === 'ground' || alt === 0 || (ac.gs !== undefined && ac.gs < 30 && (!alt || alt < 500))) {
-            return 'ground';
-        }
-
-        // Military - check hex prefix (US military aircraft have AE/AF prefixes)
+        if (alt === 'ground' || alt === 0 || (ac.gs !== undefined && ac.gs < 30 && (!alt || alt < 500))) return 'ground';
         if (MILITARY_HEX_PREFIXES.some(p => hex.startsWith(p))) return 'military';
-        
-        // Military - check type
         if (MILITARY_TYPES.some(t => type.includes(t))) return 'military';
-        
-        // Military - check dbFlags (bit 0 = military in airplanes.live)
         if (ac.dbFlags && (ac.dbFlags & 1)) return 'military';
-
-        // Helicopter - check category first (A7 = Rotorcraft)
         if (cat === 'A7') return 'helicopter';
-        
-        // Helicopter - check type
         if (HELI_TYPES.some(t => type.startsWith(t) || type === t)) return 'helicopter';
-
-        // Cargo - check callsign prefix
         if (CARGO_CALLSIGNS.some(c => callsign.startsWith(c))) return 'cargo';
-        
-        // Cargo - check freighter types
         if (CARGO_TYPES.some(t => type.includes(t))) return 'cargo';
-        if (type.endsWith('F') && type.length === 4) return 'cargo'; // B77F, A33F, etc.
-
-        // Default commercial
+        if (type.endsWith('F') && type.length === 4) return 'cargo';
         return 'commercial';
+    }
+
+    // Get airline code from callsign (first 3 letters)
+    function getAirlineCode(callsign) {
+        if (!callsign || callsign.length < 3) return null;
+        const code = callsign.substring(0, 3).toUpperCase();
+        // Check if it looks like an airline code (letters only)
+        if (/^[A-Z]{3}$/.test(code)) return code;
+        return null;
     }
 
     // ============ INITIALIZATION ============
@@ -703,19 +646,11 @@
             preferCanvas: true
         });
 
-        darkTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OSM &copy; CARTO | Data: airplanes.live',
-            maxZoom: 18
-        });
-
-        lightTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OSM &copy; CARTO | Data: airplanes.live',
-            maxZoom: 18
-        });
+        darkTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 });
+        lightTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 });
 
         darkTileLayer.addTo(map);
 
-        // Heavy debounce on map move
         let moveTimeout;
         map.on('moveend', () => {
             clearTimeout(moveTimeout);
@@ -730,14 +665,9 @@
 
     // ============ DATA LOADING ============
     async function loadAircraft() {
-        // Strict rate limiting
         const now = Date.now();
-        if (now - lastFetchTime < 3000) {
-            return;
-        }
-        if (fetchInProgress) {
-            return;
-        }
+        if (now - lastFetchTime < 3000) return;
+        if (fetchInProgress) return;
 
         fetchInProgress = true;
         lastFetchTime = now;
@@ -761,10 +691,7 @@
                 processAircraftData(data.ac);
                 updateStatus('connected', 'Live');
                 document.getElementById('loading').classList.add('hidden');
-            } else {
-                throw new Error('No data');
             }
-
         } catch (err) {
             console.error('Load failed:', err);
             updateStatus('error', 'Error');
@@ -774,18 +701,16 @@
     }
 
     function processAircraftData(aircraft) {
-        const counts = { all: 0, commercial: 0, military: 0, cargo: 0, helicopter: 0, ground: 0 };
-        const currentHexes = new Set();
+        const now = Date.now();
 
         aircraft.forEach(ac => {
             if (!ac.hex) return;
             
             const hex = ac.hex.toUpperCase();
-            currentHexes.add(hex);
-            const existing = aircraftData[hex] || {};
+            const existing = aircraftCache[hex] || {};
 
-            // Merge data
-            aircraftData[hex] = {
+            // Update/merge into global cache
+            aircraftCache[hex] = {
                 ...existing,
                 hex: hex,
                 flight: ac.flight?.trim() || existing.flight || '',
@@ -800,45 +725,38 @@
                 squawk: ac.squawk || existing.squawk || '',
                 category: ac.category || existing.category || '',
                 seen_pos: ac.seen_pos ?? 0,
-                dbFlags: ac.dbFlags ?? existing.dbFlags
+                dbFlags: ac.dbFlags ?? existing.dbFlags,
+                lastSeen: now,
+                category_type: null // Will be set below
             };
 
-            // Store position history for trails
-            if (ac.lat !== undefined && ac.lon !== undefined) {
-                if (!aircraftData[hex].history) {
-                    aircraftData[hex].history = [];
-                }
-                const hist = aircraftData[hex].history;
-                const lastPos = hist[hist.length - 1];
-                if (!lastPos || lastPos[0] !== ac.lat || lastPos[1] !== ac.lon) {
-                    hist.push([ac.lat, ac.lon]);
-                    if (hist.length > 100) hist.shift();
-                }
-            }
-
-            // Classify and count
-            const category = classifyAircraft(aircraftData[hex]);
-            aircraftData[hex].category_type = category;
-            counts.all++;
-            if (counts[category] !== undefined) counts[category]++;
+            aircraftCache[hex].category_type = classifyAircraft(aircraftCache[hex]);
         });
 
-        // Remove stale aircraft
-        Object.keys(aircraftData).forEach(hex => {
-            if (!currentHexes.has(hex)) {
-                delete aircraftData[hex];
+        // Remove aircraft not seen for 5 minutes (but keep more than current view)
+        const staleTime = now - 300000;
+        Object.keys(aircraftCache).forEach(hex => {
+            if (aircraftCache[hex].lastSeen < staleTime) {
+                delete aircraftCache[hex];
                 if (markers[hex]) {
                     map.removeLayer(markers[hex]);
                     delete markers[hex];
                 }
-                if (trailLines[hex]) {
-                    map.removeLayer(trailLines[hex]);
-                    delete trailLines[hex];
-                }
             }
         });
 
-        // Update UI counts
+        updateCounts();
+        updateMarkers();
+    }
+
+    function updateCounts() {
+        const counts = { all: 0, commercial: 0, military: 0, cargo: 0, helicopter: 0, ground: 0 };
+        
+        Object.values(aircraftCache).forEach(ac => {
+            counts.all++;
+            if (counts[ac.category_type] !== undefined) counts[ac.category_type]++;
+        });
+
         document.getElementById('countAll').textContent = counts.all;
         document.getElementById('countComm').textContent = counts.commercial;
         document.getElementById('countMil').textContent = counts.military;
@@ -846,27 +764,32 @@
         document.getElementById('countHeli').textContent = counts.helicopter;
         document.getElementById('countGnd').textContent = counts.ground;
         document.getElementById('aircraftCount').textContent = counts.all;
-
-        updateMarkers();
     }
 
     // ============ MARKERS ============
     function updateMarkers() {
+        const bounds = map.getBounds();
         let visibleCount = 0;
 
-        Object.values(aircraftData).forEach(ac => {
+        Object.values(aircraftCache).forEach(ac => {
             if (ac.lat === undefined || ac.lon === undefined) return;
-            if (ac.seen_pos > 60) return;
 
-            // Apply filter
+            // Check if in current viewport (with padding)
+            const inView = bounds.pad(0.2).contains([ac.lat, ac.lon]);
+
             if (settings.filter !== 'all' && ac.category_type !== settings.filter) {
                 if (markers[ac.hex]) {
                     map.removeLayer(markers[ac.hex]);
                     delete markers[ac.hex];
                 }
-                if (trailLines[ac.hex] && ac.hex !== selectedHex) {
-                    map.removeLayer(trailLines[ac.hex]);
-                    delete trailLines[ac.hex];
+                return;
+            }
+
+            if (!inView) {
+                // Keep marker but don't count as visible
+                if (markers[ac.hex]) {
+                    map.removeLayer(markers[ac.hex]);
+                    delete markers[ac.hex];
                 }
                 return;
             }
@@ -877,11 +800,6 @@
                 updateMarker(ac);
             } else {
                 createMarker(ac);
-            }
-
-            // Update trail for selected aircraft
-            if (ac.hex === selectedHex && settings.showTrails) {
-                updateTrail(ac);
             }
         });
 
@@ -917,7 +835,7 @@
         const color = getAltitudeColor(ac.alt_baro);
         const rotation = ac.track || 0;
         const isSelected = ac.hex === selectedHex;
-        const size = isSelected ? 32 : 24;
+        const size = isSelected ? 30 : 22;
 
         let labelHtml = '';
         if (settings.showLabels && (ac.flight || ac.hex)) {
@@ -943,80 +861,163 @@
         return ac.hex === selectedHex ? 50000 : alt;
     }
 
-    // ============ TRAILS ============
-    function updateTrail(ac) {
-        if (!ac.history || ac.history.length < 2) return;
+    // ============ TRAIL LOADING (from globe.airplanes.live) ============
+    async function loadTrail(hex) {
+        const trailStatus = document.getElementById('trailStatus');
+        trailStatus.textContent = 'Loading trail...';
+        
+        if (trailLine) {
+            map.removeLayer(trailLine);
+            trailLine = null;
+        }
 
-        const color = getAltitudeColor(ac.alt_baro);
-
-        if (trailLines[ac.hex]) {
-            trailLines[ac.hex].setLatLngs(ac.history);
-            trailLines[ac.hex].setStyle({ color: color });
-        } else {
-            trailLines[ac.hex] = L.polyline(ac.history, {
-                color: color,
-                weight: 3,
-                opacity: 0.8
-            }).addTo(map);
+        try {
+            // Use the trace endpoint format from globe.airplanes.live
+            // XX = last 2 characters of hex
+            const hexSuffix = hex.slice(-2).toUpperCase();
+            const traceUrl = `${CONFIG.globeUrl}/data/traces/${hexSuffix}/trace_recent_${hex}.json`;
+            
+            const resp = await fetch(traceUrl, { signal: AbortSignal.timeout(8000) });
+            
+            if (!resp.ok) {
+                throw new Error(`HTTP ${resp.status}`);
+            }
+            
+            const data = await resp.json();
+            
+            if (data && data.trace && data.trace.length > 1) {
+                // trace format: [seconds_offset, lat, lon, alt, gs, track, flags, vrate, details]
+                const points = data.trace
+                    .filter(p => p[1] !== null && p[2] !== null)
+                    .map(p => [p[1], p[2]]);
+                
+                if (points.length > 1) {
+                    const ac = aircraftCache[hex];
+                    const color = getAltitudeColor(ac?.alt_baro);
+                    
+                    trailLine = L.polyline(points, {
+                        color: color,
+                        weight: 3,
+                        opacity: 0.85
+                    }).addTo(map);
+                    
+                    trailStatus.textContent = `Trail: ${points.length} points`;
+                } else {
+                    trailStatus.textContent = 'Insufficient trail data';
+                }
+            } else {
+                trailStatus.textContent = 'No trail data available';
+            }
+        } catch (err) {
+            console.error('Trail load failed:', err);
+            trailStatus.textContent = 'Trail unavailable';
         }
     }
 
-    function clearTrail(hex) {
-        if (trailLines[hex]) {
-            map.removeLayer(trailLines[hex]);
-            delete trailLines[hex];
+    // ============ AIRCRAFT PHOTO LOADING ============
+    async function loadAircraftPhoto(hex, registration) {
+        const photoDiv = document.getElementById('aircraftPhoto');
+        
+        // Check cache first
+        if (photoCache[hex]) {
+            displayPhoto(photoCache[hex]);
+            return;
         }
+
+        photoDiv.innerHTML = '<div class="no-photo">Loading photo...</div>';
+
+        try {
+            // Try airport-data.com API
+            const url = `https://airport-data.com/api/ac_thumb.json?m=${hex}&n=1`;
+            const resp = await fetch(url, { signal: AbortSignal.timeout(5000) });
+            const data = await resp.json();
+            
+            if (data.status === 200 && data.count > 0 && data.data && data.data[0]) {
+                const photo = data.data[0];
+                photoCache[hex] = photo;
+                displayPhoto(photo);
+            } else {
+                photoDiv.innerHTML = '<div class="no-photo">No photo available</div>';
+            }
+        } catch (err) {
+            console.log('Photo load failed:', err);
+            photoDiv.innerHTML = '<div class="no-photo">No photo available</div>';
+        }
+    }
+
+    function displayPhoto(photo) {
+        const photoDiv = document.getElementById('aircraftPhoto');
+        const credit = photo.photographer || 'Unknown';
+        photoDiv.innerHTML = `
+            <img src="${photo.image}" alt="Aircraft" onerror="this.parentElement.innerHTML='<div class=\\'no-photo\\'>Photo unavailable</div>'">
+            <div class="photo-credit">${credit}</div>
+        `;
+    }
+
+    // ============ AIRLINE BANNER ============
+    function loadAirlineBanner(callsign) {
+        const bannerDiv = document.getElementById('airlineBanner');
+        const airlineCode = getAirlineCode(callsign);
+        
+        if (!airlineCode) {
+            bannerDiv.style.display = 'none';
+            return;
+        }
+
+        // Try to load airline banner
+        const bannerUrl = `${CONFIG.globeUrl}/airline_banners/${airlineCode}.png`;
+        const img = bannerDiv.querySelector('img');
+        
+        img.onload = () => { bannerDiv.style.display = 'flex'; };
+        img.onerror = () => { bannerDiv.style.display = 'none'; };
+        img.src = bannerUrl;
     }
 
     // ============ SELECTION ============
     function selectAircraft(hex) {
-        // Clear previous trail
-        if (selectedHex && selectedHex !== hex) {
-            clearTrail(selectedHex);
+        if (trailLine) {
+            map.removeLayer(trailLine);
+            trailLine = null;
         }
 
         selectedHex = hex;
-        const ac = aircraftData[hex];
+        const ac = aircraftCache[hex];
         if (!ac) return;
 
-        // Update info panel
         document.getElementById('infoCallsign').textContent = ac.flight || 'N/A';
         document.getElementById('infoHex').textContent = ac.hex;
         document.getElementById('infoReg').textContent = ac.r || 'N/A';
         document.getElementById('infoType').textContent = ac.t || 'N/A';
         
-        // Category with proper capitalization
         const catMap = { commercial: 'Commercial', military: 'Military', cargo: 'Cargo', helicopter: 'Helicopter', ground: 'Ground' };
         document.getElementById('infoCat').textContent = catMap[ac.category_type] || 'Unknown';
         
-        const alt = ac.alt_baro === 'ground' ? 'Ground' : (ac.alt_baro ? ac.alt_baro.toLocaleString() : '---');
+        const alt = ac.alt_baro === 'ground' ? 'Ground' : (ac.alt_baro ? ac.alt_baro.toLocaleString() + ' ft' : '---');
         document.getElementById('infoAlt').textContent = alt;
-        document.getElementById('infoSpeed').textContent = ac.gs ? Math.round(ac.gs) : '---';
-        document.getElementById('infoTrack').textContent = ac.track ? Math.round(ac.track) + '°' : '---';
-        document.getElementById('infoVRate').textContent = ac.baro_rate ? (ac.baro_rate > 0 ? '+' : '') + ac.baro_rate : '---';
+        document.getElementById('infoSpeed').textContent = ac.gs ? Math.round(ac.gs) + ' kts' : '---';
+        document.getElementById('infoTrack').textContent = ac.track ? Math.round(ac.track) + '\u00B0' : '---';
+        document.getElementById('infoVRate').textContent = ac.baro_rate ? (ac.baro_rate > 0 ? '+' : '') + ac.baro_rate + ' fpm' : '---';
 
         const squawkEl = document.getElementById('infoSquawk');
         squawkEl.textContent = ac.squawk || '----';
         squawkEl.className = 'squawk-code squawk-' + (['7500', '7600', '7700'].includes(ac.squawk) ? ac.squawk : 'normal');
 
-        document.getElementById('infoPos').textContent = ac.lat !== undefined ? `${ac.lat.toFixed(4)}, ${ac.lon.toFixed(4)}` : '---';
-
         document.getElementById('infoPanel').classList.add('show');
         document.getElementById('settingsPanel').classList.remove('show');
         
+        // Load photo, banner, and trail
+        loadAircraftPhoto(hex, ac.r);
+        loadAirlineBanner(ac.flight);
+        loadTrail(hex);
+        
         updateMarkers();
-
-        // Show trail
-        if (settings.showTrails && ac.history) {
-            updateTrail(ac);
-        }
-
         map.panTo([ac.lat, ac.lon]);
     }
 
     function deselectAircraft() {
-        if (selectedHex) {
-            clearTrail(selectedHex);
+        if (trailLine) {
+            map.removeLayer(trailLine);
+            trailLine = null;
         }
         selectedHex = null;
         document.getElementById('infoPanel').classList.remove('show');
@@ -1025,10 +1026,8 @@
 
     // ============ UI ============
     function initUI() {
-        // Close button
         document.getElementById('infoClose').addEventListener('click', deselectAircraft);
 
-        // Filter buttons
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -1038,7 +1037,6 @@
             });
         });
 
-        // Header buttons
         document.getElementById('dayNightBtn').addEventListener('click', toggleDayMode);
         document.getElementById('labelBtn').addEventListener('click', function() {
             settings.showLabels = !settings.showLabels;
@@ -1053,27 +1051,15 @@
             document.getElementById('infoPanel').classList.remove('show');
         });
 
-        // Settings toggles
         document.getElementById('toggleLabels').addEventListener('click', function() {
             settings.showLabels = !settings.showLabels;
             this.classList.toggle('on', settings.showLabels);
             document.getElementById('labelBtn').classList.toggle('active', settings.showLabels);
             updateMarkers();
         });
-        document.getElementById('toggleTrails').addEventListener('click', function() {
-            settings.showTrails = !settings.showTrails;
-            this.classList.toggle('on', settings.showTrails);
-            if (!settings.showTrails && selectedHex) {
-                clearTrail(selectedHex);
-            } else if (settings.showTrails && selectedHex) {
-                const ac = aircraftData[selectedHex];
-                if (ac) updateTrail(ac);
-            }
-        });
         document.getElementById('toggleDayMode').addEventListener('click', toggleDayMode);
         document.getElementById('toggleRadar').addEventListener('click', toggleRadar);
 
-        // Search
         let searchTimeout;
         document.getElementById('searchInput').addEventListener('input', function() {
             clearTimeout(searchTimeout);
@@ -1082,7 +1068,7 @@
             searchTimeout = setTimeout(() => {
                 if (!query) return;
 
-                const match = Object.values(aircraftData).find(ac => 
+                const match = Object.values(aircraftCache).find(ac => 
                     ac.hex.includes(query) ||
                     (ac.flight && ac.flight.toUpperCase().includes(query)) ||
                     (ac.r && ac.r.toUpperCase().includes(query)) ||
