@@ -390,7 +390,7 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text { margin-top: 16px; color: var(--text-dim); }
+        .loading-text { margin-top: 16px; color: var(--text-dim); text-align: center; }
 
         .toast {
             position: fixed;
@@ -427,7 +427,7 @@
 <body>
     <div class="loading-overlay" id="loading">
         <div class="spinner"></div>
-        <div class="loading-text">Connecting to ADSB.lol...</div>
+        <div class="loading-text" id="loadingText">Connecting...</div>
     </div>
 
     <div id="map"></div>
@@ -530,7 +530,7 @@
             </div>
             <div class="trail-status" id="trailStatus">Loading trail...</div>
         </div>
-        <div class="data-source" id="dataSource">Data: ADSB.lol</div>
+        <div class="data-source" id="dataSource">Connecting...</div>
     </div>
 
     <div class="settings-panel" id="settingsPanel">
@@ -567,49 +567,37 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
     // ============================================================
-    // SKYTRACK v7 - Real-time Flight Tracker
+    // SKYTRACK v8 - Real-time Flight Tracker
     // 
-    // DATA SOURCE PRIORITY:
-    // ----------------------
-    // Aircraft Data:
-    //   1. ADSB.lol (free, no rate limits)
-    //   2. Airplanes.live (fallback, 1 req/sec)
+    // DATA SOURCE PRIORITY WITH CORS PROXY FALLBACKS:
+    // ------------------------------------------------
+    // 1. OpenSky Network (native CORS support - tried first!)
+    // 2. ADSB.lol via CORS proxies
+    // 3. Airplanes.live via CORS proxies
     //
-    // Aircraft Photos:
-    //   1. Planespotters.net API (1M+ high-quality photos)
-    //   2. Airport-Data.com (700k+ photos)
-    //   3. Aircraft silhouettes (type-based SVG fallback)
-    //
-    // Flight Trails:
-    //   1. Globe.airplanes.live trace files (full history)
-    //   2. Local position history (built from live updates)
-    //
-    // Airline Banners:
-    //   1. Globe.airplanes.live banners (3-letter ICAO codes)
+    // CORS PROXIES (cycled automatically on failure):
+    // - corsproxy.io
+    // - allorigins.win  
     // ============================================================
 
     const CONFIG = {
         center: [39.8, -98.5],
         zoom: 5,
-        refreshInterval: 5000,
+        refreshInterval: 6000,
         
-        // Aircraft data APIs (priority order)
-        apis: [
-            { name: 'ADSB.lol', url: 'https://api.adsb.lol/v2' },
-            { name: 'Airplanes.live', url: 'https://api.airplanes.live/v2' }
+        // CORS Proxies (will cycle through on failure)
+        corsProxies: [
+            url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+            url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
         ],
         
-        // Photo sources (priority order)
-        photoSources: {
-            planespotters: 'https://api.planespotters.net/pub/photos/hex/',
-            airportData: 'https://www.airport-data.com/api/ac_thumb.json',
-            silhouette: 'https://globe.airplanes.live/aircraft_sil/'
-        },
+        // Silhouette images (img tag, no CORS issues)
+        silhouetteUrl: 'https://globe.airplanes.live/aircraft_sil/',
         
         // Trail source
         traceUrl: 'https://globe.airplanes.live/data/traces/',
         
-        // Airline banners
+        // Airline banners (img tag, no CORS issues)
         airlineBannerUrl: 'https://globe.airplanes.live/airline_banners/'
     };
 
@@ -623,9 +611,8 @@
     let radarLayer = null;
     let lastFetchTime = 0;
     let fetchInProgress = false;
-    let photoCache = {};
-    let currentApiIndex = 0;
-    let apiFailures = {};
+    let currentProxyIndex = 0;
+    let lastSuccessfulMethod = null;
 
     const settings = {
         showLabels: true,
@@ -634,7 +621,7 @@
         filter: 'all'
     };
 
-    // Aircraft classification data
+    // Aircraft classification
     const MILITARY_HEX_PREFIXES = ['AE', 'AF'];
     const MILITARY_TYPES = ['F16', 'F15', 'F18', 'F22', 'F35', 'C17', 'C130', 'C5', 'KC135', 'KC10', 'KC46', 'E3', 'E6', 'E8', 'B52', 'B1', 'B2', 'A10', 'P8', 'P3', 'EP3', 'RC135', 'U2', 'RQ4', 'MQ9', 'V22', 'H60', 'UH60', 'MH60', 'HH60', 'CH47', 'AH64'];
     const CARGO_CALLSIGNS = ['FDX', 'UPS', 'GTI', 'ABX', 'ATN', 'CLX', 'BOX', 'MPH'];
@@ -679,6 +666,10 @@
         return null;
     }
 
+    function setLoadingText(text) {
+        document.getElementById('loadingText').textContent = text;
+    }
+
     // ============ INITIALIZATION ============
     document.addEventListener('DOMContentLoaded', init);
 
@@ -714,41 +705,76 @@
         });
     }
 
-    // ============ API WITH FAILOVER CHAIN ============
-    async function fetchWithFallback(endpoint) {
-        for (let i = 0; i < CONFIG.apis.length; i++) {
-            const apiIndex = (currentApiIndex + i) % CONFIG.apis.length;
-            const api = CONFIG.apis[apiIndex];
+    // ============ OPENSKY NETWORK (HAS CORS SUPPORT!) ============
+    async function fetchOpenSky(bounds) {
+        const url = `https://opensky-network.org/api/states/all?lamin=${bounds.getSouth().toFixed(4)}&lomin=${bounds.getWest().toFixed(4)}&lamax=${bounds.getNorth().toFixed(4)}&lomax=${bounds.getEast().toFixed(4)}`;
+        
+        setLoadingText('Trying OpenSky Network...');
+        console.log('Trying OpenSky (direct CORS)...');
+        
+        const resp = await fetch(url, { signal: AbortSignal.timeout(12000) });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        
+        const data = await resp.json();
+        if (!data || !data.states || data.states.length === 0) {
+            throw new Error('No aircraft data');
+        }
+        
+        // Transform OpenSky format to our format
+        return data.states
+            .filter(s => s[5] !== null && s[6] !== null)
+            .map(s => ({
+                hex: (s[0] || '').toUpperCase().trim(),
+                flight: (s[1] || '').trim(),
+                lat: s[6],
+                lon: s[5],
+                alt_baro: s[7] ? Math.round(s[7] * 3.28084) : null, // meters to feet
+                gs: s[9] ? Math.round(s[9] * 1.94384) : null, // m/s to knots
+                track: s[10],
+                baro_rate: s[11] ? Math.round(s[11] * 196.85) : null, // m/s to fpm
+                squawk: s[14] || '',
+                on_ground: s[8],
+                t: '',
+                r: '',
+                category: ''
+            }));
+    }
+
+    // ============ ADSB API VIA CORS PROXY ============
+    async function fetchAdsbViaProxy(center, radius, apiName, baseUrl) {
+        const apiUrl = `${baseUrl}/point/${center.lat.toFixed(4)}/${center.lng.toFixed(4)}/${radius}`;
+        
+        for (let i = 0; i < CONFIG.corsProxies.length; i++) {
+            const proxyIndex = (currentProxyIndex + i) % CONFIG.corsProxies.length;
+            const proxyFn = CONFIG.corsProxies[proxyIndex];
+            const proxiedUrl = proxyFn(apiUrl);
             
-            // Skip if recently failed (30 second cooldown)
-            if (apiFailures[api.name] && Date.now() - apiFailures[api.name] < 30000) {
-                continue;
-            }
+            setLoadingText(`Trying ${apiName} via proxy ${proxyIndex + 1}...`);
+            console.log(`Trying ${apiName} via proxy ${proxyIndex}...`);
             
             try {
-                const url = api.url + endpoint;
-                const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
+                const resp = await fetch(proxiedUrl, { signal: AbortSignal.timeout(10000) });
                 
-                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                if (!resp.ok) {
+                    console.log(`Proxy ${proxyIndex} returned ${resp.status}`);
+                    continue;
+                }
                 
                 const data = await resp.json();
                 
-                // Success - make this the primary API
-                currentApiIndex = apiIndex;
-                delete apiFailures[api.name];
-                document.getElementById('dataSource').textContent = `Data: ${api.name}`;
-                
-                return data;
-            } catch (err) {
-                console.log(`${api.name} failed:`, err.message);
-                apiFailures[api.name] = Date.now();
+                if (data && data.ac && data.ac.length > 0) {
+                    currentProxyIndex = proxyIndex; // Remember working proxy
+                    return { aircraft: data.ac, proxyIndex };
+                }
+            } catch (e) {
+                console.log(`Proxy ${proxyIndex} failed: ${e.message}`);
             }
         }
         
-        throw new Error('All APIs failed');
+        throw new Error(`All proxies failed for ${apiName}`);
     }
 
-    // ============ DATA LOADING ============
+    // ============ MAIN DATA LOADING WITH FULL FAILOVER ============
     async function loadAircraft() {
         const now = Date.now();
         if (now - lastFetchTime < 3000) return;
@@ -764,17 +790,57 @@
 
         updateStatus('loading', 'Loading...');
 
-        try {
-            const data = await fetchWithFallback(`/point/${center.lat}/${center.lng}/${radius}`);
-            
-            if (data && data.ac) {
-                processAircraftData(data.ac);
-                updateStatus('connected', 'Live');
-                document.getElementById('loading').classList.add('hidden');
+        let aircraft = null;
+        let sourceName = null;
+
+        // METHOD 1: OpenSky Network (has native CORS support!)
+        if (!aircraft) {
+            try {
+                aircraft = await fetchOpenSky(bounds);
+                sourceName = 'OpenSky';
+                lastSuccessfulMethod = 'opensky';
+                console.log(`OpenSky success: ${aircraft.length} aircraft`);
+            } catch (e) {
+                console.log('OpenSky failed:', e.message);
             }
-        } catch (err) {
-            console.error('Load failed:', err);
-            updateStatus('error', 'Error');
+        }
+
+        // METHOD 2: ADSB.lol via CORS proxy
+        if (!aircraft) {
+            try {
+                const result = await fetchAdsbViaProxy(center, radius, 'ADSB.lol', 'https://api.adsb.lol/v2');
+                aircraft = result.aircraft;
+                sourceName = `ADSB.lol (proxy)`;
+                lastSuccessfulMethod = 'adsblol';
+                console.log(`ADSB.lol success: ${aircraft.length} aircraft`);
+            } catch (e) {
+                console.log('ADSB.lol failed:', e.message);
+            }
+        }
+
+        // METHOD 3: Airplanes.live via CORS proxy
+        if (!aircraft) {
+            try {
+                const result = await fetchAdsbViaProxy(center, radius, 'Airplanes.live', 'https://api.airplanes.live/v2');
+                aircraft = result.aircraft;
+                sourceName = `Airplanes.live (proxy)`;
+                lastSuccessfulMethod = 'airplaneslive';
+                console.log(`Airplanes.live success: ${aircraft.length} aircraft`);
+            } catch (e) {
+                console.log('Airplanes.live failed:', e.message);
+            }
+        }
+
+        // Process results
+        if (aircraft && aircraft.length > 0) {
+            processAircraftData(aircraft);
+            updateStatus('connected', 'Live');
+            document.getElementById('dataSource').textContent = `Data: ${sourceName}`;
+            document.getElementById('loading').classList.add('hidden');
+        } else {
+            updateStatus('error', 'No Data');
+            setLoadingText('All sources failed. Retrying...');
+            console.error('All data sources failed');
         }
 
         fetchInProgress = false;
@@ -789,7 +855,7 @@
             const hex = ac.hex.toUpperCase();
             const existing = aircraftCache[hex] || {};
 
-            // Build local position history for trail fallback
+            // Build local position history
             let history = existing.history || [];
             if (ac.lat !== undefined && ac.lon !== undefined) {
                 const lastPos = history[history.length - 1];
@@ -948,7 +1014,7 @@
         return ac.hex === selectedHex ? 50000 : alt;
     }
 
-    // ============ TRAIL LOADING WITH FALLBACK ============
+    // ============ TRAIL LOADING ============
     async function loadTrail(hex) {
         const trailStatus = document.getElementById('trailStatus');
         trailStatus.textContent = 'Loading trail...';
@@ -961,39 +1027,48 @@
         const ac = aircraftCache[hex];
         if (!ac) return;
 
-        // Source 1: Globe.airplanes.live trace files (best - full history)
+        // Try globe traces via proxy
         try {
             const hexSuffix = hex.slice(-2).toLowerCase();
             const traceUrl = `${CONFIG.traceUrl}${hexSuffix}/trace_recent_${hex.toLowerCase()}.json`;
             
-            const resp = await fetch(traceUrl, { signal: AbortSignal.timeout(5000) });
-            
-            if (resp.ok) {
-                const data = await resp.json();
+            // Try each proxy
+            for (let i = 0; i < CONFIG.corsProxies.length; i++) {
+                const proxyFn = CONFIG.corsProxies[(currentProxyIndex + i) % CONFIG.corsProxies.length];
+                const proxiedUrl = proxyFn(traceUrl);
                 
-                if (data && data.trace && data.trace.length > 1) {
-                    const points = data.trace
-                        .filter(p => p[1] !== null && p[2] !== null)
-                        .map(p => [p[1], p[2]]);
+                try {
+                    const resp = await fetch(proxiedUrl, { signal: AbortSignal.timeout(8000) });
+                    if (!resp.ok) continue;
                     
-                    if (points.length > 1) {
-                        const color = getAltitudeColor(ac.alt_baro);
-                        trailLine = L.polyline(points, {
-                            color: color,
-                            weight: 3,
-                            opacity: 0.85
-                        }).addTo(map);
+                    const data = await resp.json();
+                    
+                    if (data && data.trace && data.trace.length > 1) {
+                        const points = data.trace
+                            .filter(p => p[1] !== null && p[2] !== null)
+                            .map(p => [p[1], p[2]]);
                         
-                        trailStatus.textContent = `Trail: ${points.length} pts (globe)`;
-                        return;
+                        if (points.length > 1) {
+                            const color = getAltitudeColor(ac.alt_baro);
+                            trailLine = L.polyline(points, {
+                                color: color,
+                                weight: 3,
+                                opacity: 0.85
+                            }).addTo(map);
+                            
+                            trailStatus.textContent = `Trail: ${points.length} pts (globe)`;
+                            return;
+                        }
                     }
+                } catch (e) {
+                    continue;
                 }
             }
         } catch (err) {
             console.log('Globe trace failed:', err.message);
         }
 
-        // Fallback: Local position history (built from live updates)
+        // Fallback: Local history
         if (ac.history && ac.history.length > 1) {
             const points = ac.history.map(p => [p[0], p[1]]);
             const color = getAltitudeColor(ac.alt_baro);
@@ -1010,104 +1085,24 @@
         }
     }
 
-    // ============ PHOTO LOADING WITH FALLBACK CHAIN ============
-    async function loadAircraftPhoto(hex, registration, type) {
+    // ============ PHOTO LOADING (img tag - no CORS) ============
+    function loadAircraftPhoto(hex, registration, type) {
         const photoDiv = document.getElementById('aircraftPhoto');
         
-        // Check cache first
-        if (photoCache[hex]) {
-            displayPhoto(photoCache[hex]);
-            return;
-        }
-
-        photoDiv.innerHTML = '<div class="no-photo">Loading photo...</div>';
-
-        // Source 1: Planespotters.net (best quality - 1M+ photos)
-        try {
-            const psUrl = `${CONFIG.photoSources.planespotters}${hex}`;
-            const resp = await fetch(psUrl, { signal: AbortSignal.timeout(5000) });
-            
-            if (resp.ok) {
-                const data = await resp.json();
-                if (data.photos && data.photos.length > 0) {
-                    const photo = data.photos[0];
-                    const result = {
-                        url: photo.thumbnail_large?.src || photo.thumbnail?.src,
-                        credit: photo.photographer,
-                        source: 'Planespotters.net'
-                    };
-                    if (result.url) {
-                        photoCache[hex] = result;
-                        displayPhoto(result);
-                        return;
-                    }
-                }
-            }
-        } catch (err) {
-            console.log('Planespotters failed:', err.message);
-        }
-
-        // Source 2: Airport-Data.com (700k+ photos)
-        try {
-            const adUrl = `${CONFIG.photoSources.airportData}?m=${hex}&n=1`;
-            const resp = await fetch(adUrl, { signal: AbortSignal.timeout(5000) });
-            
-            if (resp.ok) {
-                const data = await resp.json();
-                if (data.status === 200 && data.count > 0 && data.data?.[0]) {
-                    const photo = data.data[0];
-                    if (photo.image) {
-                        const result = {
-                            url: photo.image,
-                            credit: photo.photographer,
-                            source: 'Airport-Data.com'
-                        };
-                        photoCache[hex] = result;
-                        displayPhoto(result);
-                        return;
-                    }
-                }
-            }
-        } catch (err) {
-            console.log('Airport-data failed:', err.message);
-        }
-
-        // Fallback: Aircraft type silhouette
         if (type) {
-            const silUrl = `${CONFIG.photoSources.silhouette}${type.toUpperCase()}.png`;
-            displayPhoto({
-                url: silUrl,
-                credit: null,
-                source: 'Silhouette',
-                isSilhouette: true
-            });
+            const silUrl = `${CONFIG.silhouetteUrl}${type.toUpperCase()}.png`;
+            photoDiv.innerHTML = `
+                <img src="${silUrl}" alt="${type}" 
+                     style="object-fit: contain; background: #1a1a2e; padding: 20px;"
+                     onerror="this.parentElement.innerHTML='<div class=\\'no-photo\\'>No image</div>'">
+                <div class="photo-source">Silhouette</div>
+            `;
         } else {
-            photoDiv.innerHTML = '<div class="no-photo">No photo available</div>';
+            photoDiv.innerHTML = '<div class="no-photo">No type data</div>';
         }
     }
 
-    function displayPhoto(photo) {
-        const photoDiv = document.getElementById('aircraftPhoto');
-        
-        const style = photo.isSilhouette ? 
-            'object-fit: contain; background: #1a1a2e; padding: 20px;' : 
-            'object-fit: cover;';
-        
-        const creditHtml = photo.credit ? 
-            `<div class="photo-credit">&copy; ${photo.credit}</div>` : '';
-        
-        const sourceHtml = photo.source ? 
-            `<div class="photo-source">${photo.source}</div>` : '';
-        
-        photoDiv.innerHTML = `
-            <img src="${photo.url}" alt="Aircraft" style="${style}"
-                 onerror="this.parentElement.innerHTML='<div class=\\'no-photo\\'>Photo unavailable</div>'">
-            ${creditHtml}
-            ${sourceHtml}
-        `;
-    }
-
-    // ============ AIRLINE BANNER ============
+    // ============ AIRLINE BANNER (img tag - no CORS) ============
     function loadAirlineBanner(callsign) {
         const bannerDiv = document.getElementById('airlineBanner');
         const airlineCode = getAirlineCode(callsign);
@@ -1157,7 +1152,6 @@
         document.getElementById('infoPanel').classList.add('show');
         document.getElementById('settingsPanel').classList.remove('show');
         
-        // Load enrichment data with fallback chains
         loadAircraftPhoto(hex, ac.r, ac.t);
         loadAirlineBanner(ac.flight);
         loadTrail(hex);
