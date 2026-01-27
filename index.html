@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SkyTrack v3.9 Phase 16 - Live Flight Tracker</title>
+    <title>SkyTrack v3.9 Phase 16 - Live Flight Tracker (MIL-FIX-v3)</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a1a2e">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -5365,10 +5365,12 @@ if ('serviceWorker' in navigator) {
     let bookmarks = [];
     const settings = { mapStyle: 'dark', showLabels: true, showAirports: true, showRadar: false, altitudeColors: true, showWiki: true, showInterestingBadges: true, filter: 'all', followMode: false, compactMode: false };
     const baseMaps = {};
-    const MILITARY_TYPES = ['F16', 'F15', 'F18', 'F22', 'F35', 'C17', 'C130', 'C5', 'KC135', 'KC10', 'E3', 'B52', 'B1', 'B2', 'A10'];
+    const MILITARY_TYPES = ['F16', 'F15', 'F18', 'F22', 'F35', 'KC135', 'KC10', 'E3', 'B52', 'B1', 'B2', 'A10'];
+    const MILITARY_TYPES_EXACT = ['C17', 'C130', 'C5'];  // These need exact matching to avoid hitting Cessnas/Citations
+    const HELI_TYPES = ['R22', 'R44', 'R66', 'EC35', 'EC45', 'EC55', 'EC75', 'AS50', 'AS55', 'AS65', 'B06', 'B105', 'B206', 'B212', 'B222', 'B230', 'B407', 'B412', 'B429', 'B430', 'BK17', 'S76', 'S92', 'MD50', 'MD52', 'MD60', 'MD90', 'A109', 'A119', 'A139', 'A149', 'A169', 'AW09', 'AW39', 'AW69', 'AW89', 'AW101', 'AW109', 'AW119', 'AW139', 'AW149', 'AW169', 'AW189', 'H125', 'H130', 'H135', 'H145', 'H155', 'H160', 'H175', 'H215', 'H225', 'AS32', 'AS33', 'AS35', 'AS36', 'AS55', 'AS65', 'EC20', 'EC30', 'EC55', 'EC65', 'UH1', 'UH60', 'AH1', 'AH64', 'CH47', 'CH53', 'MH6', 'MH47', 'MH53', 'MH60', 'HH60', 'SH60', 'V22'];
+    const CESSNA_TYPES = ['C120', 'C140', 'C150', 'C152', 'C162', 'C170', 'C172', 'C175', 'C177', 'C180', 'C182', 'C185', 'C188', 'C190', 'C195', 'C205', 'C206', 'C207', 'C208', 'C210', 'C303', 'C310', 'C320', 'C335', 'C336', 'C337', 'C340', 'C402', 'C404', 'C406', 'C411', 'C414', 'C421', 'C425', 'C441', 'C500', 'C501', 'C510', 'C525', 'C526', 'C550', 'C551', 'C560', 'C650', 'C680', 'C700', 'C750', 'C25A', 'C25B', 'C25C', 'C25M', 'C56X', 'C68A'];
+    const PRIVATE_TYPES = ['BE35', 'BE36', 'BE55', 'BE58', 'BE76', 'BE95', 'BE99', 'PA18', 'PA22', 'PA23', 'PA24', 'PA28', 'PA30', 'PA31', 'PA32', 'PA34', 'PA38', 'PA44', 'PA46', 'SR20', 'SR22', 'DA20', 'DA40', 'DA42', 'DA50', 'DA62', 'M20', 'AA1', 'AA5', 'TB9', 'TB10', 'TB20', 'TB21', 'RV6', 'RV7', 'RV8', 'RV10', 'RV12', 'RV14', 'TRIN', 'SIRA', 'COLT', 'CHER', 'WARR', 'ARCH', 'ARRW'];
     const CARGO_CALLSIGNS = ['FDX', 'UPS', 'GTI', 'ABX', 'ATN', 'CLX', 'BOX'];
-    const HELI_TYPES = ['EC35', 'EC45', 'A109', 'A139', 'B06', 'AS50', 'S76', 'S92', 'R22', 'R44', 'R66', 'H145', 'H135'];
-    const PRIVATE_TYPES = ['BE36', 'BE58', 'PA28', 'PA32', 'SR20', 'SR22', 'C172', 'C182', 'C208', 'PC12'];
 
     // ============ UTILITIES ============
     function haversineDistance(lat1, lon1, lat2, lon2) { const R = 6371, dLat = (lat2 - lat1) * Math.PI / 180, dLon = (lon2 - lon1) * Math.PI / 180; const a = Math.sin(dLat/2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) ** 2; return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); }
@@ -5903,10 +5905,13 @@ if ('serviceWorker' in navigator) {
         // VIP check (highest priority)
         if (ac.isVIP || badgersBestDB.isVIP(hex)) return 'vip';
         
+        // Cessna aircraft - classify as private FIRST (before any military checks)
+        if (CESSNA_TYPES.some(t => type === t || type.startsWith(t + 'P') || type.startsWith(t + 'T'))) return 'private';
+        
         // Check interesting database
         if (ac.interesting) { 
             const category = ac.interesting.category?.toLowerCase(); 
-            if (category === 'military' || category === 'mil') return 'military'; 
+            if (category === 'military' || category === 'mil') return 'military';
             if (category === 'gov' || category === 'government') return 'government'; 
             if (category === 'police' || category === 'pol') return 'police'; 
             if (category === 'medical') return 'medical';
@@ -5916,7 +5921,7 @@ if ('serviceWorker' in navigator) {
         // Check military database
         if (ac.militaryInfo) { 
             const milCat = ac.militaryInfo.category?.toLowerCase(); 
-            if (milCat === 'military' || milCat === 'mil') return 'military'; 
+            if (milCat === 'military' || milCat === 'mil') return 'military';
             if (milCat === 'gov' || milCat === 'government') return 'government'; 
             if (milCat === 'police' || milCat === 'pol') return 'police'; 
         }
@@ -5935,7 +5940,11 @@ if ('serviceWorker' in navigator) {
         
         // Existing hex prefix checks (US military)
         if (hex.startsWith('AE') || hex.startsWith('AF')) return 'military';
-        if (MILITARY_TYPES.some(t => type.startsWith(t)) || (ac.dbFlags & 1)) return 'military';
+        
+        // Military type checks - exact match for C17/C130/C5 to avoid Cessna/Citation false positives
+        if (MILITARY_TYPES_EXACT.includes(type)) return 'military';
+        if (MILITARY_TYPES.some(t => type.startsWith(t))) return 'military';
+        
         if (cat === 'A7' || HELI_TYPES.some(t => type.startsWith(t))) return 'helicopter';
         if (CARGO_CALLSIGNS.some(c => cs.startsWith(c))) return 'cargo';
         if (PRIVATE_TYPES.some(t => type.startsWith(t))) return 'private';
@@ -5966,6 +5975,7 @@ if ('serviceWorker' in navigator) {
 
     // ============ INITIALIZATION ============
     document.addEventListener('DOMContentLoaded', async () => {
+        console.log('%c SkyTrack MIL-FIX-v3 loaded - Cessna classification fixed ', 'background: #4ade80; color: #000; font-size: 14px; padding: 4px;');
         // Initialize IndexedDB first
         try {
             await skytrackDB.init();
