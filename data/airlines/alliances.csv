@@ -1,0 +1,42 @@
+ICAO,Airline,Alliance,Color
+UAL,United Airlines,Star Alliance,#FFD700
+ACA,Air Canada,Star Alliance,#FFD700
+DLH,Lufthansa,Star Alliance,#FFD700
+SAS,Scandinavian Airlines,Star Alliance,#FFD700
+THA,Thai Airways,Star Alliance,#FFD700
+SIA,Singapore Airlines,Star Alliance,#FFD700
+ANA,All Nippon Airways,Star Alliance,#FFD700
+ANZ,Air New Zealand,Star Alliance,#FFD700
+TAP,TAP Air Portugal,Star Alliance,#FFD700
+LOT,LOT Polish Airlines,Star Alliance,#FFD700
+SWR,Swiss International,Star Alliance,#FFD700
+AUA,Austrian Airlines,Star Alliance,#FFD700
+THY,Turkish Airlines,Star Alliance,#FFD700
+ETH,Ethiopian Airlines,Star Alliance,#FFD700
+EVA,EVA Air,Star Alliance,#FFD700
+ASA,Alaska Airlines,Oneworld,#D70000
+AAL,American Airlines,Oneworld,#D70000
+BAW,British Airways,Oneworld,#D70000
+CPA,Cathay Pacific,Oneworld,#D70000
+FIN,Finnair,Oneworld,#D70000
+IBE,Iberia,Oneworld,#D70000
+JAL,Japan Airlines,Oneworld,#D70000
+MAS,Malaysia Airlines,Oneworld,#D70000
+QFA,Qantas,Oneworld,#D70000
+QTR,Qatar Airways,Oneworld,#D70000
+RJA,Royal Jordanian,Oneworld,#D70000
+SRI,SriLankan Airlines,Oneworld,#D70000
+AFR,Air France,SkyTeam,#0033A0
+KLM,KLM Royal Dutch,SkyTeam,#0033A0
+DAL,Delta Air Lines,SkyTeam,#0033A0
+AZA,Alitalia,SkyTeam,#0033A0
+CSN,China Southern,SkyTeam,#0033A0
+CES,China Eastern,SkyTeam,#0033A0
+KAL,Korean Air,SkyTeam,#0033A0
+VIR,Virgin Atlantic,SkyTeam,#0033A0
+SVA,Saudia,SkyTeam,#0033A0
+AEE,Aegean Airlines,Star Alliance,#FFD700
+AVA,Avianca,Star Alliance,#FFD700
+CMP,Copa Airlines,Star Alliance,#FFD700
+MSR,EgyptAir,Star Alliance,#FFD700
+AIC,Air India,Star Alliance,#FFD700
