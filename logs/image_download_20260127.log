@@ -1,9 +1,0 @@
-[2026-01-27 00:51:38] [INFO] SkyTrack Overnight Image Downloader
-[2026-01-27 00:51:38] [INFO] Collecting hex codes from databases...
-[2026-01-27 00:51:40] [INFO] Found 15948 unique hex codes
-[2026-01-27 00:51:40] [INFO] Starting Overnight Download
-[2026-01-27 00:51:40] [INFO] Total aircraft: 15948
-[2026-01-27 00:51:40] [INFO] Already processed: 0
-[2026-01-27 00:51:40] [INFO] Remaining: 15948
-[2026-01-27 00:51:40] [INFO] Estimated time: 2.7 hours at 600ms delay
-[2026-01-27 00:51:40] [INFO] Max runtime: 12 hours
