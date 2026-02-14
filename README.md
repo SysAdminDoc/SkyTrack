@@ -1,251 +1,257 @@
-# ✈️ SkyTrack - Live Flight Tracker
+# SkyTrack
 
-A powerful real-time aircraft tracking application. Track commercial flights, military aircraft, helicopters, cargo planes, and private aircraft on an interactive map with advanced filtering, alerts, and analysis tools.
+![Version](https://img.shields.io/badge/version-0.16.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Platform](https://img.shields.io/badge/platform-Web-4285F4)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES2020+-F7DF1E?logo=javascript&logoColor=black)
+![Status](https://img.shields.io/badge/status-active-success)
 
-<div align="center">
+> Real-time global aircraft tracker with 3D globe view, military/VIP detection, and comprehensive aviation intelligence — all in a single HTML file.
 
-### ✈️ [**Launch SkyTrack**](https://sysadmindoc.github.io/SkyTrack/) ✈️
+![Screenshot](screenshot.png)
 
-[![Live Demo](https://img.shields.io/badge/🔴_LIVE-Track_Flights-0a66c2?style=for-the-badge&logoColor=white)](https://sysadmindoc.github.io/SkyTrack/)
+## Quick Start
 
-</div>
+**Hosted:** Visit [sysadmindoc.github.io/SkyTrack](https://sysadmindoc.github.io/SkyTrack)
 
-<img width="1683" height="918" alt="SkyTrack Screenshot" src="https://github.com/user-attachments/assets/4252b34a-de6d-4ee2-8ac5-97b60d0b26fb" />
-
-## 🌟 Features
-
-### Core Tracking
-- **Real-time Aircraft Tracking** — Live positions updated every 5 seconds
-- **Multiple Data Sources** — Automatic failover between OpenSky Network, ADSB.lol, and Airplanes.live
-- **Aircraft Categories** — Filter by Commercial, Military, Cargo, Cessna, Private, Helicopter, or Ground vehicles
-- **Flight Trails** — View complete flight paths from takeoff to current position
-- **Aircraft Photos** — Automatic photo lookup via Planespotters.net
-- **Airline Banners** — Display airline logos for commercial flights
-- **Aircraft Labels** — Toggleable callsign labels on the map
-
-### Special Aircraft Detection
-- **Military Aircraft** — Automatic detection via hex codes and type
-- **Government/State Aircraft** — Highlighted with special badges
-- **Police & Law Enforcement** — Identified and tracked
-- **Medical/Air Ambulance** — Emergency aircraft highlighted
-- **Historic Aircraft** — Classic and vintage planes flagged
-- **VIP Aircraft** — Notable aircraft with special indicators
-- **PIA (Privacy/Interesting Aircraft)** — Tracked aircraft of interest
-
-### Advanced Analysis
-- **Multi-Select Mode** — Select multiple aircraft simultaneously
-- **Comparison Panel** — Side-by-side comparison of selected aircraft stats
-- **Statistics Dashboard** — Real-time stats with charts and records
-- **Watchlist** — Track specific aircraft with alerts when spotted
-- **Notification Center** — Centralized alerts for watchlist, geofence, and emergency events
-
-### Airport Features
-- **Airport Information Panel** — Detailed airport data with frequencies
-- **Arrivals/Departures Board** — Live flight board for selected airports
-- **Runway Visualization** — See runway layouts on the map
-- **NOTAMs Display** — View active notices for airports
-- **LiveATC Integration** — Quick link to live ATC audio feeds
-
-### Time & History
-- **Time Machine** — Replay historical flight data with playback controls
-- **History Indicator** — See when viewing historical vs. live data
-- **Session Statistics** — Track your viewing session stats
-
-### Geofencing & Alerts
-- **Custom Geofences** — Draw zones on the map to monitor
-- **Entry/Exit Alerts** — Get notified when aircraft enter or leave zones
-- **Zone Management** — Save, edit, and organize monitoring zones
-- **Emergency Squawk Detection** — Automatic alerts for 7500/7600/7700
-
-### Weather & Environment
-- **Weather Radar** — RainViewer precipitation overlay
-- **Satellite View** — Toggle between dark map and satellite imagery
-- **Wind Barbs** — Optional wind data display
-- **SIGMET Warnings** — Significant meteorological information
-
-### Mobile Experience
-- **Responsive Design** — Full-featured mobile interface
-- **Bottom Sheet Navigation** — Native-feeling mobile UI
-- **Touch Gestures** — Swipe and pinch controls
-- **Haptic Feedback** — Tactile responses on supported devices
-- **PWA Support** — Install as a standalone app
-
-### Reliability & Offline
-- **Offline Mode** — View cached data when connection is lost
-- **Circuit Breakers** — Automatic failover between data sources
-- **Data Source Health Monitor** — Real-time source status indicator
-- **Error Recovery** — Automatic retry and reconnection
-- **Position Caching** — Recent positions stored for offline viewing
-
-### Capture & Export
-- **Screenshots** — Capture current map view
-- **Screen Recording** — Record tracking sessions
-- **Export Data** — Save aircraft data for analysis
-
-### Customization
-- **Theme System** — Dark, light, and custom color themes
-- **Layout Presets** — Save and load UI configurations
-- **Mini-map** — Optional overview map
-- **Clustering** — Group markers in dense areas
-- **Configurable Update Intervals** — Adjust refresh rates
-
-## 🛠️ Technologies
-
-- **Vanilla JavaScript** — No frameworks required
-- **Leaflet.js** — Interactive mapping
-- **OpenStreetMap / Esri** — Map tiles
-- **Service Worker** — PWA and offline support
-- **CORS Proxies** — For cross-origin API requests
-
-## 📡 Data Sources
-
-| Source | Data Type | CORS Support |
-|--------|-----------|--------------|
-| [OpenSky Network](https://opensky-network.org/) | Aircraft positions | ✅ Native |
-| [ADSB.lol](https://adsb.lol/) | Aircraft positions, trails | Via proxy |
-| [Airplanes.live](https://airplanes.live/) | Aircraft positions, trails | Via proxy |
-| [Planespotters.net](https://www.planespotters.net/) | Aircraft photos | Via proxy |
-| [RainViewer](https://www.rainviewer.com/) | Weather radar | ✅ Native |
-
-## 📦 Installation
-
-### Option 1: GitHub Pages (Recommended)
-
-1. Fork this repository
-2. Enable GitHub Pages in repository settings
-3. Access at `https://yourusername.github.io/SkyTrack/`
-
-### Option 2: Local
-
+**Self-hosted:**
 ```bash
 git clone https://github.com/SysAdminDoc/SkyTrack.git
 cd SkyTrack
-# Open index.html in your browser, or serve locally:
-npx serve .
+# Open index.html in any browser — no build step, no dependencies
 ```
 
-### Option 3: Install as PWA
+SkyTrack is a zero-dependency, single-file web application. No npm, no bundler, no server required. Just open `index.html`.
 
-Visit the live demo and click "Install" when prompted, or use your browser's install option.
+## Features
 
-## 🎮 Usage
+### Aircraft Tracking
 
-### Keyboard Shortcuts
+| Feature | Description |
+|---------|-------------|
+| Multi-Source ADS-B | Parallel data from Airplanes.live, ADSB One, and ADSB.lol with automatic failover |
+| Grid Fetch | Viewport-tiled API requests for global coverage — see every plane in the sky |
+| Smooth Animation | Interpolated movement on 2D map via `requestAnimationFrame`, SampledPositionProperty on 3D globe |
+| History Trails | Altitude-colored flight paths with local + API trace data |
+| Aircraft Photos | Auto-fetched from planespotters.net with preloaded image database |
+| Trail Export | Export flight paths as KML or GeoJSON |
+| Share Flight | Generate shareable links for specific aircraft |
+| Historical Playback | Scrub through recorded flight paths with playback controls |
 
-| Key | Action |
-|-----|--------|
-| `?` | Show keyboard shortcuts |
-| `Space` | Toggle play/pause (Time Machine) |
-| `F` | Toggle fullscreen |
-| `L` | Toggle aircraft labels |
-| `T` | Toggle trails |
-| `M` | Toggle multi-select mode |
-| `S` | Open statistics |
-| `W` | Open watchlist |
-| `Esc` | Close panels / Exit modes |
-| `Ctrl+Shift+D` | Log data source stats |
+### 3D Globe View
 
-### Controls
+| Feature | Description |
+|---------|-------------|
+| CesiumJS Globe | Full 3D Earth with terrain, atmosphere, and satellite imagery |
+| Procedural 3D Models | Runtime-generated GLB airplane models with tubular fuselage, swept wings, tail, and engine nacelles |
+| Smooth Interpolation | Aircraft glide between position updates using Cesium's SampledPositionProperty |
+| 3D Trails | Flight history rendered as altitude-accurate polylines on the globe |
+| Type-Based Scaling | Heavy (A380, B747): large, Medium (A320, B737): mid, GA: small |
+| Altitude Coloring | Ground through cruise altitude mapped to a color gradient |
+| Click Selection | Click any 3D aircraft to select and view details |
 
-| Button | Function |
-|--------|----------|
-| ☀️/🌙 | Toggle day/night theme |
-| T | Toggle aircraft labels |
-| 🌧️ | Toggle weather radar |
-| 📍 | Center on your location |
-| ⚙️ | Open settings panel |
-| 📊 | Open statistics |
-| 🔔 | Notification center |
-| 📷 | Screenshot/Recording menu |
+### Intelligence & Detection
 
-### Filters
+| Feature | Description | Database Size |
+|---------|-------------|---------------|
+| Military Detection | Identifies military aircraft by hex range and registration database | 11,383 aircraft + 7 hex ranges |
+| VIP/Government | Tracks heads of state, government, and notable private aircraft | 12,420 aircraft |
+| PIA Detection | Privacy ICAO Address — identifies aircraft using anonymized transponders | 94 aircraft |
+| Interesting Aircraft | Flagged aircraft of special interest (chase planes, test aircraft, etc.) | 4,530+ aircraft |
+| Civilian Categories | Categorized civilian fleet with type/operator data | Self-hosted DB |
 
-Click category buttons to filter aircraft:
-- **All** — Show all aircraft
-- **Commercial** — Airlines and scheduled flights
-- **Military** — Military aircraft (AE/AF hex codes)
-- **Cargo** — Freight carriers (FedEx, UPS, etc.)
-- **Cessna** — All Cessna aircraft models
-- **Private** — General aviation and business jets
-- **Heli** — Helicopters
-- **Ground** — Ground vehicles and taxiing aircraft
+### Airport Intelligence
 
-### Aircraft Details
+| Feature | Description |
+|---------|-------------|
+| 49,000+ Airports | Global airport database with ICAO/IATA codes, coordinates, and metadata |
+| Arrival/Departure Boards | Real-time boards for any airport showing inbound and outbound traffic |
+| Frequencies | Tower, ground, approach, ATIS frequencies for 11,000+ airports |
+| Runway Visualization | Rendered runway outlines on the map |
+| NOTAMs | Notices to Air Missions for selected airports |
+| LiveATC | Direct links to live ATC audio feeds |
+| METAR/TAF | Current weather observations and forecasts for airports |
 
-Click any aircraft to view:
-- Aircraft photo or silhouette
-- Callsign, registration, and operator
-- Altitude, speed, heading, vertical speed
-- Aircraft type and category
-- Squawk code with alert detection
-- Complete flight trail
-- Wikipedia summary (when available)
-- External links (FlightAware, FR24, ADSBx, etc.)
+### Airline & Route Data
 
-## ⚙️ Configuration
+| Feature | Description |
+|---------|-------------|
+| 5,800+ Airlines | ICAO/IATA codes, names, callsigns, and country data |
+| 5,774 Callsign Prefixes | Decode any flight callsign to airline and route |
+| Alliance Memberships | Star Alliance, oneworld, SkyTeam identification |
+| Route Prediction | Predicts origin/destination based on flight path analysis |
+| Route Database | Known routes for 568 airlines |
 
-Edit the `CONFIG` object to customize:
+### Map & Visualization
 
-```javascript
-const CONFIG = {
-    updateInterval: 5000,        // Position update interval (ms)
-    defaultLat: 28.5,            // Default map center latitude
-    defaultLon: -81.5,           // Default map center longitude
-    defaultZoom: 8,              // Default zoom level
-    maxTrailPoints: 500,         // Maximum trail history points
-    enableClustering: true,      // Group markers in dense areas
-    enableOfflineMode: true,     // Cache data for offline use
-    // ... more options
-};
+| Feature | Description |
+|---------|-------------|
+| Multiple Map Styles | Dark CartoDB, satellite, OpenStreetMap, and more |
+| Traffic Heatmap | Density visualization of aircraft positions |
+| Airspace Overlays | Class B airspace boundaries, restricted areas, TFRs, MOAs |
+| Weather Radar | Precipitation overlay from RainViewer |
+| Mini-Map | Picture-in-picture overview map |
+| Distance Measurement | Click-to-measure great-circle distances |
+| Aircraft Clustering | Group dense traffic into expandable clusters |
+
+### Monitoring & Alerts
+
+| Feature | Description |
+|---------|-------------|
+| Watchlist | Track specific hex codes or registrations with real-time alerts |
+| Military Alerts | Configurable radius-based alerts for military activity |
+| Notification Center | Centralized alert history with sound and desktop notifications |
+| Bookmarks | Save and quick-jump to map locations |
+
+### Search & Analysis
+
+| Feature | Description |
+|---------|-------------|
+| Advanced Search | Search by hex, registration, callsign, type, airline, or airport |
+| Multi-Select | Ctrl+click to select multiple aircraft for comparison |
+| Comparison Panel | Side-by-side analysis of selected aircraft |
+| Altitude Chart | Live altitude profile with climb/descent phases |
+| Time Machine | Browse historical aircraft positions |
+
+### UI & Experience
+
+| Feature | Description |
+|---------|-------------|
+| Themes | Dark, Midnight, Light, High Contrast, Color Blind |
+| Compact Mode | Dense layout for smaller screens |
+| Mobile Optimized | Touch gestures, responsive panels, swipe navigation |
+| Offline Mode | ServiceWorker caching for use without internet |
+| Dashboard Layouts | Configurable panel positions — Default, Minimal, Analyst presets |
+| External Links | Quick links to FlightAware, FlightRadar24, ADS-B Exchange, Wikipedia |
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        index.html (single file)                  │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌─────────────┐    ┌─────────────────┐    ┌─────────────────┐  │
+│  │ Data Sources │───>│ Grid Fetch      │───>│ Aircraft Cache  │  │
+│  │             │    │ System          │    │                 │  │
+│  │ airplanes.  │    │ Viewport tiles  │    │ Dedup + enrich  │  │
+│  │ live        │    │ Parallel fetch  │    │ with databases  │  │
+│  │ adsb.one    │    │ Rate limiting   │    │                 │  │
+│  │ adsb.lol    │    │ CORS proxy      │    │                 │  │
+│  └─────────────┘    └─────────────────┘    └────────┬────────┘  │
+│                                                      │          │
+│            ┌─────────────────────────────────────────┤          │
+│            │                                         │          │
+│            v                                         v          │
+│  ┌─────────────────┐                      ┌─────────────────┐  │
+│  │ 2D Map (Leaflet)│                      │3D Globe (Cesium)│  │
+│  │                 │                      │                 │  │
+│  │ Smooth markers  │   ◄── Toggle ──►    │ GLB models      │  │
+│  │ Altitude trails │                      │ Interpolation   │  │
+│  │ Clusters/heat   │                      │ 3D trails       │  │
+│  │ Airspace layers │                      │ Terrain/sat     │  │
+│  └─────────────────┘                      └─────────────────┘  │
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │ Intelligence Layer                                        │   │
+│  │ Military DB │ VIP DB │ PIA DB │ Airlines │ Airports │ ... │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │ UI: Search │ Alerts │ Watchlist │ Compare │ Settings      │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-## 🔧 CORS Proxy Configuration
+## Data Sources
 
-The application uses CORS proxies for APIs without cross-origin support:
+SkyTrack fetches live ADS-B data from multiple free APIs with automatic failover:
 
-1. `api.allorigins.win`
-2. `corsproxy.io`
-3. `api.codetabs.com`
+| Source | CORS | Priority | Coverage |
+|--------|------|----------|----------|
+| [Airplanes.live](https://airplanes.live) | Yes | Primary | Global |
+| [ADSB One](https://adsb.one) | Yes | Secondary | Global |
+| [ADSB.lol](https://adsb.lol) | No (proxied) | Tertiary | Global |
 
-Circuit breakers automatically cycle through alternatives on failure.
+The grid fetch system tiles the visible map area with overlapping 250nm radius API queries, distributing requests across sources at 1 req/sec per API. At global zoom, this covers the entire planet in ~16 seconds with progressive loading.
 
-## 📋 Aircraft Classification
+## Configuration
 
-Aircraft are classified using multiple methods:
+### Cesium Ion Token (Optional)
+For 3D terrain in globe view, get a free token at [cesium.com/ion](https://cesium.com/ion) and enter it in Settings.
 
-- **Hex prefix** — AE/AF prefixes indicate US military
-- **Type codes** — ICAO aircraft type designators
-- **Callsign prefixes** — Airline/operator identification
-- **ADS-B category** — A1 (light), A2 (small), A7 (helicopter), etc.
-- **Database flags** — Military, government, and special flags
-- **Registration patterns** — Country and operator identification
+### Settings Panel
+Access via the gear icon in the header. All settings persist in localStorage.
 
-## 🤝 Contributing
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Map Style | Dark CartoDB | Base map tile layer |
+| Show Labels | On | Callsign labels on aircraft |
+| Altitude Colors | On | Color-code trails by altitude |
+| Show Airports | Off | Airport markers on map |
+| Show Radar | Off | Weather precipitation overlay |
+| Military Alert Radius | 50nm | Distance trigger for military alerts |
+| Sound Alerts | Off | Audio notifications for watchlist/military |
+| Compact Mode | Off | Dense UI for small screens |
+| Follow Mode | Off | Camera tracks selected aircraft |
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## Keyboard Shortcuts
 
-## 📄 License
+SkyTrack is designed for mouse/touch interaction. All controls are accessible via the header toolbar and panel buttons.
 
-MIT License — See [LICENSE](LICENSE) file for details.
+## Browser Support
 
-## 🙏 Acknowledgments
+| Browser | Status |
+|---------|--------|
+| Chrome/Edge 90+ | Full support |
+| Firefox 90+ | Full support |
+| Safari 15+ | Full support |
+| Mobile Chrome/Safari | Optimized touch UI |
 
-- [OpenSky Network](https://opensky-network.org/) for free aircraft data API
-- [ADSB.lol](https://adsb.lol/) for ADS-B aggregation
-- [Airplanes.live](https://airplanes.live/) for additional aircraft data
-- [Planespotters.net](https://www.planespotters.net/) for aircraft photography
-- [RainViewer](https://www.rainviewer.com/) for weather radar API
-- [Leaflet](https://leafletjs.com/) for the mapping library
-- [LiveATC](https://www.liveatc.net/) for ATC audio feeds
+## Tech Stack
+
+Everything runs client-side in a single `index.html` — no server, no build process:
+
+- **Leaflet 1.9.4** — 2D map rendering, markers, layers
+- **CesiumJS 1.119** — 3D globe (lazy-loaded on first use, ~3MB)
+- **Leaflet.heat** — Traffic heatmap visualization
+- **Leaflet.markercluster** — Aircraft clustering at dense zoom levels
+- **IndexedDB** — Client-side caching of airport/registration databases
+- **ServiceWorker** — Offline capability and asset caching
+
+All external libraries loaded from cdnjs.cloudflare.com CDN. No npm packages, no compilation.
+
+## FAQ
+
+**Q: Where does the aircraft data come from?**
+ADS-B (Automatic Dependent Surveillance-Broadcast) is a system where aircraft broadcast their GPS position, altitude, speed, and identity. Volunteer-run receiver networks like Airplanes.live and ADSB One collect and share this data via public APIs.
+
+**Q: Why are some aircraft missing?**
+Not all aircraft have ADS-B transponders. Military aircraft often don't broadcast, and some older general aviation aircraft use Mode-C transponders which report altitude but not position. Aircraft using Privacy ICAO Addresses (PIA) may appear with randomized hex codes.
+
+**Q: How do I get 3D terrain working?**
+Click the globe icon to enter 3D mode. Terrain loads automatically using a Cesium Ion token included in the app. For a custom token, sign up free at cesium.com/ion and enter it in Settings.
+
+**Q: Can I run this offline?**
+Yes. After the first load, the ServiceWorker caches core assets. Aircraft data requires an internet connection, but previously loaded databases and map tiles are available offline.
+
+**Q: Why do some planes show as "interesting"?**
+SkyTrack loads curated databases including military, VIP/government, PIA (Privacy ICAO Address), and general "interesting" aircraft. These are flagged with colored markers and badges.
+
+## Contributing
+
+Issues and PRs welcome. SkyTrack is a single-file application — all changes go into `index.html`.
+
+When contributing:
+- Test in both 2D and 3D modes
+- Verify CORS compatibility for any new data sources
+- Maintain the single-file architecture
+- Dark theme is the default — ensure new UI elements support it
+
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
-<div align="center">
-
-Made with ☕ and ✈️
-
-**SkyTrack v3.9** — Track flights like a pro.
-
-[![GitHub Pages](https://img.shields.io/badge/Hosted_on-GitHub_Pages-222?style=flat-square&logo=github)](https://sysadmindoc.github.io/SkyTrack/)
-
-</div>
+Built by [SysAdminDoc](https://github.com/SysAdminDoc)
