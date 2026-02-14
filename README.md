@@ -257,7 +257,3 @@ When contributing:
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-Built by [SysAdminDoc](https://github.com/SysAdminDoc)
