@@ -71,6 +71,9 @@ SkyTrack is a zero-dependency, single-file web application. No npm, no bundler, 
 
 ### Airport Intelligence
 
+<img width="1374" height="1127" alt="image" src="https://github.com/user-attachments/assets/a5209984-590c-4a6f-ae41-656bb1f36c43" />
+
+
 | Feature | Description |
 |---------|-------------|
 | 49,000+ Airports | Global airport database with ICAO/IATA codes, coordinates, and metadata |
