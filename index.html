@@ -9515,7 +9515,6 @@ ${trailData.map(p => `            <trkpt lat="${p.lat}" lon="${p.lon}">
                 const altFt=(typeof ac.alt_baro==='number')?ac.alt_baro:0;
                 const altM=altFt<200?80:altFt*0.3048;
                 const newPos=Cesium.Cartesian3.fromDegrees(ac.lon,ac.lat,altM);
-                const heading=Cesium.Math.toRadians(ac.track||0);
                 const color=Cesium.Color.fromCssColorString(this.getAltColor(ac));
                 const isHeavy=ac.t&&/A38|B74|B77|A34|C5|C17|AN[12]|IL7|B78|A35/.test(ac.t);
                 const isMed=ac.t&&/A3[12]|B73|B75|B76|E[17][9]|A22|MD|CRJ|E7/.test(ac.t);
@@ -9523,34 +9522,34 @@ ${trailData.map(p => `            <trkpt lat="${p.lat}" lon="${p.lon}">
                 
                 let entity=this.entityMap.get(hex);
                 if(entity){
-                    // Smooth interpolation: add new sample to SampledPositionProperty
+                    // Add position sample - VelocityOrientationProperty auto-derives heading from movement
                     const pp=entity.position;
                     if(pp instanceof Cesium.SampledPositionProperty) pp.addSample(jNow,newPos);
-                    const op=entity.orientation;
-                    if(op instanceof Cesium.SampledProperty){
-                        const hpr=new Cesium.HeadingPitchRoll(heading,0,0);
-                        op.addSample(jNow,Cesium.Transforms.headingPitchRollQuaternion(newPos,hpr));
-                    }
                     entity.model.color=color;
                     entity.model.scale=scale;
                     if(entity.label)entity.label.text=ac.flight?.trim()||ac.r||hex;
                 } else {
-                    // Create SampledPositionProperty for smooth movement between updates
+                    // SampledPositionProperty for smooth interpolation between updates
                     const posP=new Cesium.SampledPositionProperty();
                     posP.setInterpolationOptions({interpolationDegree:1,interpolationAlgorithm:Cesium.LinearApproximation});
                     posP.forwardExtrapolationType=Cesium.ExtrapolationType.EXTRAPOLATE;
                     posP.forwardExtrapolationDuration=10;
+                    
+                    // Seed a back-position along track so VelocityOrientationProperty has immediate direction
+                    const trackRad=(ac.track||0)*Math.PI/180;
+                    const backDist=0.008; // ~800m back along track
+                    const prevLat=ac.lat-Math.cos(trackRad)*backDist;
+                    const prevLon=ac.lon-Math.sin(trackRad)*backDist;
+                    const prevTime=Cesium.JulianDate.addSeconds(jNow,-3,new Cesium.JulianDate());
+                    posP.addSample(prevTime,Cesium.Cartesian3.fromDegrees(prevLon,prevLat,altM));
                     posP.addSample(jNow,newPos);
                     
-                    const oriP=new Cesium.SampledProperty(Cesium.Quaternion);
-                    oriP.setInterpolationOptions({interpolationDegree:1,interpolationAlgorithm:Cesium.LinearApproximation});
-                    oriP.forwardExtrapolationType=Cesium.ExtrapolationType.HOLD;
-                    const hpr=new Cesium.HeadingPitchRoll(heading,0,0);
-                    oriP.addSample(jNow,Cesium.Transforms.headingPitchRollQuaternion(newPos,hpr));
+                    // Orientation derived from movement direction - always faces where it's flying
+                    const velOri=new Cesium.VelocityOrientationProperty(posP);
                     
                     entity=this.cesiumViewer.entities.add({
                         position:posP,
-                        orientation:oriP,
+                        orientation:velOri,
                         model:{
                             uri:this.modelUri,
                             scale:scale,
