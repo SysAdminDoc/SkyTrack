@@ -14,7 +14,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-32x32.png">
     <link rel="icon" type="image/png" sizes="48x48" href="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-48x48.png">
     <link rel="apple-touch-icon" sizes="128x128" href="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-128x128.png">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <style>
         :root {
             --bg: #1a1a2e;
@@ -1345,8 +1345,8 @@ if ('serviceWorker' in navigator) {
             const swCode = `
                 const CACHE_NAME = 'skytrack-v3.9-p12';
                 const STATIC_ASSETS = [
-                    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-                    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
+                    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
                     'https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js'
                 ];
                 
@@ -2175,7 +2175,7 @@ if ('serviceWorker' in navigator) {
         </div>
     </div>
     <div class="toast" id="toast"></div>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script>
     // ============================================================
@@ -2189,8 +2189,8 @@ if ('serviceWorker' in navigator) {
         cacheExpiry: 300000,
         defaultCredentials: { clientId: 'mparker-api-client', clientSecret: 'aPEAJUp6WgZuN7UZxX83BionDNsozUTF' },
         corsProxies: [
-            url => 'https://corsproxy.io/?' + encodeURIComponent(url),
-            url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url)
+            url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+            url => 'https://corsproxy.org/?' + encodeURIComponent(url)
         ],
         // Self-hosted asset URLs
         silhouetteUrl: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/silhouettes/',
@@ -2564,7 +2564,7 @@ if ('serviceWorker' in navigator) {
         
         async checkConnection() {
             try {
-                const response = await fetch('https://api.adsb.lol/health', {
+                const response = await fetch('https://api.airplanes.live/v2/point/0/0/1', {
                     method: 'HEAD',
                     cache: 'no-cache',
                     signal: AbortSignal.timeout(5000)
@@ -2719,18 +2719,6 @@ if ('serviceWorker' in navigator) {
     const dataSourceManager = {
         sources: [
             {
-                key: 'adsblol',
-                name: 'ADSB.lol',
-                buildUrl: (c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r,
-                parseResponse: d => d?.ac?.length ? d.ac : null,
-                status: 'unknown',
-                lastSuccess: 0,
-                lastError: 0,
-                errorCount: 0,
-                latency: 0,
-                priority: 1
-            },
-            {
                 key: 'airplaneslive',
                 name: 'Airplanes.live',
                 buildUrl: (c, r) => 'https://api.airplanes.live/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r,
@@ -2740,19 +2728,34 @@ if ('serviceWorker' in navigator) {
                 lastError: 0,
                 errorCount: 0,
                 latency: 0,
-                priority: 2
+                priority: 1,
+                cors: true
             },
             {
-                key: 'adsbfi',
-                name: 'ADSB.fi',
-                buildUrl: (c, r) => 'https://api.adsb.fi/v1/aircraft?lat=' + c.lat.toFixed(4) + '&lon=' + c.lng.toFixed(4) + '&radius=' + (r * 1852),
-                parseResponse: d => d?.aircraft?.length ? d.aircraft : null,
+                key: 'adsbone',
+                name: 'ADSB One',
+                buildUrl: (c, r) => 'https://api.adsb.one/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r,
+                parseResponse: d => d?.ac?.length ? d.ac : null,
                 status: 'unknown',
                 lastSuccess: 0,
                 lastError: 0,
                 errorCount: 0,
                 latency: 0,
-                priority: 3
+                priority: 2,
+                cors: true
+            },
+            {
+                key: 'adsblol',
+                name: 'ADSB.lol',
+                buildUrl: (c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r,
+                parseResponse: d => d?.ac?.length ? d.ac : null,
+                status: 'unknown',
+                lastSuccess: 0,
+                lastError: 0,
+                errorCount: 0,
+                latency: 0,
+                priority: 3,
+                cors: false
             }
         ],
         
@@ -2785,11 +2788,17 @@ if ('serviceWorker' in navigator) {
             try {
                 const testUrl = source.buildUrl({ lat: 40, lng: -74 }, 10);
                 
-                const response = await fetch(testUrl, {
-                    method: 'GET',
-                    cache: 'no-cache',
-                    signal: AbortSignal.timeout(8000)
-                });
+                let response;
+                if (source.cors === false) {
+                    response = await fetchWithProxy(testUrl);
+                    if (!response) throw new Error('Proxy fetch failed');
+                } else {
+                    response = await fetch(testUrl, {
+                        method: 'GET',
+                        cache: 'no-cache',
+                        signal: AbortSignal.timeout(8000)
+                    });
+                }
                 
                 source.latency = Date.now() - startTime;
                 
@@ -5371,11 +5380,11 @@ if ('serviceWorker' in navigator) {
 
     // ============ DATA SOURCES ============
     const DATA_SOURCES = {
-        adsblol: { name: 'ADSB.lol', buildUrl: (b, c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null },
         airplaneslive: { name: 'Airplanes.live', buildUrl: (b, c, r) => 'https://api.airplanes.live/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null },
-        adsbfi: { name: 'ADSB.fi', buildUrl: (b, c, r) => 'https://api.adsb.fi/v1/aircraft?lat=' + c.lat.toFixed(4) + '&lon=' + c.lng.toFixed(4) + '&radius=' + (r * 1852), parseResponse: d => d?.aircraft?.length ? d.aircraft : null }
+        adsbone: { name: 'ADSB One', buildUrl: (b, c, r) => 'https://api.adsb.one/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null },
+        adsblol: { name: 'ADSB.lol', buildUrl: (b, c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null }
     };
-    const SOURCE_ORDER = ['adsblol', 'airplaneslive', 'adsbfi'];
+    const SOURCE_ORDER = ['airplaneslive', 'adsbone', 'adsblol'];
 
     // ============ STATE ============
     let apiCredentials = { clientId: '', clientSecret: '' };
@@ -6263,95 +6272,132 @@ if ('serviceWorker' in navigator) {
     }
 
     // ============ AIRCRAFT DATA ============
-    async function loadAircraft() {
-        if (fetchInProgress || Date.now() - lastFetchTime < 3000) return; 
+    // Grid fetch system - covers entire viewport by tiling multiple API requests
+    const gridFetch = {
+        inProgress: false,
+        abortController: null,
         
-        // Phase 16: Check if offline
-        if (!offlineManager.isOnline) {
-            offlineManager.showCachedPositions();
-            return;
-        }
-        
-        fetchInProgress = true;
-        const bounds = map.getBounds(), center = bounds.getCenter(), radius = Math.min(250, Math.round(haversineDistance(center.lat, center.lng, bounds.getNorth(), center.lng) * 1.5));
-        let success = false;
-        
-        // Phase 16: Use circuit breaker and enhanced data source manager
-        try {
-            await circuitBreakers.aircraft.execute(async () => {
-                const sources = dataSourceManager.getSourcesInOrder();
-                
-                for (const source of sources) {
-                    if (source.status === 'unhealthy') continue;
-                    
-                    const url = source.buildUrl(center, radius);
-                    
-                    try {
-                        // Phase 16: Use retry system
-                        const resp = await retrySystem.fetch(url, { 
-                            timeout: 12000,
-                            retry: { maxRetries: 2, baseDelay: 500 }
-                        });
-                        
-                        if (resp?.ok) {
-                            const data = await resp.json();
-                            const aircraft = source.parseResponse(data);
-                            if (aircraft?.length) { 
-                                processAircraftData(aircraft); 
-                                document.getElementById('dataSource').textContent = source.name + ' - ' + aircraft.length + ' aircraft'; 
-                                lastSuccessfulSource = source.key; 
-                                success = true;
-                                connectionMonitor.recordSuccess();
-                                dataSourceManager.recordSuccess(source);
-                                
-                                // Phase 16: Cache positions for offline use
-                                offlineManager.cachePositions();
-                                return;
-                            }
-                        }
-                    } catch(e) {
-                        dataSourceManager.recordFailure(source);
-                        
-                        // Try with proxy as fallback
-                        try {
-                            const resp = await fetchWithProxy(url);
-                            if (resp?.ok) {
-                                const data = await resp.json();
-                                const aircraft = source.parseResponse(data);
-                                if (aircraft?.length) { 
-                                    processAircraftData(aircraft); 
-                                    document.getElementById('dataSource').textContent = source.name + ' (proxy) - ' + aircraft.length + ' aircraft'; 
-                                    lastSuccessfulSource = source.key; 
-                                    success = true;
-                                    connectionMonitor.recordSuccess();
-                                    dataSourceManager.recordSuccess(source);
-                                    offlineManager.cachePositions();
-                                    return;
-                                }
-                            }
-                        } catch(e2) { 
-                            continue; 
-                        }
-                    }
+        generateGrid(bounds, maxRadius) {
+            const center = bounds.getCenter();
+            const n = bounds.getNorth(), s = bounds.getSouth(), e = bounds.getEast(), w = bounds.getWest();
+            const latSpan = n - s;
+            const lonSpan = (e >= w) ? (e - w) : (360 - w + e);
+            const spacingNm = 350;
+            const spacingLat = spacingNm / 60;
+            const midLat = (n + s) / 2;
+            const spacingLon = spacingNm / (60 * Math.max(Math.cos(midLat * Math.PI / 180), 0.1));
+            if (latSpan < spacingLat && lonSpan < spacingLon) return [{ lat: center.lat, lng: center.lng }];
+            const points = [];
+            const rows = Math.ceil(latSpan / spacingLat);
+            const cols = Math.ceil(lonSpan / spacingLon);
+            const maxPoints = 32;
+            const totalNeeded = (rows + 1) * (cols + 1);
+            const skip = totalNeeded > maxPoints ? Math.ceil(totalNeeded / maxPoints) : 1;
+            for (let r = 0; r <= rows; r++) {
+                const lat = s + r * spacingLat;
+                if (lat < -85 || lat > 85) continue;
+                for (let c = 0; c <= cols; c++) {
+                    if (skip > 1 && ((r * (cols + 1) + c) % skip) !== 0) continue;
+                    let lon = w + c * spacingLon;
+                    if (lon > 180) lon -= 360;
+                    points.push({ lat, lng: lon });
                 }
-                
-                if (!success) {
-                    throw new Error('All data sources failed');
-                }
-            });
-        } catch (e) {
-            if (e.circuitBreakerOpen) {
-                document.getElementById('dataSource').textContent = 'Waiting for recovery...';
-            } else {
-                document.getElementById('dataSource').textContent = 'No data source available';
-                connectionMonitor.recordFailure();
-                
-                // Phase 16: Attempt error recovery
-                await errorRecovery.handleError('data-load', e);
             }
+            points.sort((a, b) => {
+                const da = Math.abs(a.lat - center.lat) + Math.abs(a.lng - center.lng);
+                const db = Math.abs(b.lat - center.lat) + Math.abs(b.lng - center.lng);
+                return da - db;
+            });
+            return points;
+        },
+        
+        async fetchPoint(source, point, signal) {
+            const url = source.buildUrl(point, 250);
+            try {
+                let resp;
+                if (source.cors === false) { resp = await fetchWithProxy(url); }
+                else { resp = await fetch(url, { signal, cache: 'no-cache' }); }
+                if (resp?.ok) { const data = await resp.json(); return source.parseResponse(data) || []; }
+            } catch(e) { if (e.name === 'AbortError') throw e; }
+            return [];
+        }
+    };
+
+    async function loadAircraft() {
+        if (gridFetch.inProgress) { if (gridFetch.abortController) gridFetch.abortController.abort(); return; }
+        if (Date.now() - lastFetchTime < 2000) return;
+        
+        if (!offlineManager.isOnline) { offlineManager.showCachedPositions(); return; }
+        
+        gridFetch.abortController = new AbortController();
+        const signal = gridFetch.abortController.signal;
+        gridFetch.inProgress = true;
+        fetchInProgress = true;
+        
+        const bounds = map.getBounds();
+        const grid = gridFetch.generateGrid(bounds, 250);
+        const isSinglePoint = grid.length === 1;
+        const corsSources = dataSourceManager.sources.filter(s => s.cors !== false && s.status !== 'unhealthy');
+        const proxySources = dataSourceManager.sources.filter(s => s.cors === false && s.status !== 'unhealthy');
+        const allSources = [...corsSources, ...proxySources];
+        
+        if (!allSources.length) {
+            document.getElementById('dataSource').textContent = 'No data source available';
+            gridFetch.inProgress = false; fetchInProgress = false; lastFetchTime = Date.now(); return;
         }
         
-        lastFetchTime = Date.now(); 
+        let totalAircraft = 0, completed = 0, success = false;
+        const sourceNames = new Set();
+        
+        try {
+            if (isSinglePoint) {
+                for (const source of allSources) {
+                    try {
+                        const aircraft = await gridFetch.fetchPoint(source, grid[0], signal);
+                        if (aircraft.length) {
+                            processAircraftData(aircraft);
+                            totalAircraft = Object.keys(aircraftCache).filter(h => aircraftCache[h].lat !== undefined && Date.now() - aircraftCache[h].lastSeen < 120000).length;
+                            document.getElementById('dataSource').textContent = source.name + ' - ' + totalAircraft + ' aircraft';
+                            lastSuccessfulSource = source.key; success = true;
+                            connectionMonitor.recordSuccess(); dataSourceManager.recordSuccess(source); offlineManager.cachePositions();
+                            break;
+                        }
+                    } catch(e) { if (e.name === 'AbortError') break; dataSourceManager.recordFailure(source); }
+                }
+            } else {
+                const numCors = corsSources.length || 1;
+                const batchDelay = 1050;
+                const fetchPromises = grid.map((point, idx) => {
+                    const source = corsSources[idx % numCors] || allSources[0];
+                    const delay = Math.floor(idx / numCors) * batchDelay;
+                    return new Promise(async (resolve) => {
+                        if (delay > 0) await new Promise(r => setTimeout(r, delay));
+                        if (signal.aborted) { resolve([]); return; }
+                        try {
+                            const aircraft = await gridFetch.fetchPoint(source, point, signal);
+                            completed++; sourceNames.add(source.name);
+                            if (aircraft.length) { processAircraftData(aircraft); success = true; dataSourceManager.recordSuccess(source); }
+                            totalAircraft = Object.keys(aircraftCache).filter(h => aircraftCache[h].lat !== undefined && Date.now() - aircraftCache[h].lastSeen < 120000).length;
+                            const names = [...sourceNames].join(' + ');
+                            document.getElementById('dataSource').textContent = names + ' - ' + totalAircraft + ' aircraft' + (completed < grid.length ? ' (' + completed + '/' + grid.length + ' zones)' : '');
+                            resolve(aircraft);
+                        } catch(e) { completed++; if (e.name !== 'AbortError') dataSourceManager.recordFailure(source); resolve([]); }
+                    });
+                });
+                await Promise.all(fetchPromises);
+                if (success) {
+                    connectionMonitor.recordSuccess(); offlineManager.cachePositions();
+                    totalAircraft = Object.keys(aircraftCache).filter(h => aircraftCache[h].lat !== undefined && Date.now() - aircraftCache[h].lastSeen < 120000).length;
+                    document.getElementById('dataSource').textContent = [...sourceNames].join(' + ') + ' - ' + totalAircraft + ' aircraft';
+                }
+            }
+            if (!success) { document.getElementById('dataSource').textContent = 'No data source available'; connectionMonitor.recordFailure(); }
+        } catch (e) {
+            if (e.name !== 'AbortError') { document.getElementById('dataSource').textContent = 'No data source available'; connectionMonitor.recordFailure(); }
+        }
+        
+        lastFetchTime = Date.now();
+        gridFetch.inProgress = false;
         fetchInProgress = false;
     }
 
@@ -9117,7 +9163,7 @@ ${trailData.map(p => `            <trkpt lat="${p.lat}" lon="${p.lon}">
             
             if (typeof L.heatLayer === 'undefined') {
                 const script = document.createElement('script');
-                script.src = 'https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js';
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js';
                 script.onload = () => this.createLayer(points);
                 document.head.appendChild(script);
             } else {
@@ -9342,40 +9388,38 @@ ${trailData.map(p => `            <trkpt lat="${p.lat}" lon="${p.lon}">
         updateTimer: null,
         
         createAirplaneGLB() {
-            // Procedural swept-wing jet — GLTF: +X right, +Y up, -Z forward (nose)
             const pos = [
-                 0.0,  0.15, -5.0,   // 0: nose tip
-                -0.4,  0.14,  0.0,   // 1: left shoulder
-                 0.4,  0.14,  0.0,   // 2: right shoulder
-                 0.0,  0.12,  2.0,   // 3: waist
-                 0.0,  0.10,  5.0,   // 4: tail
-                -4.5,  0.04,  0.8,   // 5: left wingtip
-                 4.5,  0.04,  0.8,   // 6: right wingtip
-                -1.2,  0.04,  3.5,   // 7: left wing trailing
-                 1.2,  0.04,  3.5,   // 8: right wing trailing
-                -1.5,  0.04,  4.8,   // 9: left htail tip
-                 1.5,  0.04,  4.8,   // 10: right htail tip
-                 0.0,  1.40,  3.8,   // 11: fin top
-                 0.0,  0.10,  4.8,   // 12: fin base rear
-                 0.0, -0.08, -5.0,   // 13: nose bottom
-                -0.4, -0.08,  0.0,   // 14: left bottom
-                 0.4, -0.08,  0.0,   // 15: right bottom
-                 0.0, -0.08,  2.0,   // 16: waist bottom
-                 0.0, -0.08,  5.0,   // 17: tail bottom
-                -4.5, -0.04,  0.8,   // 18: left wingtip bottom
-                 4.5, -0.04,  0.8,   // 19: right wingtip bottom
-                -1.2, -0.20,  1.2,   // 20: left engine
-                 1.2, -0.20,  1.2,   // 21: right engine
-                -1.2, -0.08,  0.5,   // 22: left engine top front
-                 1.2, -0.08,  0.5,   // 23: right engine top front
-                -1.2, -0.08,  1.8,   // 24: left engine top rear
-                 1.2, -0.08,  1.8,   // 25: right engine top rear
+                 0.0,  0.15, -5.0,
+                -0.4,  0.14,  0.0,
+                 0.4,  0.14,  0.0,
+                 0.0,  0.12,  2.0,
+                 0.0,  0.10,  5.0,
+                -4.5,  0.04,  0.8,
+                 4.5,  0.04,  0.8,
+                -1.2,  0.04,  3.5,
+                 1.2,  0.04,  3.5,
+                -1.5,  0.04,  4.8,
+                 1.5,  0.04,  4.8,
+                 0.0,  1.40,  3.8,
+                 0.0,  0.10,  4.8,
+                 0.0, -0.08, -5.0,
+                -0.4, -0.08,  0.0,
+                 0.4, -0.08,  0.0,
+                 0.0, -0.08,  2.0,
+                 0.0, -0.08,  5.0,
+                -4.5, -0.04,  0.8,
+                 4.5, -0.04,  0.8,
+                -1.2, -0.20,  1.2,
+                 1.2, -0.20,  1.2,
+                -1.2, -0.08,  0.5,
+                 1.2, -0.08,  0.5,
+                -1.2, -0.08,  1.8,
+                 1.2, -0.08,  1.8,
             ];
             const tri = [
                 0,1,2,  1,3,2,  3,4,8,  1,3,7,
                 0,5,1,  0,2,6,  1,5,7,  2,8,6,  5,7,3,  6,3,8,
-                3,9,4,  3,4,10,
-                3,11,4,  4,11,12,
+                3,9,4,  3,4,10,  3,11,4,  4,11,12,
                 13,15,14,  14,15,16,  16,17,15,
                 13,14,18,  13,19,15,  14,7,18,  15,19,8,
                 0,13,5,  5,13,18,  0,6,13,  13,6,19,
@@ -9443,14 +9487,12 @@ ${trailData.map(p => `            <trkpt lat="${p.lat}" lon="${p.lon}">
                     toast('Loading 3D engine...');
                     try { await this.loadCesium(); } catch (e) {
                         errorHandler.log('3D View', e.message, 'error');
-                        toast('Failed to load 3D engine');
-                        return;
+                        toast('Failed to load 3D engine'); return;
                     }
                 }
                 try { this.enable(); } catch (e) {
                     errorHandler.log('3D View', e.message, 'error');
-                    toast('3D initialization failed');
-                    this.disable();
+                    toast('3D initialization failed'); this.disable();
                 }
             } else { this.disable(); }
         },
@@ -11272,17 +11314,17 @@ ${trailData.map(p => `            <trkpt lat="${p.lat}" lon="${p.lon}">
                 // Add CSS
                 const link = document.createElement('link');
                 link.rel = 'stylesheet';
-                link.href = 'https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css';
+                link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.css';
                 document.head.appendChild(link);
                 
                 const link2 = document.createElement('link');
                 link2.rel = 'stylesheet';
-                link2.href = 'https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css';
+                link2.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.Default.css';
                 document.head.appendChild(link2);
                 
                 // Add JS
                 const script = document.createElement('script');
-                script.src = 'https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js';
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/leaflet.markercluster.js';
                 script.onload = () => {
                     this.pluginLoaded = true;
                     resolve(true);
