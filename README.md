@@ -8,8 +8,6 @@
 
 > Real-time global aircraft tracker with 3D globe view, military/VIP detection, and comprehensive aviation intelligence — all in a single HTML file.
 
-## Quick Start
-
 <div align="center">
 
 ### ✈️ [**Launch SkyTrack**](https://sysadmindoc.github.io/SkyTrack/) ✈️
