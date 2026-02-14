@@ -6273,8 +6273,89 @@ if ('serviceWorker' in navigator) {
     }
 
     // ============ AIRCRAFT DATA ============
+    // Grid fetch system - covers entire viewport by tiling multiple API requests
+    const gridFetch = {
+        inProgress: false,
+        abortController: null,
+        lastGridKey: '',
+        
+        // Generate grid points covering the viewport
+        generateGrid(bounds, maxRadius) {
+            const center = bounds.getCenter();
+            const n = bounds.getNorth(), s = bounds.getSouth(), e = bounds.getEast(), w = bounds.getWest();
+            const latSpan = n - s;
+            const lonSpan = (e >= w) ? (e - w) : (360 - w + e);
+            
+            // Each circle covers ~250nm radius. Space grid at ~350nm (~5.8 degrees lat)
+            // 1 degree lat ≈ 60nm, 1 degree lon ≈ 60nm * cos(lat)
+            const spacingNm = 350;
+            const spacingLat = spacingNm / 60;
+            const midLat = (n + s) / 2;
+            const spacingLon = spacingNm / (60 * Math.max(Math.cos(midLat * Math.PI / 180), 0.1));
+            
+            // Single circle covers viewport
+            if (latSpan < spacingLat && lonSpan < spacingLon) {
+                return [{ lat: center.lat, lng: center.lng }];
+            }
+            
+            const points = [];
+            const rows = Math.ceil(latSpan / spacingLat);
+            const cols = Math.ceil(lonSpan / spacingLon);
+            
+            // Cap grid size for performance
+            const maxPoints = 32;
+            const totalNeeded = (rows + 1) * (cols + 1);
+            const skip = totalNeeded > maxPoints ? Math.ceil(totalNeeded / maxPoints) : 1;
+            
+            for (let r = 0; r <= rows; r++) {
+                const lat = s + r * spacingLat;
+                if (lat < -85 || lat > 85) continue;
+                for (let c = 0; c <= cols; c++) {
+                    if (skip > 1 && ((r * (cols + 1) + c) % skip) !== 0) continue;
+                    let lon = w + c * spacingLon;
+                    if (lon > 180) lon -= 360;
+                    points.push({ lat, lng: lon });
+                }
+            }
+            
+            // Sort from center outward for progressive loading
+            points.sort((a, b) => {
+                const da = Math.abs(a.lat - center.lat) + Math.abs(a.lng - center.lng);
+                const db = Math.abs(b.lat - center.lat) + Math.abs(b.lng - center.lng);
+                return da - db;
+            });
+            
+            return points;
+        },
+        
+        // Fetch a single grid point from one API
+        async fetchPoint(source, point, signal) {
+            const url = source.buildUrl(point, 250);
+            try {
+                let resp;
+                if (source.cors === false) {
+                    resp = await fetchWithProxy(url);
+                } else {
+                    resp = await fetch(url, { signal, cache: 'no-cache' });
+                }
+                if (resp?.ok) {
+                    const data = await resp.json();
+                    return source.parseResponse(data) || [];
+                }
+            } catch(e) {
+                if (e.name === 'AbortError') throw e;
+            }
+            return [];
+        }
+    };
+
     async function loadAircraft() {
-        if (fetchInProgress || Date.now() - lastFetchTime < 3000) return; 
+        // If already running, abort previous and let it clean up - skip this cycle
+        if (gridFetch.inProgress) {
+            if (gridFetch.abortController) gridFetch.abortController.abort();
+            return;
+        }
+        if (Date.now() - lastFetchTime < 2000) return; 
         
         // Phase 16: Check if offline
         if (!offlineManager.isOnline) {
@@ -6282,86 +6363,121 @@ if ('serviceWorker' in navigator) {
             return;
         }
         
-        fetchInProgress = true;
-        const bounds = map.getBounds(), center = bounds.getCenter(), radius = Math.min(250, Math.round(haversineDistance(center.lat, center.lng, bounds.getNorth(), center.lng) * 1.5));
-        let success = false;
+        // Create new abort controller for this fetch cycle
+        gridFetch.abortController = new AbortController();
+        const signal = gridFetch.abortController.signal;
         
-        // Phase 16: Use circuit breaker and enhanced data source manager
+        gridFetch.inProgress = true;
+        fetchInProgress = true;
+        
+        const bounds = map.getBounds();
+        const center = bounds.getCenter();
+        const grid = gridFetch.generateGrid(bounds, 250);
+        const isSinglePoint = grid.length === 1;
+        
+        // Get CORS-enabled sources for parallel fetch
+        const corsSources = dataSourceManager.sources.filter(s => s.cors !== false && s.status !== 'unhealthy');
+        const proxySources = dataSourceManager.sources.filter(s => s.cors === false && s.status !== 'unhealthy');
+        const allSources = [...corsSources, ...proxySources];
+        
+        if (!allSources.length) {
+            document.getElementById('dataSource').textContent = 'No data source available';
+            gridFetch.inProgress = false;
+            fetchInProgress = false;
+            lastFetchTime = Date.now();
+            return;
+        }
+        
+        let totalAircraft = 0;
+        let completed = 0;
+        let success = false;
+        const sourceNames = new Set();
+        
         try {
-            await circuitBreakers.aircraft.execute(async () => {
-                const sources = dataSourceManager.getSourcesInOrder();
-                
-                for (const source of sources) {
-                    if (source.status === 'unhealthy') continue;
-                    
-                    const url = source.buildUrl(center, radius);
-                    
+            if (isSinglePoint) {
+                // Fast path: single request for small viewports
+                for (const source of allSources) {
                     try {
-                        // Phase 16: Use retry system
-                        const resp = await retrySystem.fetch(url, { 
-                            timeout: 12000,
-                            retry: { maxRetries: 2, baseDelay: 500 }
-                        });
-                        
-                        if (resp?.ok) {
-                            const data = await resp.json();
-                            const aircraft = source.parseResponse(data);
-                            if (aircraft?.length) { 
-                                processAircraftData(aircraft); 
-                                document.getElementById('dataSource').textContent = source.name + ' - ' + aircraft.length + ' aircraft'; 
-                                lastSuccessfulSource = source.key; 
-                                success = true;
-                                connectionMonitor.recordSuccess();
-                                dataSourceManager.recordSuccess(source);
-                                
-                                // Phase 16: Cache positions for offline use
-                                offlineManager.cachePositions();
-                                return;
-                            }
+                        const aircraft = await gridFetch.fetchPoint(source, grid[0], signal);
+                        if (aircraft.length) {
+                            processAircraftData(aircraft);
+                            totalAircraft = Object.keys(aircraftCache).filter(h => aircraftCache[h].lat !== undefined && Date.now() - aircraftCache[h].lastSeen < 120000).length;
+                            document.getElementById('dataSource').textContent = source.name + ' - ' + totalAircraft + ' aircraft';
+                            lastSuccessfulSource = source.key;
+                            success = true;
+                            connectionMonitor.recordSuccess();
+                            dataSourceManager.recordSuccess(source);
+                            offlineManager.cachePositions();
+                            break;
                         }
                     } catch(e) {
+                        if (e.name === 'AbortError') break;
                         dataSourceManager.recordFailure(source);
-                        
-                        // Try with proxy as fallback
-                        try {
-                            const resp = await fetchWithProxy(url);
-                            if (resp?.ok) {
-                                const data = await resp.json();
-                                const aircraft = source.parseResponse(data);
-                                if (aircraft?.length) { 
-                                    processAircraftData(aircraft); 
-                                    document.getElementById('dataSource').textContent = source.name + ' (proxy) - ' + aircraft.length + ' aircraft'; 
-                                    lastSuccessfulSource = source.key; 
-                                    success = true;
-                                    connectionMonitor.recordSuccess();
-                                    dataSourceManager.recordSuccess(source);
-                                    offlineManager.cachePositions();
-                                    return;
-                                }
-                            }
-                        } catch(e2) { 
-                            continue; 
-                        }
                     }
                 }
-                
-                if (!success) {
-                    throw new Error('All data sources failed');
-                }
-            });
-        } catch (e) {
-            if (e.circuitBreakerOpen) {
-                document.getElementById('dataSource').textContent = 'Waiting for recovery...';
             } else {
+                // Grid path: parallel requests across multiple APIs
+                // Distribute grid points across CORS sources to respect rate limits
+                const numCors = corsSources.length || 1;
+                const batchDelay = 1050; // ~1 req/sec per API
+                
+                const fetchPromises = grid.map((point, idx) => {
+                    const source = corsSources[idx % numCors] || allSources[0];
+                    const delay = Math.floor(idx / numCors) * batchDelay;
+                    
+                    return new Promise(async (resolve) => {
+                        if (delay > 0) await new Promise(r => setTimeout(r, delay));
+                        if (signal.aborted) { resolve([]); return; }
+                        
+                        try {
+                            const aircraft = await gridFetch.fetchPoint(source, point, signal);
+                            completed++;
+                            sourceNames.add(source.name);
+                            
+                            if (aircraft.length) {
+                                processAircraftData(aircraft);
+                                success = true;
+                                dataSourceManager.recordSuccess(source);
+                            }
+                            
+                            // Progressive status update
+                            totalAircraft = Object.keys(aircraftCache).filter(h => aircraftCache[h].lat !== undefined && Date.now() - aircraftCache[h].lastSeen < 120000).length;
+                            const names = [...sourceNames].join(' + ');
+                            document.getElementById('dataSource').textContent = names + ' - ' + totalAircraft + ' aircraft' + (completed < grid.length ? ' (' + completed + '/' + grid.length + ' zones)' : '');
+                            
+                            resolve(aircraft);
+                        } catch(e) {
+                            completed++;
+                            if (e.name !== 'AbortError') dataSourceManager.recordFailure(source);
+                            resolve([]);
+                        }
+                    });
+                });
+                
+                await Promise.all(fetchPromises);
+                
+                if (success) {
+                    connectionMonitor.recordSuccess();
+                    offlineManager.cachePositions();
+                    totalAircraft = Object.keys(aircraftCache).filter(h => aircraftCache[h].lat !== undefined && Date.now() - aircraftCache[h].lastSeen < 120000).length;
+                    const names = [...sourceNames].join(' + ');
+                    document.getElementById('dataSource').textContent = names + ' - ' + totalAircraft + ' aircraft';
+                }
+            }
+            
+            if (!success) {
                 document.getElementById('dataSource').textContent = 'No data source available';
                 connectionMonitor.recordFailure();
-                
-                // Phase 16: Attempt error recovery
-                await errorRecovery.handleError('data-load', e);
+            }
+        } catch (e) {
+            if (e.name !== 'AbortError') {
+                document.getElementById('dataSource').textContent = 'No data source available';
+                connectionMonitor.recordFailure();
             }
         }
         
         lastFetchTime = Date.now(); 
+        gridFetch.inProgress = false;
         fetchInProgress = false;
     }
 
