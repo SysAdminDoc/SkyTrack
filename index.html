@@ -1297,6 +1297,109 @@
             height: 20px;
             color: var(--text-dim);
         }
+
+        /* ============ UI OVERHAUL: GROUPED TOOLBAR ============ */
+        .header { gap: 2px !important; padding: 6px 8px !important; align-items: center !important; }
+        .hv2-sep { width: 1px; height: 24px; background: var(--border); margin: 0 6px; flex-shrink: 0; opacity: 0.5; }
+        .hv2-dropdown { position: relative; }
+        .hv2-dropdown-trigger { display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text-dim); font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+        .hv2-dropdown-trigger:hover { background: rgba(255,255,255,0.08); color: var(--text); border-color: rgba(255,255,255,0.15); }
+        .hv2-dropdown-trigger.open { background: rgba(255,255,255,0.1); color: var(--text); border-color: var(--accent); }
+        .hv2-dropdown-trigger svg { width: 15px; height: 15px; flex-shrink: 0; }
+        .hv2-dropdown-trigger .hv2-dd-badge { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
+        .hv2-panel { position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%) translateY(-8px); opacity: 0; pointer-events: none; background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px; min-width: 220px; z-index: 2500; box-shadow: 0 12px 40px rgba(0,0,0,0.5); transition: opacity 0.15s, transform 0.15s; backdrop-filter: blur(16px); }
+        .hv2-panel.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+        .hv2-panel-title { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 10px 4px; }
+        .hv2-item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; cursor: pointer; transition: background 0.1s; }
+        .hv2-item:hover { background: rgba(255,255,255,0.06); }
+        .hv2-item-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: rgba(255,255,255,0.04); flex-shrink: 0; }
+        .hv2-item-icon .header-btn { width: 28px !important; height: 28px !important; padding: 4px !important; margin: 0 !important; border: none !important; background: transparent !important; }
+        .hv2-item-label { font-size: 12px; color: var(--text-dim); flex: 1; }
+        .hv2-item-status { font-size: 10px; color: var(--text-muted); }
+        .hv2-item.is-active .hv2-item-icon { background: rgba(0,210,150,0.15); }
+        .hv2-item.is-active .hv2-item-label { color: var(--accent); }
+        .hv2-item.is-active .hv2-item-status { color: var(--accent); }
+        .header-btn.active { background: rgba(0,210,150,0.12) !important; color: var(--accent) !important; box-shadow: 0 0 12px rgba(0,210,150,0.2), inset 0 0 0 1px rgba(0,210,150,0.25) !important; }
+
+        /* ============ UI OVERHAUL: STATUS DOCK ============ */
+        .status-dock { position: fixed; bottom: 0; left: 0; right: 0; height: 32px; background: rgba(10,10,26,0.92); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: center; gap: 16px; padding: 0 16px; z-index: 1000; backdrop-filter: blur(12px); font-size: 11px; }
+        .status-dock-item { display: flex; align-items: center; gap: 5px; color: var(--text-muted); }
+        .status-dock-item svg { width: 12px; height: 12px; opacity: 0.6; }
+        .status-dock-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+        .status-dock-dot.green { background: #22c55e; box-shadow: 0 0 6px #22c55e88; }
+        .status-dock-dot.yellow { background: #eab308; box-shadow: 0 0 6px #eab30888; }
+        .status-dock-dot.red { background: #ef4444; box-shadow: 0 0 6px #ef444488; }
+        .status-dock-dot.grey { background: #6b7280; }
+        .status-dock-value { color: var(--text-dim); font-weight: 500; }
+        .status-dock-sep { width: 1px; height: 14px; background: var(--border); opacity: 0.4; }
+        #map { bottom: 32px !important; }
+        #cesiumContainer { bottom: 32px !important; }
+        .data-source-indicator { display: none !important; }
+        .legend { display: none !important; }
+
+        /* ============ UI OVERHAUL: FILTER CHIPS ============ */
+        .filter-chips-bar { position: fixed; top: 50px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; z-index: 1100; padding: 4px 6px; background: rgba(10,10,26,0.85); border: 1px solid var(--border); border-radius: 20px; backdrop-filter: blur(12px); opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .filter-chips-bar.show { opacity: 1; pointer-events: auto; }
+        .filter-chip-btn { padding: 4px 10px; border: 1px solid transparent; border-radius: 14px; background: rgba(255,255,255,0.04); color: var(--text-muted); font-size: 10px; font-weight: 500; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+        .filter-chip-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-dim); }
+        .filter-chip-btn.active { background: rgba(0,210,150,0.12); color: var(--accent); border-color: rgba(0,210,150,0.25); }
+        .filter-chips-toggle { position: fixed; top: 50px; right: 10px; width: 28px; height: 28px; border-radius: 50%; background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1100; transition: all 0.15s; }
+        .filter-chips-toggle:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+        .filter-chips-toggle.active { color: var(--accent); border-color: rgba(0,210,150,0.3); }
+
+        /* ============ UI OVERHAUL: 3D HUD ============ */
+        .hud-3d { position: fixed; bottom: 44px; right: 12px; background: rgba(10,10,26,0.88); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; z-index: 1200; backdrop-filter: blur(12px); display: none; min-width: 160px; }
+        .hud-3d.show { display: block; }
+        .hud-3d-title { font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .hud-3d-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 11px; color: var(--text-dim); }
+        .hud-3d-key { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; padding: 1px 5px; background: rgba(255,255,255,0.08); border-radius: 4px; font-size: 10px; font-weight: 600; color: var(--text-muted); }
+
+        /* ============ UI OVERHAUL: ONBOARDING ============ */
+        .onboard-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9000; display: none; }
+        .onboard-overlay.show { display: flex; align-items: center; justify-content: center; }
+        .onboard-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 16px; padding: 28px 32px; max-width: 420px; width: 90%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        .onboard-icon { width: 56px; height: 56px; margin: 0 auto 16px; background: rgba(0,210,150,0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+        .onboard-icon svg { width: 28px; height: 28px; color: var(--accent); }
+        .onboard-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+        .onboard-desc { font-size: 13px; color: var(--text-dim); line-height: 1.5; margin-bottom: 20px; }
+        .onboard-tips { text-align: left; margin-bottom: 20px; }
+        .onboard-tip { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; font-size: 12px; color: var(--text-dim); }
+        .onboard-tip-num { width: 22px; height: 22px; border-radius: 50%; background: rgba(0,210,150,0.12); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+        .onboard-btn { padding: 10px 32px; background: var(--accent); color: #000; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+        .onboard-btn:hover { opacity: 0.9; }
+
+        /* ============ UI OVERHAUL: LOADING OVERLAY ============ */
+        .loading-overlay { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 800; pointer-events: none; transition: opacity 0.5s; }
+        .loading-overlay.hidden { opacity: 0; }
+        .loading-pulse { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); opacity: 0.3; animation: loadPulse 1.5s ease-in-out infinite; }
+        @keyframes loadPulse { 0%,100% { transform: scale(0.8); opacity: 0.2; } 50% { transform: scale(1.2); opacity: 0.5; } }
+        .loading-text { margin-top: 14px; font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+        /* ============ UI OVERHAUL: QUICKGLANCE ============ */
+        .info-quickglance { display: flex; gap: 2px; padding: 8px 12px; background: rgba(0,210,150,0.04); border-bottom: 1px solid var(--border); }
+        .info-qg-item { flex: 1; text-align: center; }
+        .info-qg-val { font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.2; }
+        .info-qg-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+
+        /* ============ UI OVERHAUL: WIDE SIDEBAR ============ */
+        @media (min-width: 1400px) {
+            .info-panel.show { position: fixed !important; top: 50px !important; left: 0 !important; bottom: 32px !important; width: 360px !important; max-height: none !important; border-radius: 0 !important; border-left: none !important; border-top: none !important; border-bottom: none !important; }
+            body.panel-pinned #map { left: 360px !important; }
+            body.panel-pinned .info-panel.show { box-shadow: 4px 0 20px rgba(0,0,0,0.3) !important; }
+        }
+
+        /* ============ UI OVERHAUL: MOBILE ============ */
+        @media (max-width: 768px) {
+            .hv2-dropdown-trigger span:not(.hv2-dd-badge) { display: none; }
+            .hv2-dropdown-trigger { padding: 5px 7px; }
+            .hv2-panel { min-width: 200px; left: auto; right: -10px; transform: translateY(-8px); }
+            .hv2-panel.show { transform: translateY(0); }
+            .filter-chips-bar { top: 46px; max-width: calc(100vw - 50px); overflow-x: auto; }
+            .status-dock { font-size: 10px; gap: 8px; }
+            .status-dock-label { display: none; }
+            .hud-3d { bottom: 40px; right: 8px; }
+            .filter-chips-toggle { top: 46px; }
+        }
     </style>
 <script>
 // Inline PWA manifest for single-file deployment
@@ -1450,34 +1553,105 @@ if ('serviceWorker' in navigator) {
         </div>
     </div>
     <header class="header">
-        <button class="header-btn" id="dayNightBtn" title="Cycle Map Style"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></button>
-        <button class="header-btn" id="labelBtn" title="Toggle Labels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></button>
-        <button class="header-btn" id="airportsBtn" title="Toggle Airports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></button>
-        <button class="header-btn active" id="radarBtn" title="Toggle Radar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></button>
-        <button class="header-btn" id="weatherOverlayBtn" title="Weather Overlay (SIGMETs/Wind)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 14.7L12 12m2.7 2.7a5 5 0 1 0-7-7.1M20 20l-7-7M8 12a4 4 0 0 0 4 4"/><path d="M3 15l2-2 2 2"/><path d="M17 9l2-2 2 2"/></svg></button>
+        <!-- Primary Actions (always visible) -->
         <button class="header-btn" id="locateBtn" title="My Location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg></button>
-        <button class="header-btn" id="measureBtn" title="Measure Distance (D)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21L21 3M3 21h7v-7M21 3h-7v7"/></svg></button>
-        <button class="header-btn" id="followBtn" title="Follow Selected Aircraft (F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><path d="M12 8v8M8 12h8" stroke-dasharray="2 2"/></svg></button>
-        <button class="header-btn" id="multiSelectBtn" title="Multi-Select Mode (Ctrl+Click)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+        <button class="header-btn" id="view3DBtn" title="3D Globe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></button>
         <button class="header-btn" id="settingsBtn" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
-        <button class="header-btn" id="statsBtn" title="Statistics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></button>
-        <button class="header-btn" id="notifBtn" title="Notifications">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-            <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
-        </button>
-        <div class="filter-divider"></div>
-        <button class="header-btn" id="miniMapBtn" title="Toggle Mini-map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="6" height="6" fill="currentColor"/></svg></button>
-        <button class="header-btn" id="heatmapBtn" title="Toggle Traffic Heatmap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6" opacity="0.5"/><circle cx="12" cy="12" r="9" opacity="0.3"/></svg></button>
-        <button class="header-btn" id="airspaceBtn" title="Toggle Airspace"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></button>
-        <button class="header-btn" id="view3DBtn" title="Toggle 3D View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></button>
-        <button class="header-btn" id="timeMachineBtn" title="Time Machine - Historical Playback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><path d="M4 4l2 2M20 4l-2 2"/></svg></button>
-        <button class="header-btn" id="clusterBtn" title="Toggle Clustering"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.3"/></svg></button>
-        <button class="header-btn" id="geofenceBtn" title="Geofencing - Draw Alert Zones"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><circle cx="12" cy="12" r="3"/></svg></button>
-        <button class="header-btn" id="captureBtn" title="Screenshot / Recording"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M5 7h.01"/></svg></button>
+        <button class="header-btn" id="notifBtn" title="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-badge" id="notifBadge" style="display:none;">0</span></button>
+        
+        <div class="hv2-sep"></div>
+        
+        <!-- Map Dropdown -->
+        <div class="hv2-dropdown">
+            <button class="hv2-dropdown-trigger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><span>Map</span><span class="hv2-dd-badge" style="display:none"></span></button>
+            <div class="hv2-panel">
+                <div class="hv2-panel-title">Map & Layers</div>
+                <div class="hv2-item" data-btn="dayNightBtn"><div class="hv2-item-icon"><button class="header-btn" id="dayNightBtn" title="Map Style"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></button></div><div class="hv2-item-label">Map Style</div></div>
+                <div class="hv2-item" data-btn="labelBtn"><div class="hv2-item-icon"><button class="header-btn" id="labelBtn" title="Labels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></button></div><div class="hv2-item-label">Labels</div><div class="hv2-item-status">OFF</div></div>
+                <div class="hv2-item" data-btn="airportsBtn"><div class="hv2-item-icon"><button class="header-btn" id="airportsBtn" title="Airports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></button></div><div class="hv2-item-label">Airports</div><div class="hv2-item-status">OFF</div></div>
+                <div class="hv2-item" data-btn="radarBtn"><div class="hv2-item-icon"><button class="header-btn active" id="radarBtn" title="Radar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></button></div><div class="hv2-item-label">Weather Radar</div><div class="hv2-item-status">ON</div></div>
+                <div class="hv2-item" data-btn="weatherOverlayBtn"><div class="hv2-item-icon"><button class="header-btn" id="weatherOverlayBtn" title="Weather"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 14.7L12 12m2.7 2.7a5 5 0 1 0-7-7.1M20 20l-7-7M8 12a4 4 0 0 0 4 4"/><path d="M3 15l2-2 2 2"/><path d="M17 9l2-2 2 2"/></svg></button></div><div class="hv2-item-label">SIGMETs / Wind</div></div>
+                <div class="hv2-item" data-btn="airspaceBtn"><div class="hv2-item-icon"><button class="header-btn" id="airspaceBtn" title="Airspace"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></button></div><div class="hv2-item-label">Airspace</div></div>
+                <div class="hv2-item" data-btn="heatmapBtn"><div class="hv2-item-icon"><button class="header-btn" id="heatmapBtn" title="Heatmap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6" opacity="0.5"/><circle cx="12" cy="12" r="9" opacity="0.3"/></svg></button></div><div class="hv2-item-label">Traffic Heatmap</div></div>
+                <div class="hv2-item" data-btn="miniMapBtn"><div class="hv2-item-icon"><button class="header-btn" id="miniMapBtn" title="Mini-map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="6" height="6" fill="currentColor"/></svg></button></div><div class="hv2-item-label">Mini-map</div></div>
+            </div>
+        </div>
+        
+        <!-- Tools Dropdown -->
+        <div class="hv2-dropdown">
+            <button class="hv2-dropdown-trigger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg><span>Tools</span><span class="hv2-dd-badge" style="display:none"></span></button>
+            <div class="hv2-panel">
+                <div class="hv2-panel-title">Tools</div>
+                <div class="hv2-item" data-btn="measureBtn"><div class="hv2-item-icon"><button class="header-btn" id="measureBtn" title="Measure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21L21 3M3 21h7v-7M21 3h-7v7"/></svg></button></div><div class="hv2-item-label">Measure Distance</div></div>
+                <div class="hv2-item" data-btn="followBtn"><div class="hv2-item-icon"><button class="header-btn" id="followBtn" title="Follow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><path d="M12 8v8M8 12h8" stroke-dasharray="2 2"/></svg></button></div><div class="hv2-item-label">Follow Aircraft</div></div>
+                <div class="hv2-item" data-btn="multiSelectBtn"><div class="hv2-item-icon"><button class="header-btn" id="multiSelectBtn" title="Multi-Select"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button></div><div class="hv2-item-label">Multi-Select</div></div>
+                <div class="hv2-item" data-btn="geofenceBtn"><div class="hv2-item-icon"><button class="header-btn" id="geofenceBtn" title="Geofence"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><circle cx="12" cy="12" r="3"/></svg></button></div><div class="hv2-item-label">Geofencing</div></div>
+                <div class="hv2-item" data-btn="captureBtn"><div class="hv2-item-icon"><button class="header-btn" id="captureBtn" title="Screenshot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M5 7h.01"/></svg></button></div><div class="hv2-item-label">Screenshot</div></div>
+                <div class="hv2-item" data-btn="statsBtn"><div class="hv2-item-icon"><button class="header-btn" id="statsBtn" title="Stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></button></div><div class="hv2-item-label">Statistics</div></div>
+            </div>
+        </div>
+        
+        <!-- View Dropdown -->
+        <div class="hv2-dropdown">
+            <button class="hv2-dropdown-trigger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>View</span><span class="hv2-dd-badge" style="display:none"></span></button>
+            <div class="hv2-panel">
+                <div class="hv2-panel-title">View Options</div>
+                <div class="hv2-item" data-btn="clusterBtn"><div class="hv2-item-icon"><button class="header-btn" id="clusterBtn" title="Cluster"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.3"/></svg></button></div><div class="hv2-item-label">Clustering</div></div>
+                <div class="hv2-item" data-btn="timeMachineBtn"><div class="hv2-item-icon"><button class="header-btn" id="timeMachineBtn" title="Time Machine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><path d="M4 4l2 2M20 4l-2 2"/></svg></button></div><div class="hv2-item-label">Time Machine</div></div>
+            </div>
+        </div>
     </header>
+    <!-- Status Dock -->
+    <div class="status-dock" id="statusDock">
+        <div class="status-dock-item"><span class="status-dock-dot grey" id="dockDot"></span><span class="status-dock-value" id="dockSource">Connecting</span></div>
+        <div class="status-dock-sep"></div>
+        <div class="status-dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 110-14h8.5M21 12l-4-4m4 4l-4 4"/></svg><span class="status-dock-value" id="dockCount">0</span><span class="status-dock-label"> aircraft</span></div>
+        <div class="status-dock-sep"></div>
+        <div class="status-dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="status-dock-value" id="dockTime">---</span></div>
+    </div>
+    
+    <!-- Filter Chips Bar -->
+    <button class="filter-chips-toggle" id="filterChipsToggle" title="Quick Filters"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg></button>
+    <div class="filter-chips-bar" id="filterChipsBar">
+        <button class="filter-chip-btn" data-filter="commercial">Commercial</button>
+        <button class="filter-chip-btn" data-filter="military">Military</button>
+        <button class="filter-chip-btn" data-filter="cargo">Cargo</button>
+        <button class="filter-chip-btn" data-filter="private">Private</button>
+        <button class="filter-chip-btn" data-filter="helicopter">Helicopter</button>
+        <button class="filter-chip-btn" data-filter="interesting">Interesting</button>
+    </div>
+    
+    <!-- 3D HUD -->
+    <div class="hud-3d" id="hud3d">
+        <div class="hud-3d-title">3D Controls</div>
+        <div class="hud-3d-row"><span class="hud-3d-key">Drag</span> Rotate globe</div>
+        <div class="hud-3d-row"><span class="hud-3d-key">Scroll</span> Zoom in/out</div>
+        <div class="hud-3d-row"><span class="hud-3d-key">R-Drag</span> Tilt camera</div>
+        <div class="hud-3d-row"><span class="hud-3d-key">Click</span> Select aircraft</div>
+    </div>
+    
+    <!-- Onboarding Overlay -->
+    <div class="onboard-overlay" id="onboardOverlay">
+        <div class="onboard-card">
+            <div class="onboard-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 110-14h8.5"/><polyline points="21 12 17 8 21 12 17 16"/></svg></div>
+            <div class="onboard-title">Welcome to SkyTrack</div>
+            <div class="onboard-desc">Real-time global aircraft tracking with military detection, 3D globe view, and aviation intelligence.</div>
+            <div class="onboard-tips">
+                <div class="onboard-tip"><span class="onboard-tip-num">1</span><span>Click any aircraft on the map to see its details, route, and specs</span></div>
+                <div class="onboard-tip"><span class="onboard-tip-num">2</span><span>Use the search bar to find flights by callsign, registration, or airport</span></div>
+                <div class="onboard-tip"><span class="onboard-tip-num">3</span><span>Click the globe icon to enter immersive 3D view</span></div>
+                <div class="onboard-tip"><span class="onboard-tip-num">4</span><span>Open Map, Tools, and View menus for layers, heatmaps, and more</span></div>
+                <div class="onboard-tip"><span class="onboard-tip-num">5</span><span>Use the filter button to show only military, cargo, or interesting aircraft</span></div>
+            </div>
+            <button class="onboard-btn" id="onboardDismiss">Start Tracking</button>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-pulse"></div>
+        <div class="loading-text" id="loadingText">Scanning for aircraft...</div>
+    </div>
     <div class="filter-bar" id="filterBar">
         <div class="logo"><img src="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-32x32.png" alt="SkyTrack"><span>SkyTrack</span></div>
         <div class="search-container" id="searchContainer">
@@ -1593,6 +1767,12 @@ if ('serviceWorker' in navigator) {
     <div class="info-panel" id="infoPanel">
         <div class="aircraft-photo" id="aircraftPhoto"><div class="no-photo">Loading...</div></div>
         <div class="airline-banner" id="airlineBanner" style="display:none;"><img src="" alt=""></div>
+        <div class="info-quickglance" id="infoQuickGlance">
+            <div class="info-qg-item"><div class="info-qg-val" id="qgCallsign">---</div><div class="info-qg-label">Flight</div></div>
+            <div class="info-qg-item"><div class="info-qg-val" id="qgAlt">---</div><div class="info-qg-label">Altitude</div></div>
+            <div class="info-qg-item"><div class="info-qg-val" id="qgSpeed">---</div><div class="info-qg-label">Speed</div></div>
+            <div class="info-qg-item"><div class="info-qg-val" id="qgDest">---</div><div class="info-qg-label">Dest</div></div>
+        </div>
         <div class="info-header">
             <div class="info-header-left">
                 <div class="info-header-top">
@@ -9611,6 +9791,7 @@ ${trailData.map(p => `            <trkpt lat="${p.lat}" lon="${p.lon}">
         }
     };
 
+
     // ============ PHASE 12: DASHBOARD LAYOUT MANAGER ============
     const dashboardLayout = {
         panels: {
@@ -13094,6 +13275,213 @@ To create a timelapse video:
         document.getElementById('installPrompt').classList.remove('show');
         toast('SkyTrack installed successfully!');
     });
+
+    // ============ UI OVERHAUL: INITIALIZATION ============
+    (function initUIOverhaul() {
+        // --- Status Dock Updates ---
+        function updateStatusDock() {
+            const count = Object.keys(aircraftCache).filter(h => aircraftCache[h].lat !== undefined && Date.now() - aircraftCache[h].lastSeen < 120000).length;
+            const el = document.getElementById('dockCount');
+            if (el) el.textContent = count.toLocaleString();
+            
+            const srcEl = document.getElementById('dockSource');
+            const dotEl = document.getElementById('dockDot');
+            if (srcEl) {
+                const ds = document.getElementById('dataSource');
+                const txt = ds ? ds.textContent : '';
+                const srcName = txt.split(' - ')[0] || 'Connecting';
+                srcEl.textContent = srcName;
+            }
+            if (dotEl) {
+                const healthy = dataSourceManager.sources.filter(s => s.status === 'healthy').length;
+                dotEl.className = 'status-dock-dot ' + (healthy >= 2 ? 'green' : healthy >= 1 ? 'yellow' : count > 0 ? 'yellow' : 'red');
+            }
+            
+            const timeEl = document.getElementById('dockTime');
+            if (timeEl && lastFetchTime) {
+                const ago = Math.round((Date.now() - lastFetchTime) / 1000);
+                timeEl.textContent = ago < 5 ? 'just now' : ago + 's ago';
+            }
+        }
+        setInterval(updateStatusDock, 1500);
+        
+        // --- Dropdown Menus ---
+        document.querySelectorAll('.hv2-dropdown-trigger').forEach(trigger => {
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const panel = trigger.nextElementSibling;
+                const wasOpen = panel.classList.contains('show');
+                // Close all
+                document.querySelectorAll('.hv2-panel.show').forEach(p => p.classList.remove('show'));
+                document.querySelectorAll('.hv2-dropdown-trigger.open').forEach(t => t.classList.remove('open'));
+                if (!wasOpen) {
+                    panel.classList.add('show');
+                    trigger.classList.add('open');
+                }
+            });
+        });
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.hv2-panel.show').forEach(p => p.classList.remove('show'));
+            document.querySelectorAll('.hv2-dropdown-trigger.open').forEach(t => t.classList.remove('open'));
+        });
+        document.querySelectorAll('.hv2-panel').forEach(p => p.addEventListener('click', e => e.stopPropagation()));
+        
+        // Wire dropdown items to original button handlers
+        document.querySelectorAll('.hv2-item[data-btn]').forEach(item => {
+            item.addEventListener('click', () => {
+                const btnId = item.getAttribute('data-btn');
+                const btn = document.getElementById(btnId);
+                if (btn) btn.click();
+                // Update active state
+                setTimeout(() => {
+                    item.classList.toggle('is-active', btn && btn.classList.contains('active'));
+                }, 100);
+            });
+        });
+        
+        // Sync active states periodically
+        function syncDropdownStates() {
+            document.querySelectorAll('.hv2-item[data-btn]').forEach(item => {
+                const btn = document.getElementById(item.getAttribute('data-btn'));
+                if (btn) item.classList.toggle('is-active', btn.classList.contains('active'));
+            });
+            // Update dropdown badges
+            document.querySelectorAll('.hv2-dropdown').forEach(dd => {
+                const activeCount = dd.querySelectorAll('.hv2-item.is-active').length;
+                const badge = dd.querySelector('.hv2-dd-badge');
+                if (badge) badge.style.display = activeCount > 0 ? '' : 'none';
+            });
+        }
+        setInterval(syncDropdownStates, 2000);
+        setTimeout(syncDropdownStates, 500);
+        
+        // --- Filter Chips ---
+        const chipsBar = document.getElementById('filterChipsBar');
+        const chipsToggle = document.getElementById('filterChipsToggle');
+        let chipsVisible = false;
+        if (chipsToggle) {
+            chipsToggle.addEventListener('click', () => {
+                chipsVisible = !chipsVisible;
+                chipsBar.classList.toggle('show', chipsVisible);
+                chipsToggle.classList.toggle('active', chipsVisible);
+            });
+        }
+        document.querySelectorAll('.filter-chip-btn').forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('active');
+                applyChipFilters();
+            });
+        });
+        function applyChipFilters() {
+            const activeChips = [...document.querySelectorAll('.filter-chip-btn.active')].map(c => c.dataset.filter);
+            // If no chips active, show all
+            if (activeChips.length === 0) {
+                if (typeof updateMarkers === 'function') updateMarkers();
+                return;
+            }
+            // Update marker visibility
+            Object.entries(markers).forEach(([hex, marker]) => {
+                const ac = aircraftCache[hex];
+                if (!ac) return;
+                let show = false;
+                if (activeChips.includes('military') && ac.militaryInfo) show = true;
+                if (activeChips.includes('commercial') && !ac.militaryInfo && ac.category && /A[3-5]/.test(ac.category)) show = true;
+                if (activeChips.includes('cargo') && ac.t && /B74.*F|B77.*F|A33.*F|MD11|A30/.test(ac.t)) show = true;
+                if (activeChips.includes('private') && (!ac.category || /A[12]|B[12]/.test(ac.category))) show = true;
+                if (activeChips.includes('helicopter') && ac.category && /A7|B6/.test(ac.category)) show = true;
+                if (activeChips.includes('interesting') && (ac.interesting || ac.isVIP || ac.piaInfo)) show = true;
+                marker.setOpacity(show ? 1 : 0.08);
+            });
+        }
+        
+        // --- 3D HUD ---
+        const origToggle3D = view3D.toggle.bind(view3D);
+        const hud3d = document.getElementById('hud3d');
+        if (hud3d) {
+            const origEnable = view3D.enable.bind(view3D);
+            const origDisable = view3D.disable.bind(view3D);
+            const patchedEnable = view3D.enable;
+            const patchedDisable = view3D.disable;
+            const showHud = () => { if (hud3d) hud3d.classList.add('show'); };
+            const hideHud = () => { if (hud3d) hud3d.classList.remove('show'); };
+            // Patch enable/disable to show/hide HUD
+            const origEnableFn = view3D.enable;
+            view3D.enable = function() {
+                origEnableFn.call(this);
+                showHud();
+            };
+            const origDisableFn = view3D.disable;
+            view3D.disable = function() {
+                origDisableFn.call(this);
+                hideHud();
+            };
+        }
+        
+        // --- Onboarding ---
+        if (!localStorage.getItem('skytrack_onboarded')) {
+            const overlay = document.getElementById('onboardOverlay');
+            if (overlay) {
+                setTimeout(() => overlay.classList.add('show'), 1500);
+                document.getElementById('onboardDismiss')?.addEventListener('click', () => {
+                    overlay.classList.remove('show');
+                    localStorage.setItem('skytrack_onboarded', '1');
+                });
+            }
+        }
+        
+        // --- Loading Overlay ---
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            const checkLoaded = setInterval(() => {
+                const count = Object.keys(aircraftCache).filter(h => aircraftCache[h].lat !== undefined).length;
+                const loadText = document.getElementById('loadingText');
+                if (count > 0) {
+                    if (loadText) loadText.textContent = count + ' aircraft found';
+                    setTimeout(() => loadingOverlay.classList.add('hidden'), 800);
+                    setTimeout(() => { loadingOverlay.style.display = 'none'; }, 1300);
+                    clearInterval(checkLoaded);
+                }
+            }, 500);
+            // Force hide after 15s
+            setTimeout(() => { loadingOverlay.classList.add('hidden'); setTimeout(() => { loadingOverlay.style.display = 'none'; }, 500); }, 15000);
+        }
+        
+        // --- Info Panel QuickGlance ---
+        const origSelectAircraft = window.selectAircraft;
+        const qg = document.getElementById('infoQuickGlance');
+        function updateQuickGlance(hex) {
+            if (!qg) return;
+            const ac = aircraftCache[hex];
+            if (!ac) return;
+            const cs = document.getElementById('qgCallsign');
+            const alt = document.getElementById('qgAlt');
+            const spd = document.getElementById('qgSpeed');
+            const dest = document.getElementById('qgDest');
+            if (cs) cs.textContent = ac.flight?.trim() || ac.r || hex.toUpperCase();
+            if (alt) alt.textContent = (typeof ac.alt_baro === 'number') ? Math.round(ac.alt_baro).toLocaleString() + "'" : '---';
+            if (spd) spd.textContent = ac.gs ? Math.round(ac.gs) + 'kt' : '---';
+            if (dest) dest.textContent = ac.to || ac.destination || '---';
+        }
+        // Patch selectAircraft to update quickglance
+        const origSelect = selectAircraft;
+        window.selectAircraft = function(hex) {
+            origSelect(hex);
+            updateQuickGlance(hex);
+        };
+        // Also update periodically for selected aircraft
+        setInterval(() => { if (selectedHex) updateQuickGlance(selectedHex); }, 2000);
+        
+        // --- Wide Screen Sidebar Pin ---
+        if (window.innerWidth >= 1400) {
+            const observer = new MutationObserver(() => {
+                const panel = document.getElementById('infoPanel');
+                document.body.classList.toggle('panel-pinned', panel && panel.classList.contains('show'));
+            });
+            const panel = document.getElementById('infoPanel');
+            if (panel) observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
+        }
+    })();
+
     </script>
 </body>
 </html>
