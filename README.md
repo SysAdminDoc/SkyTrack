@@ -6,7 +6,7 @@
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES2020+-F7DF1E?logo=javascript&logoColor=black)
 ![Status](https://img.shields.io/badge/status-active-success)
 
-> Real-time global aircraft tracker with 3D globe view, military/VIP detection, and comprehensive aviation intelligence — all in a single HTML file.
+> Real-time global aircraft tracker with 3D globe view, military/VIP detection, and comprehensive aviation intelligence.
 
 <div align="center">
 
