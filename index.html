@@ -2718,45 +2718,9 @@ if ('serviceWorker' in navigator) {
     // ============ PHASE 16: ENHANCED DATA SOURCE MANAGER ============
     const dataSourceManager = {
         sources: [
-            {
-                key: 'airplaneslive',
-                name: 'Airplanes.live',
-                buildUrl: (c, r) => 'https://api.airplanes.live/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r,
-                parseResponse: d => d?.ac?.length ? d.ac : null,
-                status: 'unknown',
-                lastSuccess: 0,
-                lastError: 0,
-                errorCount: 0,
-                latency: 0,
-                priority: 1,
-                cors: true
-            },
-            {
-                key: 'adsbone',
-                name: 'ADSB One',
-                buildUrl: (c, r) => 'https://api.adsb.one/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r,
-                parseResponse: d => d?.ac?.length ? d.ac : null,
-                status: 'unknown',
-                lastSuccess: 0,
-                lastError: 0,
-                errorCount: 0,
-                latency: 0,
-                priority: 2,
-                cors: true
-            },
-            {
-                key: 'adsblol',
-                name: 'ADSB.lol',
-                buildUrl: (c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r,
-                parseResponse: d => d?.ac?.length ? d.ac : null,
-                status: 'unknown',
-                lastSuccess: 0,
-                lastError: 0,
-                errorCount: 0,
-                latency: 0,
-                priority: 3,
-                cors: false
-            }
+            { key: 'airplaneslive', name: 'Airplanes.live', buildUrl: (c, r) => 'https://api.airplanes.live/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 1, cors: true },
+            { key: 'adsbone', name: 'ADSB One', buildUrl: (c, r) => 'https://api.adsb.one/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 2, cors: true },
+            { key: 'adsblol', name: 'ADSB.lol', buildUrl: (c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 3, cors: false }
         ],
         
         currentSource: null,
@@ -2789,16 +2753,8 @@ if ('serviceWorker' in navigator) {
                 const testUrl = source.buildUrl({ lat: 40, lng: -74 }, 10);
                 
                 let response;
-                if (source.cors === false) {
-                    response = await fetchWithProxy(testUrl);
-                    if (!response) throw new Error('Proxy fetch failed');
-                } else {
-                    response = await fetch(testUrl, {
-                        method: 'GET',
-                        cache: 'no-cache',
-                        signal: AbortSignal.timeout(8000)
-                    });
-                }
+                if (source.cors === false) { response = await fetchWithProxy(testUrl); if (!response) throw new Error('No proxy'); }
+                else { response = await fetch(testUrl, { method: 'GET', cache: 'no-cache', signal: AbortSignal.timeout(8000) }); }
                 
                 source.latency = Date.now() - startTime;
                 
@@ -6272,133 +6228,57 @@ if ('serviceWorker' in navigator) {
     }
 
     // ============ AIRCRAFT DATA ============
-    // Grid fetch system - covers entire viewport by tiling multiple API requests
     const gridFetch = {
-        inProgress: false,
-        abortController: null,
-        
-        generateGrid(bounds, maxRadius) {
+        inProgress: false, abortController: null,
+        generateGrid(bounds) {
             const center = bounds.getCenter();
             const n = bounds.getNorth(), s = bounds.getSouth(), e = bounds.getEast(), w = bounds.getWest();
-            const latSpan = n - s;
-            const lonSpan = (e >= w) ? (e - w) : (360 - w + e);
-            const spacingNm = 350;
-            const spacingLat = spacingNm / 60;
-            const midLat = (n + s) / 2;
-            const spacingLon = spacingNm / (60 * Math.max(Math.cos(midLat * Math.PI / 180), 0.1));
-            if (latSpan < spacingLat && lonSpan < spacingLon) return [{ lat: center.lat, lng: center.lng }];
-            const points = [];
-            const rows = Math.ceil(latSpan / spacingLat);
-            const cols = Math.ceil(lonSpan / spacingLon);
-            const maxPoints = 32;
-            const totalNeeded = (rows + 1) * (cols + 1);
-            const skip = totalNeeded > maxPoints ? Math.ceil(totalNeeded / maxPoints) : 1;
-            for (let r = 0; r <= rows; r++) {
-                const lat = s + r * spacingLat;
-                if (lat < -85 || lat > 85) continue;
-                for (let c = 0; c <= cols; c++) {
-                    if (skip > 1 && ((r * (cols + 1) + c) % skip) !== 0) continue;
-                    let lon = w + c * spacingLon;
-                    if (lon > 180) lon -= 360;
-                    points.push({ lat, lng: lon });
-                }
-            }
-            points.sort((a, b) => {
-                const da = Math.abs(a.lat - center.lat) + Math.abs(a.lng - center.lng);
-                const db = Math.abs(b.lat - center.lat) + Math.abs(b.lng - center.lng);
-                return da - db;
-            });
-            return points;
+            const latSpan = n - s, lonSpan = (e >= w) ? (e - w) : (360 - w + e);
+            const spacingLat = 350/60, midLat = (n+s)/2;
+            const spacingLon = 350 / (60 * Math.max(Math.cos(midLat * Math.PI/180), 0.1));
+            if (latSpan < spacingLat && lonSpan < spacingLon) return [{lat:center.lat,lng:center.lng}];
+            const pts=[], rows=Math.ceil(latSpan/spacingLat), cols=Math.ceil(lonSpan/spacingLon);
+            const tot=(rows+1)*(cols+1), skip=tot>32?Math.ceil(tot/32):1;
+            for(let r=0;r<=rows;r++){const lat=s+r*spacingLat;if(lat<-85||lat>85)continue;
+                for(let cc=0;cc<=cols;cc++){if(skip>1&&((r*(cols+1)+cc)%skip)!==0)continue;
+                    let lon=w+cc*spacingLon;if(lon>180)lon-=360;pts.push({lat,lng:lon});}}
+            pts.sort((a,b)=>(Math.abs(a.lat-center.lat)+Math.abs(a.lng-center.lng))-(Math.abs(b.lat-center.lat)+Math.abs(b.lng-center.lng)));
+            return pts;
         },
-        
         async fetchPoint(source, point, signal) {
-            const url = source.buildUrl(point, 250);
-            try {
-                let resp;
-                if (source.cors === false) { resp = await fetchWithProxy(url); }
-                else { resp = await fetch(url, { signal, cache: 'no-cache' }); }
-                if (resp?.ok) { const data = await resp.json(); return source.parseResponse(data) || []; }
-            } catch(e) { if (e.name === 'AbortError') throw e; }
-            return [];
+            const url=source.buildUrl(point,250);
+            try{let r;if(source.cors===false){r=await fetchWithProxy(url);}else{r=await fetch(url,{signal,cache:'no-cache'});}
+                if(r?.ok){const d=await r.json();return source.parseResponse(d)||[];}}catch(e){if(e.name==='AbortError')throw e;}return[];
         }
     };
-
     async function loadAircraft() {
-        if (gridFetch.inProgress) { if (gridFetch.abortController) gridFetch.abortController.abort(); return; }
-        if (Date.now() - lastFetchTime < 2000) return;
-        
-        if (!offlineManager.isOnline) { offlineManager.showCachedPositions(); return; }
-        
-        gridFetch.abortController = new AbortController();
-        const signal = gridFetch.abortController.signal;
-        gridFetch.inProgress = true;
-        fetchInProgress = true;
-        
-        const bounds = map.getBounds();
-        const grid = gridFetch.generateGrid(bounds, 250);
-        const isSinglePoint = grid.length === 1;
-        const corsSources = dataSourceManager.sources.filter(s => s.cors !== false && s.status !== 'unhealthy');
-        const proxySources = dataSourceManager.sources.filter(s => s.cors === false && s.status !== 'unhealthy');
-        const allSources = [...corsSources, ...proxySources];
-        
-        if (!allSources.length) {
-            document.getElementById('dataSource').textContent = 'No data source available';
-            gridFetch.inProgress = false; fetchInProgress = false; lastFetchTime = Date.now(); return;
-        }
-        
-        let totalAircraft = 0, completed = 0, success = false;
-        const sourceNames = new Set();
-        
-        try {
-            if (isSinglePoint) {
-                for (const source of allSources) {
-                    try {
-                        const aircraft = await gridFetch.fetchPoint(source, grid[0], signal);
-                        if (aircraft.length) {
-                            processAircraftData(aircraft);
-                            totalAircraft = Object.keys(aircraftCache).filter(h => aircraftCache[h].lat !== undefined && Date.now() - aircraftCache[h].lastSeen < 120000).length;
-                            document.getElementById('dataSource').textContent = source.name + ' - ' + totalAircraft + ' aircraft';
-                            lastSuccessfulSource = source.key; success = true;
-                            connectionMonitor.recordSuccess(); dataSourceManager.recordSuccess(source); offlineManager.cachePositions();
-                            break;
-                        }
-                    } catch(e) { if (e.name === 'AbortError') break; dataSourceManager.recordFailure(source); }
-                }
-            } else {
-                const numCors = corsSources.length || 1;
-                const batchDelay = 1050;
-                const fetchPromises = grid.map((point, idx) => {
-                    const source = corsSources[idx % numCors] || allSources[0];
-                    const delay = Math.floor(idx / numCors) * batchDelay;
-                    return new Promise(async (resolve) => {
-                        if (delay > 0) await new Promise(r => setTimeout(r, delay));
-                        if (signal.aborted) { resolve([]); return; }
-                        try {
-                            const aircraft = await gridFetch.fetchPoint(source, point, signal);
-                            completed++; sourceNames.add(source.name);
-                            if (aircraft.length) { processAircraftData(aircraft); success = true; dataSourceManager.recordSuccess(source); }
-                            totalAircraft = Object.keys(aircraftCache).filter(h => aircraftCache[h].lat !== undefined && Date.now() - aircraftCache[h].lastSeen < 120000).length;
-                            const names = [...sourceNames].join(' + ');
-                            document.getElementById('dataSource').textContent = names + ' - ' + totalAircraft + ' aircraft' + (completed < grid.length ? ' (' + completed + '/' + grid.length + ' zones)' : '');
-                            resolve(aircraft);
-                        } catch(e) { completed++; if (e.name !== 'AbortError') dataSourceManager.recordFailure(source); resolve([]); }
-                    });
-                });
-                await Promise.all(fetchPromises);
-                if (success) {
-                    connectionMonitor.recordSuccess(); offlineManager.cachePositions();
-                    totalAircraft = Object.keys(aircraftCache).filter(h => aircraftCache[h].lat !== undefined && Date.now() - aircraftCache[h].lastSeen < 120000).length;
-                    document.getElementById('dataSource').textContent = [...sourceNames].join(' + ') + ' - ' + totalAircraft + ' aircraft';
-                }
-            }
-            if (!success) { document.getElementById('dataSource').textContent = 'No data source available'; connectionMonitor.recordFailure(); }
-        } catch (e) {
-            if (e.name !== 'AbortError') { document.getElementById('dataSource').textContent = 'No data source available'; connectionMonitor.recordFailure(); }
-        }
-        
-        lastFetchTime = Date.now();
-        gridFetch.inProgress = false;
-        fetchInProgress = false;
+        if(gridFetch.inProgress){if(gridFetch.abortController)gridFetch.abortController.abort();return;}
+        if(Date.now()-lastFetchTime<2000)return;
+        if(!offlineManager.isOnline){offlineManager.showCachedPositions();return;}
+        gridFetch.abortController=new AbortController();const signal=gridFetch.abortController.signal;
+        gridFetch.inProgress=true;fetchInProgress=true;
+        const grid=gridFetch.generateGrid(map.getBounds()),single=grid.length===1;
+        const corsSrc=dataSourceManager.sources.filter(s=>s.cors!==false&&s.status!=='unhealthy');
+        const allSrc=[...corsSrc,...dataSourceManager.sources.filter(s=>s.cors===false&&s.status!=='unhealthy')];
+        if(!allSrc.length){document.getElementById('dataSource').textContent='No sources';gridFetch.inProgress=false;fetchInProgress=false;lastFetchTime=Date.now();return;}
+        let success=false;const names=new Set();
+        try{
+            if(single){for(const src of allSrc){try{const ac=await gridFetch.fetchPoint(src,grid[0],signal);
+                if(ac.length){processAircraftData(ac);const n=Object.keys(aircraftCache).filter(h=>aircraftCache[h].lat!==undefined&&Date.now()-aircraftCache[h].lastSeen<120000).length;
+                    document.getElementById('dataSource').textContent=src.name+' - '+n+' aircraft';lastSuccessfulSource=src.key;success=true;
+                    connectionMonitor.recordSuccess();dataSourceManager.recordSuccess(src);offlineManager.cachePositions();break;}}catch(e){if(e.name==='AbortError')break;dataSourceManager.recordFailure(src);}}}
+            else{const nc=corsSrc.length||1;
+                await Promise.all(grid.map((pt,i)=>{const src=corsSrc[i%nc]||allSrc[0];const delay=Math.floor(i/nc)*1050;
+                    return new Promise(async resolve=>{if(delay>0)await new Promise(r=>setTimeout(r,delay));if(signal.aborted){resolve([]);return;}
+                        try{const ac=await gridFetch.fetchPoint(src,pt,signal);names.add(src.name);
+                            if(ac.length){processAircraftData(ac);success=true;dataSourceManager.recordSuccess(src);}
+                            const n=Object.keys(aircraftCache).filter(h=>aircraftCache[h].lat!==undefined&&Date.now()-aircraftCache[h].lastSeen<120000).length;
+                            document.getElementById('dataSource').textContent=[...names].join(' + ')+' - '+n+' aircraft';resolve(ac);
+                        }catch(e){if(e.name!=='AbortError')dataSourceManager.recordFailure(src);resolve([]);}});}));
+                if(success){connectionMonitor.recordSuccess();offlineManager.cachePositions();}}
+            if(!success){document.getElementById('dataSource').textContent='No sources';connectionMonitor.recordFailure();}
+        }catch(e){if(e.name!=='AbortError')connectionMonitor.recordFailure();}
+        lastFetchTime=Date.now();gridFetch.inProgress=false;fetchInProgress=false;
     }
 
     function processAircraftData(aircraft) {
@@ -9384,262 +9264,351 @@ ${trailData.map(p => `            <trkpt lat="${p.lat}" lon="${p.lon}">
         enabled: false,
         cesiumViewer: null,
         entityMap: new Map(),
+        trailMap: new Map(),
         modelUri: null,
         updateTimer: null,
         
         createAirplaneGLB() {
-            const pos = [
-                 0.0,  0.15, -5.0,
-                -0.4,  0.14,  0.0,
-                 0.4,  0.14,  0.0,
-                 0.0,  0.12,  2.0,
-                 0.0,  0.10,  5.0,
-                -4.5,  0.04,  0.8,
-                 4.5,  0.04,  0.8,
-                -1.2,  0.04,  3.5,
-                 1.2,  0.04,  3.5,
-                -1.5,  0.04,  4.8,
-                 1.5,  0.04,  4.8,
-                 0.0,  1.40,  3.8,
-                 0.0,  0.10,  4.8,
-                 0.0, -0.08, -5.0,
-                -0.4, -0.08,  0.0,
-                 0.4, -0.08,  0.0,
-                 0.0, -0.08,  2.0,
-                 0.0, -0.08,  5.0,
-                -4.5, -0.04,  0.8,
-                 4.5, -0.04,  0.8,
-                -1.2, -0.20,  1.2,
-                 1.2, -0.20,  1.2,
-                -1.2, -0.08,  0.5,
-                 1.2, -0.08,  0.5,
-                -1.2, -0.08,  1.8,
-                 1.2, -0.08,  1.8,
+            // Build proper 3D airplane with tubular fuselage, swept wings, tail, engines
+            const verts = [];
+            const indices = [];
+            let vi = 0;
+            function addV(x,y,z) { verts.push(x,y,z); return vi++; }
+            function tri(a,b,c) { indices.push(a,b,c); }
+            function quad(a,b,c,d) { tri(a,b,c); tri(a,c,d); }
+            
+            // Fuselage - 8-sided tube with nose cone and tail taper
+            const stations = [
+                {z:-6.0, rx:0.00, ry:0.00},  // nose tip
+                {z:-4.5, rx:0.20, ry:0.18},  // nose cone
+                {z:-3.0, rx:0.35, ry:0.32},  // cockpit
+                {z:-1.0, rx:0.42, ry:0.38},  // forward cabin
+                {z: 0.0, rx:0.44, ry:0.40},  // mid (widest)
+                {z: 1.5, rx:0.43, ry:0.39},  // aft cabin
+                {z: 3.0, rx:0.35, ry:0.32},  // taper begin
+                {z: 4.2, rx:0.22, ry:0.20},  // tail taper
+                {z: 5.5, rx:0.08, ry:0.07},  // tail tip
             ];
-            const tri = [
-                0,1,2,  1,3,2,  3,4,8,  1,3,7,
-                0,5,1,  0,2,6,  1,5,7,  2,8,6,  5,7,3,  6,3,8,
-                3,9,4,  3,4,10,  3,11,4,  4,11,12,
-                13,15,14,  14,15,16,  16,17,15,
-                13,14,18,  13,19,15,  14,7,18,  15,19,8,
-                0,13,5,  5,13,18,  0,6,13,  13,6,19,
-                5,18,7,  6,8,19,  9,4,17,  10,17,4,
-                22,20,24,  23,25,21,  20,22,23,  20,23,21,  24,20,25,  20,21,25,  22,24,25,  22,25,23,
-            ];
-            const nV = pos.length / 3, nI = tri.length;
-            const posBL = nV * 3 * 4, idxBL = nI * 2, idxPad = (4 - (idxBL % 4)) % 4;
-            const binLen = posBL + idxBL + idxPad;
-            let mn = [Infinity,Infinity,Infinity], mx = [-Infinity,-Infinity,-Infinity];
-            for (let i = 0; i < pos.length; i += 3) { for (let j = 0; j < 3; j++) { mn[j] = Math.min(mn[j], pos[i+j]); mx[j] = Math.max(mx[j], pos[i+j]); } }
-            const gj = JSON.stringify({
-                asset:{version:"2.0",generator:"SkyTrack"},scene:0,
-                scenes:[{nodes:[0]}],nodes:[{mesh:0}],
+            const sides = 8;
+            const noseTip = addV(0, 0, -6.0);
+            const rings = [];
+            for (let si = 1; si < stations.length; si++) {
+                const s = stations[si]; const ring = [];
+                for (let j = 0; j < sides; j++) {
+                    const a = (j/sides) * Math.PI * 2;
+                    ring.push(addV(Math.cos(a)*s.rx, Math.sin(a)*s.ry, s.z));
+                }
+                rings.push(ring);
+            }
+            // Nose cone
+            for (let j=0; j<sides; j++) tri(noseTip, rings[0][j], rings[0][(j+1)%sides]);
+            // Fuselage body
+            for (let ri=0; ri<rings.length-1; ri++)
+                for (let j=0; j<sides; j++) { const j2=(j+1)%sides; quad(rings[ri][j], rings[ri][j2], rings[ri+1][j2], rings[ri+1][j]); }
+            // Tail cap
+            const tailTip = addV(0, 0, 5.5);
+            const lr = rings[rings.length-1];
+            for (let j=0; j<sides; j++) tri(lr[j], tailTip, lr[(j+1)%sides]);
+            
+            // Wings - swept, tapered, with airfoil thickness
+            const wt = 0.055;
+            function wing(sign) {
+                const s = sign;
+                const rl = addV(s*0.44, wt, -0.3);   // root leading top
+                const rlb= addV(s*0.44,-wt, -0.3);   // root leading bottom
+                const rt = addV(s*0.44, wt,  2.0);   // root trailing top
+                const rtb= addV(s*0.44,-wt,  2.0);   // root trailing bottom
+                const ml = addV(s*2.5, wt*0.7, 0.5);  // mid leading top
+                const mlb= addV(s*2.5,-wt*0.7, 0.5);  // mid leading bottom
+                const mt = addV(s*2.5, wt*0.5, 2.5);  // mid trailing top
+                const mtb= addV(s*2.5,-wt*0.5, 2.5);  // mid trailing bottom
+                const tl = addV(s*5.2, wt*0.25, 1.4); // tip leading top
+                const tlb= addV(s*5.2,-wt*0.25, 1.4); // tip leading bottom
+                const tt = addV(s*5.2, wt*0.15, 2.8); // tip trailing top
+                const ttb= addV(s*5.2,-wt*0.15, 2.8); // tip trailing bottom
+                // Top surface
+                quad(rl, ml, mt, rt); quad(ml, tl, tt, mt);
+                // Bottom surface
+                quad(rlb, rtb, mtb, mlb); quad(mlb, mtb, ttb, tlb);
+                // Leading edge
+                quad(rl, rlb, mlb, ml); quad(ml, mlb, tlb, tl);
+                // Trailing edge
+                quad(rt, mt, mtb, rtb); quad(mt, tt, ttb, mtb);
+                // Wingtip cap
+                quad(tl, tt, ttb, tlb);
+            }
+            wing(-1); wing(1);
+            
+            // Vertical stabilizer (fin)
+            const ft = 0.028;
+            const fl=addV(-ft,0.20,3.2), fr=addV(ft,0.20,3.2);
+            const ftl=addV(-ft,1.55,3.8), ftr=addV(ft,1.55,3.8);
+            const frl=addV(-ft,1.40,5.1), frr=addV(ft,1.40,5.1);
+            const fbl=addV(-ft,0.07,5.3), fbr=addV(ft,0.07,5.3);
+            quad(fl,ftl,frl,fbl); quad(fr,fbr,frr,ftr); // sides
+            quad(fl,fr,ftr,ftl); quad(ftl,ftr,frr,frl); // leading + top
+            quad(frl,frr,fbr,fbl); // trailing
+            
+            // Horizontal stabilizer
+            const ht = 0.035;
+            function htail(sign) {
+                const s = sign;
+                const rf=addV(s*0.15, ht, 4.0), rfb=addV(s*0.15,-ht, 4.0);
+                const rr=addV(s*0.15, ht, 5.1), rrb=addV(s*0.15,-ht, 5.1);
+                const tf=addV(s*1.9, ht*0.4, 4.7), tfb=addV(s*1.9,-ht*0.4, 4.7);
+                const tr_=addV(s*1.9, ht*0.25, 5.4), trb=addV(s*1.9,-ht*0.25, 5.4);
+                quad(rf,tf,tr_,rr); quad(rfb,rrb,trb,tfb); // top/bottom
+                quad(rf,rfb,tfb,tf); quad(rr,tr_,trb,rrb); // leading/trailing
+                quad(tf,tr_,trb,tfb); // tip
+            }
+            htail(-1); htail(1);
+            
+            // Engine nacelles (6-sided cylinders under wings)
+            function engine(cx,cy,cz,len,rad) {
+                const ns=6, fc=addV(cx,cy,cz-len/2), rc=addV(cx,cy,cz+len/2);
+                const fr_=[],rr_=[];
+                for(let j=0;j<ns;j++){const a=(j/ns)*Math.PI*2;
+                    fr_.push(addV(cx+Math.cos(a)*rad,cy+Math.sin(a)*rad,cz-len/2));
+                    rr_.push(addV(cx+Math.cos(a)*rad,cy+Math.sin(a)*rad,cz+len/2));}
+                for(let j=0;j<ns;j++){const j2=(j+1)%ns;
+                    tri(fc,fr_[j2],fr_[j]); tri(rc,rr_[j],rr_[j2]);
+                    quad(fr_[j],fr_[j2],rr_[j2],rr_[j]);}
+            }
+            engine(-1.6,-0.32,0.9,2.0,0.17);
+            engine( 1.6,-0.32,0.9,2.0,0.17);
+            
+            // Build GLB binary
+            const nV=verts.length/3, nI=indices.length;
+            const posBL=nV*3*4, idxBL=nI*2, idxPad=(4-(idxBL%4))%4, binLen=posBL+idxBL+idxPad;
+            let mn=[Infinity,Infinity,Infinity],mx=[-Infinity,-Infinity,-Infinity];
+            for(let i=0;i<verts.length;i+=3)for(let j=0;j<3;j++){mn[j]=Math.min(mn[j],verts[i+j]);mx[j]=Math.max(mx[j],verts[i+j]);}
+            const gj=JSON.stringify({
+                asset:{version:"2.0",generator:"SkyTrack"},scene:0,scenes:[{nodes:[0]}],nodes:[{mesh:0}],
                 meshes:[{primitives:[{attributes:{POSITION:0},indices:1,material:0}]}],
-                materials:[{pbrMetallicRoughness:{baseColorFactor:[0.85,0.87,0.9,1],metallicFactor:0.6,roughnessFactor:0.35},doubleSided:true,emissiveFactor:[0.06,0.06,0.09]}],
-                accessors:[
-                    {bufferView:0,componentType:5126,count:nV,type:"VEC3",max:mx,min:mn},
-                    {bufferView:1,componentType:5123,count:nI,type:"SCALAR"}
-                ],
-                bufferViews:[
-                    {buffer:0,byteOffset:0,byteLength:posBL,target:34962},
-                    {buffer:0,byteOffset:posBL,byteLength:idxBL,target:34963}
-                ],
+                materials:[{pbrMetallicRoughness:{baseColorFactor:[0.88,0.90,0.93,1],metallicFactor:0.65,roughnessFactor:0.28},doubleSided:true,emissiveFactor:[0.1,0.1,0.14]}],
+                accessors:[{bufferView:0,componentType:5126,count:nV,type:"VEC3",max:mx,min:mn},{bufferView:1,componentType:5123,count:nI,type:"SCALAR"}],
+                bufferViews:[{buffer:0,byteOffset:0,byteLength:posBL,target:34962},{buffer:0,byteOffset:posBL,byteLength:idxBL,target:34963}],
                 buffers:[{byteLength:binLen}]
             });
-            const jp = (4 - (gj.length % 4)) % 4;
-            const je = new TextEncoder().encode(gj + ' '.repeat(jp));
-            const total = 12 + 8 + je.length + 8 + binLen;
-            const glb = new ArrayBuffer(total);
-            const dv = new DataView(glb);
-            let o = 0;
-            dv.setUint32(o, 0x46546C67, true); o += 4;
-            dv.setUint32(o, 2, true); o += 4;
-            dv.setUint32(o, total, true); o += 4;
-            dv.setUint32(o, je.length, true); o += 4;
-            dv.setUint32(o, 0x4E4F534A, true); o += 4;
-            new Uint8Array(glb, o, je.length).set(je); o += je.length;
-            dv.setUint32(o, binLen, true); o += 4;
-            dv.setUint32(o, 0x004E4942, true); o += 4;
-            for (let i = 0; i < pos.length; i++) { dv.setFloat32(o, pos[i], true); o += 4; }
-            for (let i = 0; i < tri.length; i++) { dv.setUint16(o, tri[i], true); o += 2; }
-            return URL.createObjectURL(new Blob([glb], { type: 'model/gltf-binary' }));
+            const jp=(4-(gj.length%4))%4, je=new TextEncoder().encode(gj+' '.repeat(jp));
+            const total=12+8+je.length+8+binLen, glb=new ArrayBuffer(total), dv=new DataView(glb);
+            let o=0;
+            dv.setUint32(o,0x46546C67,true);o+=4;dv.setUint32(o,2,true);o+=4;dv.setUint32(o,total,true);o+=4;
+            dv.setUint32(o,je.length,true);o+=4;dv.setUint32(o,0x4E4F534A,true);o+=4;
+            new Uint8Array(glb,o,je.length).set(je);o+=je.length;
+            dv.setUint32(o,binLen,true);o+=4;dv.setUint32(o,0x004E4942,true);o+=4;
+            for(let i=0;i<verts.length;i++){dv.setFloat32(o,verts[i],true);o+=4;}
+            for(let i=0;i<indices.length;i++){dv.setUint16(o,indices[i],true);o+=2;}
+            return URL.createObjectURL(new Blob([glb],{type:'model/gltf-binary'}));
         },
         
         getAltColor(ac) {
-            if (ac.hex === selectedHex) return '#00ffcc';
+            if (ac.hex===selectedHex) return '#00ffcc';
             if (ac.militaryInfo) return '#ff6b6b';
-            if (ac.isVIP || ac.interesting) return '#ffaa00';
+            if (ac.isVIP||ac.interesting) return '#ffaa00';
             if (ac.piaInfo) return '#e056fd';
-            const alt = ac.alt_baro;
-            if (!alt || alt === 'ground' || alt < 500) return '#4ecdc4';
-            if (alt < 5000) return '#45d1c4';
-            if (alt < 10000) return '#45b7d1';
-            if (alt < 18000) return '#78c4e8';
-            if (alt < 25000) return '#96ceb4';
-            if (alt < 35000) return '#c8e6a0';
-            if (alt < 40000) return '#ffeaa7';
+            const alt=ac.alt_baro;
+            if (!alt||alt==='ground'||alt<500) return '#4ecdc4';
+            if (alt<10000) return '#45b7d1';
+            if (alt<25000) return '#96ceb4';
+            if (alt<35000) return '#c8e6a0';
+            if (alt<40000) return '#ffeaa7';
             return '#fdcb6e';
         },
         
         async toggle() {
             if (!this.enabled) {
-                if (typeof Cesium === 'undefined') {
+                if (typeof Cesium==='undefined') {
                     toast('Loading 3D engine...');
-                    try { await this.loadCesium(); } catch (e) {
-                        errorHandler.log('3D View', e.message, 'error');
-                        toast('Failed to load 3D engine'); return;
-                    }
+                    try{await this.loadCesium();}catch(e){errorHandler.log('3D',e.message,'error');toast('Failed to load 3D engine');return;}
                 }
-                try { this.enable(); } catch (e) {
-                    errorHandler.log('3D View', e.message, 'error');
-                    toast('3D initialization failed'); this.disable();
-                }
-            } else { this.disable(); }
+                try{this.enable();}catch(e){errorHandler.log('3D',e.message,'error');toast('3D init failed');this.disable();}
+            } else this.disable();
         },
         
         async loadCesium() {
-            return new Promise((resolve, reject) => {
-                const timeout = setTimeout(() => reject(new Error('Cesium load timeout')), 30000);
-                const css = document.createElement('link');
-                css.rel = 'stylesheet';
-                css.href = 'https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css';
+            return new Promise((resolve,reject)=>{
+                const timeout=setTimeout(()=>reject(new Error('timeout')),30000);
+                const css=document.createElement('link');css.rel='stylesheet';
+                css.href='https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css';
                 document.head.appendChild(css);
-                window.CESIUM_BASE_URL = 'https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/';
-                const script = document.createElement('script');
-                script.src = 'https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js';
-                script.onload = () => { clearTimeout(timeout); resolve(); };
-                script.onerror = () => { clearTimeout(timeout); reject(new Error('Failed to load Cesium')); };
-                document.head.appendChild(script);
+                window.CESIUM_BASE_URL='https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/';
+                const s=document.createElement('script');
+                s.src='https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js';
+                s.onload=()=>{clearTimeout(timeout);resolve();};
+                s.onerror=()=>{clearTimeout(timeout);reject(new Error('Cesium load failed'));};
+                document.head.appendChild(s);
             });
         },
         
         enable() {
-            this.enabled = true;
+            this.enabled=true;
             document.getElementById('view3DBtn')?.classList.add('active');
-            let container = document.getElementById('cesiumContainer');
-            if (!container) { container = document.createElement('div'); container.id = 'cesiumContainer'; document.body.appendChild(container); }
-            container.style.display = 'block';
-            document.getElementById('map').style.display = 'none';
+            let container=document.getElementById('cesiumContainer');
+            if(!container){container=document.createElement('div');container.id='cesiumContainer';document.body.appendChild(container);}
+            container.style.display='block';
+            document.getElementById('map').style.display='none';
             
             if (!this.cesiumViewer) {
-                Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0ODU4Y2UzOS00YTM3LTRjMDQtOWIzYy0yM2FjYzMyMjM3YmMiLCJpZCI6MzgzOTMyLCJpYXQiOjE3Njk1MTExMDZ9.ufhWemohfJfWo62Nc7k9YfzEtW4N-B4pqx2VJFiou9k';
-                this.cesiumViewer = new Cesium.Viewer('cesiumContainer', {
-                    terrain: Cesium.Terrain.fromWorldTerrain(),
-                    animation: false, timeline: false, baseLayerPicker: false,
-                    geocoder: false, homeButton: false, sceneModePicker: false,
-                    navigationHelpButton: false, fullscreenButton: false
+                Cesium.Ion.defaultAccessToken='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0ODU4Y2UzOS00YTM3LTRjMDQtOWIzYy0yM2FjYzMyMjM3YmMiLCJpZCI6MzgzOTMyLCJpYXQiOjE3Njk1MTExMDZ9.ufhWemohfJfWo62Nc7k9YfzEtW4N-B4pqx2VJFiou9k';
+                this.cesiumViewer=new Cesium.Viewer('cesiumContainer',{
+                    terrain:Cesium.Terrain.fromWorldTerrain(),
+                    animation:false,timeline:false,baseLayerPicker:false,
+                    geocoder:false,homeButton:false,sceneModePicker:false,
+                    navigationHelpButton:false,fullscreenButton:false,
+                    shouldAnimate:true
                 });
-                this.modelUri = this.createAirplaneGLB();
-                const scene = this.cesiumViewer.scene;
-                scene.backgroundColor = Cesium.Color.fromCssColorString('#05050f');
-                scene.globe.baseColor = Cesium.Color.fromCssColorString('#0a0a1a');
-                scene.globe.showGroundAtmosphere = true;
-                scene.fog.enabled = true;
-                scene.fog.density = 0.0002;
-                if (scene.skyAtmosphere) { scene.skyAtmosphere.hueShift = -0.05; scene.skyAtmosphere.saturationShift = -0.2; scene.skyAtmosphere.brightnessShift = -0.3; }
-                this.cesiumViewer.cesiumWidget.creditContainer.style.display = 'none';
-                const handler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
-                handler.setInputAction((click) => {
-                    const picked = scene.pick(click.position);
-                    if (Cesium.defined(picked) && picked.id && picked.id._skytrackHex) { selectAircraft(picked.id._skytrackHex); this.updateAircraft(); }
-                }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+                this.modelUri=this.createAirplaneGLB();
+                const scene=this.cesiumViewer.scene;
+                scene.backgroundColor=Cesium.Color.fromCssColorString('#05050f');
+                scene.globe.baseColor=Cesium.Color.fromCssColorString('#0a0a1a');
+                scene.globe.showGroundAtmosphere=true;
+                scene.fog.enabled=true; scene.fog.density=0.0002;
+                if(scene.skyAtmosphere){scene.skyAtmosphere.hueShift=-0.05;scene.skyAtmosphere.saturationShift=-0.2;scene.skyAtmosphere.brightnessShift=-0.3;}
+                try{this.cesiumViewer.cesiumWidget.creditContainer.style.display='none';}catch(e){}
+                
+                // Click to select aircraft
+                const handler=new Cesium.ScreenSpaceEventHandler(scene.canvas);
+                handler.setInputAction((click)=>{
+                    const picked=scene.pick(click.position);
+                    if(Cesium.defined(picked)&&picked.id&&picked.id._skytrackHex){selectAircraft(picked.id._skytrackHex);this.updateAircraft();}
+                },Cesium.ScreenSpaceEventType.LEFT_CLICK);
             }
-            const center = map.getCenter();
-            const altitude = Math.pow(2, 20 - map.getZoom()) * 500;
-            this.cesiumViewer.camera.flyTo({ destination: Cesium.Cartesian3.fromDegrees(center.lng, center.lat, altitude), duration: 0 });
+            
+            const center=map.getCenter();
+            const alt=Math.pow(2,20-map.getZoom())*500;
+            this.cesiumViewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(center.lng,center.lat,alt),duration:0});
+            
             this.updateAircraft();
-            if (this.updateTimer) clearInterval(this.updateTimer);
-            this.updateTimer = setInterval(() => this.updateAircraft(), 1500);
+            if(this.updateTimer)clearInterval(this.updateTimer);
+            this.updateTimer=setInterval(()=>this.updateAircraft(),2000);
             toast('3D Globe active');
         },
         
         disable() {
-            this.enabled = false;
+            this.enabled=false;
             document.getElementById('view3DBtn')?.classList.remove('active');
-            if (this.updateTimer) { clearInterval(this.updateTimer); this.updateTimer = null; }
-            if (this.cesiumViewer) {
-                try {
-                    const carto = this.cesiumViewer.scene.globe.ellipsoid.cartesianToCartographic(this.cesiumViewer.camera.position);
-                    const lat = Cesium.Math.toDegrees(carto.latitude);
-                    const lon = Cesium.Math.toDegrees(carto.longitude);
-                    const zoom = Math.max(2, Math.min(18, Math.round(Math.log2(38000000 / Math.max(carto.height, 100)))));
-                    map.setView([lat, lon], zoom, { animate: false });
-                } catch(e) {}
-            }
-            const container = document.getElementById('cesiumContainer');
-            if (container) container.style.display = 'none';
-            document.getElementById('map').style.display = 'block';
-            if (typeof map !== 'undefined' && map) { setTimeout(() => { map.invalidateSize(); if (typeof updateMarkers === 'function') updateMarkers(); }, 100); }
+            if(this.updateTimer){clearInterval(this.updateTimer);this.updateTimer=null;}
+            if(this.cesiumViewer){try{
+                const carto=this.cesiumViewer.scene.globe.ellipsoid.cartesianToCartographic(this.cesiumViewer.camera.position);
+                map.setView([Cesium.Math.toDegrees(carto.latitude),Cesium.Math.toDegrees(carto.longitude)],
+                    Math.max(2,Math.min(18,Math.round(Math.log2(38000000/Math.max(carto.height,100))))),{animate:false});
+            }catch(e){}}
+            const container=document.getElementById('cesiumContainer');
+            if(container)container.style.display='none';
+            document.getElementById('map').style.display='block';
+            if(typeof map!=='undefined'&&map){setTimeout(()=>{map.invalidateSize();if(typeof updateMarkers==='function')updateMarkers();},100);}
             toast('2D view restored');
         },
         
         updateAircraft() {
-            if (!this.enabled || !this.cesiumViewer) return;
-            const now = Date.now();
-            const activeHexes = new Set();
+            if(!this.enabled||!this.cesiumViewer)return;
+            const now=Date.now();
+            const jNow=this.cesiumViewer.clock.currentTime.clone();
+            const activeHexes=new Set();
             
-            Object.entries(aircraftCache).forEach(([hex, ac]) => {
-                if (ac.lat === undefined || ac.lon === undefined) return;
-                if (now - ac.lastSeen > 120000) return;
+            Object.entries(aircraftCache).forEach(([hex,ac])=>{
+                if(ac.lat===undefined||ac.lon===undefined)return;
+                if(now-ac.lastSeen>120000)return;
                 activeHexes.add(hex);
                 
-                const altFt = (typeof ac.alt_baro === 'number') ? ac.alt_baro : 0;
-                const altM = altFt < 200 ? 80 : altFt * 0.3048;
-                const heading = Cesium.Math.toRadians(ac.track || 0);
-                const position = Cesium.Cartesian3.fromDegrees(ac.lon, ac.lat, altM);
-                const hpr = new Cesium.HeadingPitchRoll(heading, 0, 0);
-                const orientation = Cesium.Transforms.headingPitchRollQuaternion(position, hpr);
-                const color = Cesium.Color.fromCssColorString(this.getAltColor(ac));
+                const altFt=(typeof ac.alt_baro==='number')?ac.alt_baro:0;
+                const altM=altFt<200?80:altFt*0.3048;
+                const newPos=Cesium.Cartesian3.fromDegrees(ac.lon,ac.lat,altM);
+                const heading=Cesium.Math.toRadians(ac.track||0);
+                const color=Cesium.Color.fromCssColorString(this.getAltColor(ac));
+                const isHeavy=ac.t&&/A38|B74|B77|A34|C5|C17|AN[12]|IL7|B78|A35/.test(ac.t);
+                const isMed=ac.t&&/A3[12]|B73|B75|B76|E[17][9]|A22|MD|CRJ|E7/.test(ac.t);
+                const scale=isHeavy?7.5:isMed?5:3.5;
                 
-                const isHeavy = ac.t && /A38|B74|B77|A34|C5|C17|AN[12]|IL7|B78|A35/.test(ac.t);
-                const isMedium = ac.t && /A3[12]|B73|B75|B76|E[17][9]|A22|MD|CRJ|E7/.test(ac.t);
-                const scale = isHeavy ? 9 : isMedium ? 6 : 4;
-                
-                let entity = this.entityMap.get(hex);
-                if (entity) {
-                    entity.position = position;
-                    entity.orientation = orientation;
-                    entity.model.color = color;
-                    entity.model.scale = scale;
-                    if (entity.label) entity.label.text = ac.flight?.trim() || ac.r || hex;
+                let entity=this.entityMap.get(hex);
+                if(entity){
+                    // Smooth interpolation: add new sample to SampledPositionProperty
+                    const pp=entity.position;
+                    if(pp instanceof Cesium.SampledPositionProperty) pp.addSample(jNow,newPos);
+                    const op=entity.orientation;
+                    if(op instanceof Cesium.SampledProperty){
+                        const hpr=new Cesium.HeadingPitchRoll(heading,0,0);
+                        op.addSample(jNow,Cesium.Transforms.headingPitchRollQuaternion(newPos,hpr));
+                    }
+                    entity.model.color=color;
+                    entity.model.scale=scale;
+                    if(entity.label)entity.label.text=ac.flight?.trim()||ac.r||hex;
                 } else {
-                    entity = this.cesiumViewer.entities.add({
-                        position: position,
-                        orientation: orientation,
-                        model: {
-                            uri: this.modelUri,
-                            scale: scale,
-                            color: color,
-                            colorBlendMode: Cesium.ColorBlendMode.MIX,
-                            colorBlendAmount: 0.7,
-                            minimumPixelSize: 12,
-                            maximumScale: 1200,
-                            silhouetteColor: Cesium.Color.fromCssColorString('#ffffff22'),
-                            silhouetteSize: 0.5
+                    // Create SampledPositionProperty for smooth movement between updates
+                    const posP=new Cesium.SampledPositionProperty();
+                    posP.setInterpolationOptions({interpolationDegree:1,interpolationAlgorithm:Cesium.LinearApproximation});
+                    posP.forwardExtrapolationType=Cesium.ExtrapolationType.EXTRAPOLATE;
+                    posP.forwardExtrapolationDuration=10;
+                    posP.addSample(jNow,newPos);
+                    
+                    const oriP=new Cesium.SampledProperty(Cesium.Quaternion);
+                    oriP.setInterpolationOptions({interpolationDegree:1,interpolationAlgorithm:Cesium.LinearApproximation});
+                    oriP.forwardExtrapolationType=Cesium.ExtrapolationType.HOLD;
+                    const hpr=new Cesium.HeadingPitchRoll(heading,0,0);
+                    oriP.addSample(jNow,Cesium.Transforms.headingPitchRollQuaternion(newPos,hpr));
+                    
+                    entity=this.cesiumViewer.entities.add({
+                        position:posP,
+                        orientation:oriP,
+                        model:{
+                            uri:this.modelUri,
+                            scale:scale,
+                            color:color,
+                            colorBlendMode:Cesium.ColorBlendMode.MIX,
+                            colorBlendAmount:0.6,
+                            minimumPixelSize:14,
+                            maximumScale:1500,
+                            silhouetteColor:Cesium.Color.WHITE.withAlpha(0.15),
+                            silhouetteSize:0.8
                         },
-                        label: {
-                            text: ac.flight?.trim() || ac.r || hex,
-                            font: '11px "Segoe UI", sans-serif',
-                            fillColor: Cesium.Color.WHITE.withAlpha(0.9),
-                            outlineColor: Cesium.Color.BLACK,
-                            outlineWidth: 2,
-                            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-                            pixelOffset: new Cesium.Cartesian2(0, -20),
-                            scaleByDistance: new Cesium.NearFarScalar(5e3, 1.0, 1.5e6, 0.25),
-                            distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 800000),
-                            showBackground: true,
-                            backgroundColor: Cesium.Color.fromCssColorString('#0a0a1acc'),
-                            backgroundPadding: new Cesium.Cartesian2(5, 3)
+                        label:{
+                            text:ac.flight?.trim()||ac.r||hex,
+                            font:'11px "Segoe UI",sans-serif',
+                            fillColor:Cesium.Color.WHITE.withAlpha(0.9),
+                            outlineColor:Cesium.Color.BLACK,
+                            outlineWidth:2,
+                            style:Cesium.LabelStyle.FILL_AND_OUTLINE,
+                            pixelOffset:new Cesium.Cartesian2(0,-22),
+                            scaleByDistance:new Cesium.NearFarScalar(5e3,1.0,1.5e6,0.2),
+                            distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,800000),
+                            showBackground:true,
+                            backgroundColor:Cesium.Color.fromCssColorString('#0a0a1acc'),
+                            backgroundPadding:new Cesium.Cartesian2(5,3)
                         }
                     });
-                    entity._skytrackHex = hex;
-                    this.entityMap.set(hex, entity);
+                    entity._skytrackHex=hex;
+                    this.entityMap.set(hex,entity);
+                }
+                
+                // History trails
+                if(ac.history&&ac.history.length>1){
+                    const pts=[];
+                    for(let i=Math.max(0,ac.history.length-200);i<ac.history.length;i++){
+                        const h=ac.history[i];
+                        const hAlt=(typeof h[2]==='number'&&h[2]>200)?h[2]*0.3048:80;
+                        pts.push(Cesium.Cartesian3.fromDegrees(h[1],h[0],hAlt));
+                    }
+                    pts.push(newPos);
+                    
+                    let trail=this.trailMap.get(hex);
+                    if(trail){
+                        trail.polyline.positions=pts;
+                        trail.polyline.material=color.withAlpha(0.55);
+                        trail.polyline.width=hex===selectedHex?3:1.5;
+                    } else {
+                        trail=this.cesiumViewer.entities.add({
+                            polyline:{positions:pts,width:hex===selectedHex?3:1.5,material:color.withAlpha(0.55),clampToGround:false}
+                        });
+                        trail._skytrackTrail=hex;
+                        this.trailMap.set(hex,trail);
+                    }
                 }
             });
             
-            for (const [hex, entity] of this.entityMap) {
-                if (!activeHexes.has(hex)) { this.cesiumViewer.entities.remove(entity); this.entityMap.delete(hex); }
-            }
+            // Remove stale
+            for(const[hex,e]of this.entityMap){if(!activeHexes.has(hex)){this.cesiumViewer.entities.remove(e);this.entityMap.delete(hex);}}
+            for(const[hex,t]of this.trailMap){if(!activeHexes.has(hex)){this.cesiumViewer.entities.remove(t);this.trailMap.delete(hex);}}
         }
     };
 
