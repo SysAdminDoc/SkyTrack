@@ -98,6 +98,13 @@
         .mini-map { position: fixed; bottom: 15px; right: 15px; width: 180px; height: 120px; background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; z-index: 1000; overflow: hidden; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         .mini-map.visible { display: block; }
         .mini-map .leaflet-container { background: #1a1a2e; }
+        #cesiumContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 400; background: #0a0a1a; }
+        #cesiumContainer .cesium-viewer-bottom, #cesiumContainer .cesium-viewer-animationContainer, #cesiumContainer .cesium-viewer-timelineContainer { display: none !important; }
+        #cesiumContainer .cesium-widget-credits { display: none !important; }
+        .globe3d-controls { position: absolute; bottom: 80px; right: 15px; z-index: 410; display: flex; flex-direction: column; gap: 6px; }
+        .globe3d-controls button { width: 36px; height: 36px; border-radius: 6px; background: var(--bg-panel); border: 1px solid var(--border); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; backdrop-filter: blur(10px); }
+        .globe3d-controls button:hover { background: var(--bg-hover); }
+        .globe3d-controls button.active { color: var(--accent); border-color: var(--accent); }
         /* Phase 6: Airport Board */
         .airport-board { position: fixed; top: 70px; left: 15px; width: 380px; max-height: calc(100vh - 100px); background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; z-index: 1500; display: none; flex-direction: column; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
         .airport-board.visible { display: flex; }
@@ -1426,6 +1433,7 @@ if ('serviceWorker' in navigator) {
         <div class="loading-progress"><div class="loading-progress-bar" id="loadingProgress"></div></div>
     </div>
     <div id="map"></div>
+    <div id="cesiumContainer"></div>
     <!-- Phase 16: Reliability Indicators -->
     <div class="data-source-indicator" id="dataSourceIndicator">
         <span class="source-name">Connecting...</span>
@@ -1459,6 +1467,7 @@ if ('serviceWorker' in navigator) {
         <button class="header-btn" id="measureBtn" title="Measure Distance (D)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21L21 3M3 21h7v-7M21 3h-7v7"/></svg></button>
         <button class="header-btn" id="followBtn" title="Follow Selected Aircraft (F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><path d="M12 8v8M8 12h8" stroke-dasharray="2 2"/></svg></button>
         <button class="header-btn" id="multiSelectBtn" title="Multi-Select Mode (Ctrl+Click)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+        <button class="header-btn" id="globe3DBtn" title="3D Globe Mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20"/></svg></button>
         <button class="header-btn" id="settingsBtn" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
         <button class="header-btn" id="statsBtn" title="Statistics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></button>
         <button class="header-btn" id="notifBtn" title="Notifications">
@@ -5393,7 +5402,7 @@ if ('serviceWorker' in navigator) {
     let lastFetchTime = 0, fetchInProgress = false, lastSuccessfulSource = null, lastSuccessfulProxy = 0, animationRunning = false;
     const aircraftAnimation = {}, photoCache = {}, photoFailCache = {};
     let bookmarks = [];
-    const settings = { mapStyle: 'google-streets', showLabels: false, showAirports: false, showRadar: true, altitudeColors: true, showWiki: true, showInterestingBadges: false, filter: 'all', followMode: false, compactMode: false };
+    const settings = { mapStyle: 'google-streets', showLabels: false, showAirports: false, showRadar: true, altitudeColors: true, showWiki: true, showInterestingBadges: false, filter: 'all', followMode: false, compactMode: false, cesiumIonToken: '' };
     const baseMaps = {};
     const MILITARY_TYPES = ['F16', 'F15', 'F18', 'F22', 'F35', 'KC135', 'KC10', 'E3', 'B52', 'B1', 'B2', 'A10'];
     const MILITARY_TYPES_EXACT = ['C17', 'C130', 'C5'];  // These need exact matching to avoid hitting Cessnas/Citations
@@ -7291,6 +7300,7 @@ if ('serviceWorker' in navigator) {
                 if (ac?.lat !== undefined) map.panTo([ac.lat, ac.lon]);
             }
         });
+        document.getElementById('globe3DBtn').addEventListener('click', () => globe3D.toggle());
         document.getElementById('settingsBtn').addEventListener('click', () => { document.getElementById('settingsPanel').classList.toggle('show'); document.getElementById('infoPanel').classList.remove('show'); document.getElementById('airportPanel').classList.remove('show'); });
         document.getElementById('toggleLabels').classList.toggle('on', settings.showLabels); document.getElementById('toggleLabels').addEventListener('click', function() { settings.showLabels = !settings.showLabels; this.classList.toggle('on', settings.showLabels); document.getElementById('labelBtn').classList.toggle('active', settings.showLabels); saveSettings(); updateMarkers(); });
         document.getElementById('toggleAirports').classList.toggle('on', settings.showAirports); document.getElementById('toggleAirports').addEventListener('click', function() { settings.showAirports = !settings.showAirports; this.classList.toggle('on', settings.showAirports); document.getElementById('airportsBtn').classList.toggle('active', settings.showAirports); saveSettings(); updateAirportMarkers(); });
@@ -13012,6 +13022,415 @@ To create a timelapse video:
         }
     }, 5000);
     
+    // ============ 3D GLOBE MODE (CesiumJS) ============
+    const globe3D = {
+        viewer: null,
+        entities: new Map(),
+        active: false,
+        loaded: false,
+        modelUri: null,
+        updateInterval: null,
+        imagery: 'dark',
+        
+        createAirplaneGLB() {
+            // Procedural airplane model - GLTF convention: +X right, +Y up, -Z forward
+            // Nose points -Z so Cesium heading=0 faces North
+            const pos = [
+                // Top surface
+                 0.0,  0.15, -5.0,   // 0: nose
+                -4.0,  0.06,  0.5,   // 1: left wingtip
+                 4.0,  0.06,  0.5,   // 2: right wingtip
+                -0.4,  0.14,  0.0,   // 3: left shoulder
+                 0.4,  0.14,  0.0,   // 4: right shoulder
+                 0.0,  0.12,  2.0,   // 5: waist
+                -1.3,  0.06,  4.5,   // 6: left tail tip
+                 1.3,  0.06,  4.5,   // 7: right tail tip
+                 0.0,  0.10,  5.0,   // 8: tail point
+                 0.0,  1.30,  3.5,   // 9: fin top
+                // Bottom surface
+                 0.0, -0.06, -5.0,   // 10: nose bottom
+                -4.0, -0.06,  0.5,   // 11: left wingtip bottom
+                 4.0, -0.06,  0.5,   // 12: right wingtip bottom
+                -0.4, -0.06,  0.0,   // 13: left shoulder bottom
+                 0.4, -0.06,  0.0,   // 14: right shoulder bottom
+                 0.0, -0.06,  2.0,   // 15: waist bottom
+                 0.0, -0.06,  5.0,   // 16: tail bottom
+                // Engine nacelles (subtle bumps)
+                -1.0, -0.15,  1.5,   // 17: left engine
+                 1.0, -0.15,  1.5,   // 18: right engine
+            ];
+            
+            const tri = [
+                // === TOP SURFACES ===
+                0,3,1,   0,4,3,   0,2,4,     // forward sweep to wings
+                3,5,1,   4,2,5,              // wing roots to waist
+                1,5,6,   2,7,5,              // outer wing to tail tips
+                5,8,6,   5,7,8,              // rear fuselage top
+                // === BOTTOM SURFACES ===
+                10,11,13, 10,13,14, 10,14,12, // forward bottom
+                13,11,15, 14,15,12,           // wing roots bottom
+                11,6,15,  12,15,7,            // outer bottom
+                15,6,16,  15,16,7,            // rear bottom
+                // === LEADING EDGES ===
+                0,1,11,  0,11,10,            // left leading
+                0,10,12, 0,12,2,             // right leading
+                // === TRAILING EDGES ===
+                1,6,11,   2,12,7,            // wingtips
+                6,8,16,   7,16,8,            // tail edges
+                // === TAIL FIN ===
+                5,9,8,    8,9,5,             // fin faces (double-sided via doubleSided material)
+                // === ENGINE PODS ===
+                13,17,15, 14,15,18,          // engine bumps
+            ];
+            
+            const numVerts = pos.length / 3;
+            const numIdx = tri.length;
+            const posByteLen = numVerts * 3 * 4;
+            const idxByteLen = numIdx * 2;
+            const idxPad = (4 - (idxByteLen % 4)) % 4;
+            const binLen = posByteLen + idxByteLen + idxPad;
+            
+            let mn = [Infinity,Infinity,Infinity], mx = [-Infinity,-Infinity,-Infinity];
+            for (let i = 0; i < pos.length; i += 3) {
+                for (let j = 0; j < 3; j++) { mn[j] = Math.min(mn[j], pos[i+j]); mx[j] = Math.max(mx[j], pos[i+j]); }
+            }
+            
+            const gj = JSON.stringify({
+                asset:{version:"2.0",generator:"SkyTrack"},scene:0,
+                scenes:[{nodes:[0]}],nodes:[{mesh:0}],
+                meshes:[{primitives:[{attributes:{POSITION:0},indices:1,material:0}]}],
+                materials:[{pbrMetallicRoughness:{baseColorFactor:[0.82,0.84,0.88,1],metallicFactor:0.5,roughnessFactor:0.4},doubleSided:true,emissiveFactor:[0.05,0.05,0.08]}],
+                accessors:[
+                    {bufferView:0,componentType:5126,count:numVerts,type:"VEC3",max:mx,min:mn},
+                    {bufferView:1,componentType:5123,count:numIdx,type:"SCALAR"}
+                ],
+                bufferViews:[
+                    {buffer:0,byteOffset:0,byteLength:posByteLen,target:34962},
+                    {buffer:0,byteOffset:posByteLen,byteLength:idxByteLen,target:34963}
+                ],
+                buffers:[{byteLength:binLen}]
+            });
+            
+            const jp = (4 - (gj.length % 4)) % 4;
+            const je = new TextEncoder().encode(gj + ' '.repeat(jp));
+            const total = 12 + 8 + je.length + 8 + binLen;
+            const glb = new ArrayBuffer(total);
+            const dv = new DataView(glb);
+            let o = 0;
+            
+            dv.setUint32(o, 0x46546C67, true); o += 4;
+            dv.setUint32(o, 2, true); o += 4;
+            dv.setUint32(o, total, true); o += 4;
+            dv.setUint32(o, je.length, true); o += 4;
+            dv.setUint32(o, 0x4E4F534A, true); o += 4;
+            new Uint8Array(glb, o, je.length).set(je); o += je.length;
+            dv.setUint32(o, binLen, true); o += 4;
+            dv.setUint32(o, 0x004E4942, true); o += 4;
+            for (let i = 0; i < pos.length; i++) { dv.setFloat32(o, pos[i], true); o += 4; }
+            for (let i = 0; i < tri.length; i++) { dv.setUint16(o, tri[i], true); o += 2; }
+            
+            return URL.createObjectURL(new Blob([glb], { type: 'model/gltf-binary' }));
+        },
+        
+        async loadCesium() {
+            if (this.loaded) return true;
+            toast('Loading 3D engine...');
+            return new Promise((resolve, reject) => {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = 'https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css';
+                document.head.appendChild(link);
+                window.CESIUM_BASE_URL = 'https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/';
+                const script = document.createElement('script');
+                script.src = 'https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js';
+                script.onload = () => { this.loaded = true; resolve(true); };
+                script.onerror = () => { toast('Failed to load 3D engine'); reject(new Error('Cesium load failed')); };
+                document.head.appendChild(script);
+            });
+        },
+        
+        async init() {
+            await this.loadCesium();
+            this.modelUri = this.createAirplaneGLB();
+            
+            // Disable default Ion token requirement
+            Cesium.Ion.defaultAccessToken = undefined;
+            
+            const container = document.getElementById('cesiumContainer');
+            
+            this.viewer = new Cesium.Viewer(container, {
+                baseLayer: false,
+                baseLayerPicker: false,
+                geocoder: false,
+                homeButton: false,
+                infoBox: false,
+                selectionIndicator: false,
+                timeline: false,
+                animation: false,
+                navigationHelpButton: false,
+                scene3DOnly: true,
+                skyBox: false,
+                skyAtmosphere: new Cesium.SkyAtmosphere(),
+                msaaSamples: 2,
+                requestRenderMode: false,
+                contextOptions: { webgl: { alpha: false, antialias: true } }
+            });
+            
+            // Add dark imagery layer
+            this.setImagery('dark');
+            
+            // Style the globe
+            const scene = this.viewer.scene;
+            const globe = scene.globe;
+            scene.backgroundColor = Cesium.Color.fromCssColorString('#05050f');
+            globe.baseColor = Cesium.Color.fromCssColorString('#0a0a1a');
+            globe.showGroundAtmosphere = true;
+            globe.enableLighting = false;
+            scene.fog.enabled = true;
+            scene.fog.density = 0.0002;
+            scene.fog.screenSpaceErrorFactor = 4;
+            
+            // Atmosphere glow
+            if (scene.skyAtmosphere) {
+                scene.skyAtmosphere.hueShift = -0.05;
+                scene.skyAtmosphere.saturationShift = -0.2;
+                scene.skyAtmosphere.brightnessShift = -0.3;
+            }
+            
+            // Performance settings
+            scene.globe.maximumScreenSpaceError = 3;
+            this.viewer.resolutionScale = window.devicePixelRatio > 1 ? 0.85 : 1.0;
+            
+            // Click handler for aircraft selection
+            const handler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
+            handler.setInputAction((click) => {
+                const picked = scene.pick(click.position);
+                if (Cesium.defined(picked) && picked.id && picked.id._skytrackHex) {
+                    selectAircraft(picked.id._skytrackHex);
+                }
+            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+            
+            // Add 3D controls overlay
+            const controls = document.createElement('div');
+            controls.className = 'globe3d-controls';
+            controls.innerHTML = '<button id="globe3dSatBtn" title="Toggle Satellite Imagery">S</button>' +
+                '<button id="globe3dTerrainBtn" title="Toggle Terrain (needs Cesium Ion token)">T</button>' +
+                '<button id="globe3dResetBtn" title="Reset View">R</button>';
+            container.appendChild(controls);
+            
+            document.getElementById('globe3dSatBtn').addEventListener('click', () => {
+                this.imagery = this.imagery === 'dark' ? 'satellite' : 'dark';
+                this.setImagery(this.imagery);
+                document.getElementById('globe3dSatBtn').classList.toggle('active', this.imagery === 'satellite');
+            });
+            
+            document.getElementById('globe3dTerrainBtn').addEventListener('click', () => {
+                const token = settings.cesiumIonToken || prompt('Enter Cesium Ion access token for terrain (free at cesium.com/ion):');
+                if (token) {
+                    settings.cesiumIonToken = token;
+                    saveSettings();
+                    Cesium.Ion.defaultAccessToken = token;
+                    Cesium.createWorldTerrainAsync().then(tp => {
+                        this.viewer.terrainProvider = tp;
+                        document.getElementById('globe3dTerrainBtn').classList.add('active');
+                        toast('3D Terrain enabled');
+                    }).catch(() => toast('Terrain load failed - check token'));
+                }
+            });
+            
+            document.getElementById('globe3dResetBtn').addEventListener('click', () => {
+                this.viewer.camera.flyTo({
+                    destination: Cesium.Cartesian3.fromDegrees(-98.5, 39.8, 15000000),
+                    orientation: { heading: 0, pitch: -Cesium.Math.PI_OVER_TWO, roll: 0 },
+                    duration: 1.5
+                });
+            });
+            
+            toast('3D Globe ready');
+        },
+        
+        setImagery(type) {
+            const layers = this.viewer.imageryLayers;
+            layers.removeAll();
+            if (type === 'satellite') {
+                layers.addImageryProvider(new Cesium.UrlTemplateImageryProvider({
+                    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                    credit: new Cesium.Credit('Esri'),
+                    maximumLevel: 19
+                }));
+            } else {
+                layers.addImageryProvider(new Cesium.UrlTemplateImageryProvider({
+                    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+                    subdomains: ['a','b','c','d'],
+                    credit: new Cesium.Credit('CartoDB'),
+                    maximumLevel: 18
+                }));
+            }
+        },
+        
+        getAltColor(ac) {
+            if (ac.militaryInfo) return '#ff6b6b';
+            if (ac.interesting || ac.isVIP) return '#ff8800';
+            if (ac.piaInfo) return '#e056fd';
+            const alt = ac.alt_baro;
+            if (!alt || alt === 'ground' || alt < 500) return '#4ecdc4';
+            if (alt < 5000) return '#45d1c4';
+            if (alt < 10000) return '#45b7d1';
+            if (alt < 18000) return '#78c4e8';
+            if (alt < 25000) return '#96ceb4';
+            if (alt < 35000) return '#c8e6a0';
+            if (alt < 40000) return '#ffeaa7';
+            return '#fdcb6e';
+        },
+        
+        async activate() {
+            if (!this.viewer) await this.init();
+            
+            // Sync camera from Leaflet
+            const center = map.getCenter();
+            const zoom = map.getZoom();
+            const altitude = 38000000 / Math.pow(2, zoom);
+            
+            this.viewer.camera.setView({
+                destination: Cesium.Cartesian3.fromDegrees(center.lng, center.lat, Math.max(altitude, 1000)),
+                orientation: { heading: 0, pitch: -Cesium.Math.PI_OVER_TWO * 0.92, roll: 0 }
+            });
+            
+            document.getElementById('cesiumContainer').style.display = 'block';
+            document.getElementById('map').style.visibility = 'hidden';
+            this.active = true;
+            
+            // Immediate update then periodic
+            this.updateAircraft();
+            this.updateInterval = setInterval(() => this.updateAircraft(), 1500);
+            
+            toast('3D Globe active');
+        },
+        
+        deactivate() {
+            if (this.updateInterval) { clearInterval(this.updateInterval); this.updateInterval = null; }
+            
+            // Sync camera back to Leaflet
+            if (this.viewer) {
+                try {
+                    const ellipsoid = this.viewer.scene.globe.ellipsoid;
+                    const cam = this.viewer.camera;
+                    const carto = ellipsoid.cartesianToCartographic(cam.position);
+                    const lat = Cesium.Math.toDegrees(carto.latitude);
+                    const lon = Cesium.Math.toDegrees(carto.longitude);
+                    const alt = carto.height;
+                    const zoom = Math.max(2, Math.min(18, Math.round(Math.log2(38000000 / Math.max(alt, 100)))));
+                    map.setView([lat, lon], zoom, { animate: false });
+                } catch(e) {}
+            }
+            
+            document.getElementById('cesiumContainer').style.display = 'none';
+            document.getElementById('map').style.visibility = 'visible';
+            this.active = false;
+            
+            toast('2D Map active');
+        },
+        
+        toggle() {
+            if (this.active) this.deactivate(); else this.activate();
+            document.getElementById('globe3DBtn').classList.toggle('active', this.active);
+        },
+        
+        updateAircraft() {
+            if (!this.active || !this.viewer) return;
+            
+            const now = Date.now();
+            const activeHexes = new Set();
+            
+            Object.entries(aircraftCache).forEach(([hex, ac]) => {
+                if (ac.lat === undefined || ac.lon === undefined) return;
+                if (now - ac.lastSeen > 120000) return;
+                
+                activeHexes.add(hex);
+                
+                // Convert altitude: feet to meters, ground aircraft at 50m for visibility
+                const altFt = (typeof ac.alt_baro === 'number') ? ac.alt_baro : 0;
+                const altM = altFt < 200 ? 80 : altFt * 0.3048;
+                const heading = Cesium.Math.toRadians(ac.track || 0);
+                const pitch = 0;
+                const roll = 0;
+                
+                const position = Cesium.Cartesian3.fromDegrees(ac.lon, ac.lat, altM);
+                const hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+                const orientation = Cesium.Transforms.headingPitchRollQuaternion(position, hpr);
+                
+                const hexColor = (hex === selectedHex) ? '#ff3366' : this.getAltColor(ac);
+                const cesiumColor = Cesium.Color.fromCssColorString(hexColor);
+                
+                // Scale: larger types get bigger models
+                const isLarge = ac.t && /A38|B74|B77|A34|C5|C17|AN2|IL7|B78|A35/.test(ac.t);
+                const isMed = ac.t && /A32|B73|B75|B76|E19|A22|MD|CRJ|E17/.test(ac.t);
+                const modelScale = isLarge ? 8 : isMed ? 5.5 : 3.5;
+                
+                let entity = this.entities.get(hex);
+                if (entity) {
+                    entity.position = position;
+                    entity.orientation = orientation;
+                    if (entity.model) {
+                        entity.model.color = cesiumColor;
+                        entity.model.scale = modelScale;
+                    }
+                    if (entity.label) {
+                        entity.label.text = ac.flight?.trim() || ac.r || '';
+                    }
+                } else {
+                    entity = this.viewer.entities.add({
+                        position: position,
+                        orientation: orientation,
+                        model: {
+                            uri: this.modelUri,
+                            scale: modelScale,
+                            color: cesiumColor,
+                            colorBlendMode: Cesium.ColorBlendMode.MIX,
+                            colorBlendAmount: 0.75,
+                            minimumPixelSize: 8,
+                            maximumScale: 800,
+                            silhouetteColor: Cesium.Color.fromCssColorString('#ffffff33'),
+                            silhouetteSize: 0.5
+                        },
+                        label: {
+                            text: ac.flight?.trim() || ac.r || '',
+                            font: '11px "Segoe UI", sans-serif',
+                            fillColor: Cesium.Color.WHITE.withAlpha(0.9),
+                            outlineColor: Cesium.Color.BLACK,
+                            outlineWidth: 2,
+                            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                            pixelOffset: new Cesium.Cartesian2(0, -18),
+                            distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 600000),
+                            scaleByDistance: new Cesium.NearFarScalar(5e3, 1.0, 8e5, 0.3),
+                            showBackground: true,
+                            backgroundColor: Cesium.Color.fromCssColorString('#0a0a1acc'),
+                            backgroundPadding: new Cesium.Cartesian2(4, 2)
+                        },
+                        point: {
+                            pixelSize: 4,
+                            color: cesiumColor,
+                            outlineColor: Cesium.Color.BLACK,
+                            outlineWidth: 1,
+                            distanceDisplayCondition: new Cesium.DistanceDisplayCondition(600000, 50000000),
+                            scaleByDistance: new Cesium.NearFarScalar(6e5, 1.0, 2e7, 0.4)
+                        }
+                    });
+                    entity._skytrackHex = hex;
+                    this.entities.set(hex, entity);
+                }
+            });
+            
+            // Remove stale entities
+            for (const [hex, entity] of this.entities) {
+                if (!activeHexes.has(hex)) {
+                    this.viewer.entities.remove(entity);
+                    this.entities.delete(hex);
+                }
+            }
+        }
+    };
+
     // ============ PHASE 16: INITIALIZE RELIABILITY SYSTEMS ============
     offlineManager.init();
     dataSourceManager.init();
