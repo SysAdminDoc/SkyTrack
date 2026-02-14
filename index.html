@@ -14,7 +14,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-32x32.png">
     <link rel="icon" type="image/png" sizes="48x48" href="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-48x48.png">
     <link rel="apple-touch-icon" sizes="128x128" href="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-128x128.png">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <style>
         :root {
             --bg: #1a1a2e;
@@ -1345,8 +1345,8 @@ if ('serviceWorker' in navigator) {
             const swCode = `
                 const CACHE_NAME = 'skytrack-v3.9-p12';
                 const STATIC_ASSETS = [
-                    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-                    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
+                    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
                     'https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js'
                 ];
                 
@@ -2175,7 +2175,7 @@ if ('serviceWorker' in navigator) {
         </div>
     </div>
     <div class="toast" id="toast"></div>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script>
     // ============================================================
@@ -2189,8 +2189,8 @@ if ('serviceWorker' in navigator) {
         cacheExpiry: 300000,
         defaultCredentials: { clientId: 'mparker-api-client', clientSecret: 'aPEAJUp6WgZuN7UZxX83BionDNsozUTF' },
         corsProxies: [
-            url => 'https://corsproxy.io/?' + encodeURIComponent(url),
-            url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url)
+            url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+            url => 'https://corsproxy.org/?' + encodeURIComponent(url)
         ],
         // Self-hosted asset URLs
         silhouetteUrl: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/silhouettes/',
@@ -2564,7 +2564,7 @@ if ('serviceWorker' in navigator) {
         
         async checkConnection() {
             try {
-                const response = await fetch('https://api.adsb.lol/health', {
+                const response = await fetch('https://api.airplanes.live/v2/point/0/0/1', {
                     method: 'HEAD',
                     cache: 'no-cache',
                     signal: AbortSignal.timeout(5000)
@@ -2719,18 +2719,6 @@ if ('serviceWorker' in navigator) {
     const dataSourceManager = {
         sources: [
             {
-                key: 'adsblol',
-                name: 'ADSB.lol',
-                buildUrl: (c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r,
-                parseResponse: d => d?.ac?.length ? d.ac : null,
-                status: 'unknown',
-                lastSuccess: 0,
-                lastError: 0,
-                errorCount: 0,
-                latency: 0,
-                priority: 1
-            },
-            {
                 key: 'airplaneslive',
                 name: 'Airplanes.live',
                 buildUrl: (c, r) => 'https://api.airplanes.live/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r,
@@ -2740,19 +2728,34 @@ if ('serviceWorker' in navigator) {
                 lastError: 0,
                 errorCount: 0,
                 latency: 0,
-                priority: 2
+                priority: 1,
+                cors: true
             },
             {
-                key: 'adsbfi',
-                name: 'ADSB.fi',
-                buildUrl: (c, r) => 'https://api.adsb.fi/v1/aircraft?lat=' + c.lat.toFixed(4) + '&lon=' + c.lng.toFixed(4) + '&radius=' + (r * 1852),
-                parseResponse: d => d?.aircraft?.length ? d.aircraft : null,
+                key: 'adsbone',
+                name: 'ADSB One',
+                buildUrl: (c, r) => 'https://api.adsb.one/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r,
+                parseResponse: d => d?.ac?.length ? d.ac : null,
                 status: 'unknown',
                 lastSuccess: 0,
                 lastError: 0,
                 errorCount: 0,
                 latency: 0,
-                priority: 3
+                priority: 2,
+                cors: true
+            },
+            {
+                key: 'adsblol',
+                name: 'ADSB.lol',
+                buildUrl: (c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r,
+                parseResponse: d => d?.ac?.length ? d.ac : null,
+                status: 'unknown',
+                lastSuccess: 0,
+                lastError: 0,
+                errorCount: 0,
+                latency: 0,
+                priority: 3,
+                cors: false
             }
         ],
         
@@ -2785,11 +2788,18 @@ if ('serviceWorker' in navigator) {
             try {
                 const testUrl = source.buildUrl({ lat: 40, lng: -74 }, 10);
                 
-                const response = await fetch(testUrl, {
-                    method: 'GET',
-                    cache: 'no-cache',
-                    signal: AbortSignal.timeout(8000)
-                });
+                let response;
+                if (source.cors === false) {
+                    // Non-CORS sources need proxy for health check
+                    response = await fetchWithProxy(testUrl);
+                    if (!response) throw new Error('Proxy fetch failed');
+                } else {
+                    response = await fetch(testUrl, {
+                        method: 'GET',
+                        cache: 'no-cache',
+                        signal: AbortSignal.timeout(8000)
+                    });
+                }
                 
                 source.latency = Date.now() - startTime;
                 
@@ -5371,11 +5381,11 @@ if ('serviceWorker' in navigator) {
 
     // ============ DATA SOURCES ============
     const DATA_SOURCES = {
-        adsblol: { name: 'ADSB.lol', buildUrl: (b, c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null },
         airplaneslive: { name: 'Airplanes.live', buildUrl: (b, c, r) => 'https://api.airplanes.live/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null },
-        adsbfi: { name: 'ADSB.fi', buildUrl: (b, c, r) => 'https://api.adsb.fi/v1/aircraft?lat=' + c.lat.toFixed(4) + '&lon=' + c.lng.toFixed(4) + '&radius=' + (r * 1852), parseResponse: d => d?.aircraft?.length ? d.aircraft : null }
+        adsbone: { name: 'ADSB One', buildUrl: (b, c, r) => 'https://api.adsb.one/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null },
+        adsblol: { name: 'ADSB.lol', buildUrl: (b, c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null }
     };
-    const SOURCE_ORDER = ['adsblol', 'airplaneslive', 'adsbfi'];
+    const SOURCE_ORDER = ['airplaneslive', 'adsbone', 'adsblol'];
 
     // ============ STATE ============
     let apiCredentials = { clientId: '', clientSecret: '' };
@@ -9117,7 +9127,7 @@ ${trailData.map(p => `            <trkpt lat="${p.lat}" lon="${p.lon}">
             
             if (typeof L.heatLayer === 'undefined') {
                 const script = document.createElement('script');
-                script.src = 'https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js';
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js';
                 script.onload = () => this.createLayer(points);
                 document.head.appendChild(script);
             } else {
@@ -11164,17 +11174,17 @@ ${trailData.map(p => `            <trkpt lat="${p.lat}" lon="${p.lon}">
                 // Add CSS
                 const link = document.createElement('link');
                 link.rel = 'stylesheet';
-                link.href = 'https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css';
+                link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.css';
                 document.head.appendChild(link);
                 
                 const link2 = document.createElement('link');
                 link2.rel = 'stylesheet';
-                link2.href = 'https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css';
+                link2.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.Default.css';
                 document.head.appendChild(link2);
                 
                 // Add JS
                 const script = document.createElement('script');
-                script.src = 'https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js';
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/leaflet.markercluster.js';
                 script.onload = () => {
                     this.pluginLoaded = true;
                     resolve(true);
