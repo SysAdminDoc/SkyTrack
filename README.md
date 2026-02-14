@@ -46,6 +46,9 @@ SkyTrack is a zero-dependency, single-file web application. No npm, no bundler, 
 
 ### 3D Globe View
 
+<img width="2812" height="1128" alt="image" src="https://github.com/user-attachments/assets/e8b4e3b6-2e71-466d-bbef-2a3866365b8c" />
+
+
 | Feature | Description |
 |---------|-------------|
 | CesiumJS Globe | Full 3D Earth with terrain, atmosphere, and satellite imagery |
