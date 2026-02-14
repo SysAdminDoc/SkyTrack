@@ -8,11 +8,17 @@
 
 > Real-time global aircraft tracker with 3D globe view, military/VIP detection, and comprehensive aviation intelligence — all in a single HTML file.
 
-![Screenshot](screenshot.png)
+<img width="1683" height="918" alt="SkyTrack Screenshot" src="https://github.com/user-attachments/assets/4252b34a-de6d-4ee2-8ac5-97b60d0b26fb" />
 
 ## Quick Start
 
-**Hosted:** Visit [sysadmindoc.github.io/SkyTrack](https://sysadmindoc.github.io/SkyTrack)
+<div align="center">
+
+### ✈️ [**Launch SkyTrack**](https://sysadmindoc.github.io/SkyTrack/) ✈️
+
+[![Live Demo](https://img.shields.io/badge/🔴_LIVE-Track_Flights-0a66c2?style=for-the-badge&logoColor=white)](https://sysadmindoc.github.io/SkyTrack/)
+
+</div>
 
 **Self-hosted:**
 ```bash
