@@ -481,7 +481,6 @@
         .loading-progress { width: 200px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
         .loading-progress-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
         .spinner { width: 48px; height: 48px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
         .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--bg-panel); border: 1px solid var(--border); padding: 12px 20px; border-radius: 8px; z-index: 3000; opacity: 0; transition: all 0.3s; }
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         .data-source { font-size: 10px; color: var(--text-muted); text-align: center; padding: 4px; background: rgba(128,128,128,0.1); border-radius: 0 0 8px 8px; }
@@ -2753,6 +2752,18 @@ if ('serviceWorker' in navigator) {
     // Pause updates when tab is not visible
     let _fetchIntervalId = null;
     let _tabPaused = false;
+    const _pausableIntervals = []; // {id, fn, ms, name}
+    function _setPausableInterval(fn, ms, name) {
+        const entry = { id: setInterval(fn, ms), fn, ms, name: name || '' };
+        _pausableIntervals.push(entry);
+        return entry;
+    }
+    function _pauseAllIntervals() {
+        _pausableIntervals.forEach(entry => { if (entry.id) { clearInterval(entry.id); entry.id = null; } });
+    }
+    function _resumeAllIntervals() {
+        _pausableIntervals.forEach(entry => { if (!entry.id) { entry.id = setInterval(entry.fn, entry.ms); } });
+    }
     function _startFetchInterval() {
         if (_fetchIntervalId) return;
         _fetchIntervalId = setInterval(loadAircraft, CONFIG.refreshInterval);
@@ -2764,14 +2775,16 @@ if ('serviceWorker' in navigator) {
         if (perfUtils.isTabVisible()) {
             _dbg('Tab visible - resuming updates');
             _tabPaused = false;
+            _resumeAllIntervals();
             if (map) {
                 _startFetchInterval();
                 if (Date.now() - lastFetchTime > CONFIG.refreshInterval * 1.5) loadAircraft();
             }
         } else {
-            _dbg('Tab hidden - pausing fetches');
+            _dbg('Tab hidden - pausing all intervals');
             _tabPaused = true;
             _stopFetchInterval();
+            _pauseAllIntervals();
         }
     });
 
@@ -5666,7 +5679,9 @@ if ('serviceWorker' in navigator) {
     const HELI_TYPES = ['R22', 'R44', 'R66', 'EC35', 'EC45', 'EC55', 'EC75', 'AS50', 'AS55', 'AS65', 'B06', 'B105', 'B206', 'B212', 'B222', 'B230', 'B407', 'B412', 'B429', 'B430', 'BK17', 'S76', 'S92', 'MD50', 'MD52', 'MD60', 'MD90', 'A109', 'A119', 'A139', 'A149', 'A169', 'AW09', 'AW39', 'AW69', 'AW89', 'AW101', 'AW109', 'AW119', 'AW139', 'AW149', 'AW169', 'AW189', 'H125', 'H130', 'H135', 'H145', 'H155', 'H160', 'H175', 'H215', 'H225', 'AS32', 'AS33', 'AS35', 'AS36', 'EC20', 'EC30', 'EC65', 'UH1', 'UH60', 'AH1', 'AH64', 'CH47', 'CH53', 'MH6', 'MH47', 'MH53', 'MH60', 'HH60', 'SH60'];
     const CESSNA_TYPES = ['C120', 'C140', 'C150', 'C152', 'C162', 'C170', 'C172', 'C175', 'C177', 'C180', 'C182', 'C185', 'C188', 'C190', 'C195', 'C205', 'C206', 'C207', 'C208', 'C210', 'C303', 'C310', 'C320', 'C335', 'C336', 'C337', 'C340', 'C402', 'C404', 'C406', 'C411', 'C414', 'C421', 'C425', 'C441', 'C500', 'C501', 'C510', 'C525', 'C526', 'C550', 'C551', 'C560', 'C650', 'C680', 'C700', 'C750', 'C25A', 'C25B', 'C25C', 'C25M', 'C56X', 'C68A'];
     const PRIVATE_TYPES = ['BE35', 'BE36', 'BE55', 'BE58', 'BE76', 'BE95', 'BE99', 'PA18', 'PA22', 'PA23', 'PA24', 'PA28', 'PA30', 'PA31', 'PA32', 'PA34', 'PA38', 'PA44', 'PA46', 'SR20', 'SR22', 'DA20', 'DA40', 'DA42', 'DA50', 'DA62', 'M20', 'AA1', 'AA5', 'TB9', 'TB10', 'TB20', 'TB21', 'RV6', 'RV7', 'RV8', 'RV10', 'RV12', 'RV14', 'TRIN', 'SIRA', 'COLT', 'CHER', 'WARR', 'ARCH', 'ARRW'];
-    const CARGO_CALLSIGNS = ['FDX', 'UPS', 'GTI', 'ABX', 'ATN', 'CLX', 'BOX'];
+    const CARGO_CALLSIGNS = ['FDX', 'UPS', 'GTI', 'ABX', 'ATN', 'CLX', 'BOX', 'DHL', 'BCS', 'CKS', 'WGN', 'PAC', 'AZG', 'ABR', 'MPH', 'SQC', 'CAO', 'CLU', 'ICL', 'GEC', 'MAS'];
+    const MEDICAL_CALLSIGNS = ['MEDEVAC', 'LIFELN', 'MERCY', 'ANGEL', 'LIFGRD', 'MEDIC', 'AIRAMB', 'FLYNRS', 'LIFESV', 'ORNGE', 'STAR', 'REACH', 'PHI', 'AIRMETHODS'];
+    const POLICE_CALLSIGNS = ['POLICE', 'PATROL', 'TROOPER', 'SHERIFF', 'COPTER', 'EAGLE', 'N911'];
 
     // ============ UTILITIES ============
     function haversineDistance(lat1, lon1, lat2, lon2) { const R = 6371, dLat = (lat2 - lat1) * Math.PI / 180, dLon = (lon2 - lon1) * Math.PI / 180; const a = Math.sin(dLat/2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) ** 2; return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); }
@@ -6196,7 +6211,10 @@ if ('serviceWorker' in navigator) {
     }
     function classifyAircraft(ac) {
         const hex = (ac.hex || '').toUpperCase(), type = (ac.t || '').toUpperCase(), cs = (ac.flight || '').toUpperCase(), alt = ac.alt_baro, cat = ac.category || '';
-        if (alt === 'ground' || alt === 0 || (ac.gs < 30 && (!alt || alt < 500))) return 'ground';
+        // Ground check: only if explicitly 'ground' string, or BOTH very slow AND very low
+        // alt===0 from API means "unknown" not "on ground", so don't use it alone
+        // gs<30 alone catches hovering helicopters — require altitude confirmation
+        if (alt === 'ground' || (typeof alt === 'number' && alt <= 50 && (ac.gs || 0) < 30)) return 'ground';
         
         // VIP check (highest priority)
         if (ac.isVIP || badgersBestDB.isVIP(hex)) return 'vip';
@@ -6244,6 +6262,8 @@ if ('serviceWorker' in navigator) {
         if (MILITARY_TYPES.some(t => type.startsWith(t))) return 'military';
         
         if (CARGO_CALLSIGNS.some(c => cs.startsWith(c))) return 'cargo';
+        if (MEDICAL_CALLSIGNS.some(c => cs.startsWith(c))) return 'medical';
+        if (POLICE_CALLSIGNS.some(c => cs.startsWith(c))) return 'police';
         if (PRIVATE_TYPES.some(t => type.startsWith(t))) return 'private';
         return 'commercial';
     }
@@ -6351,10 +6371,10 @@ if ('serviceWorker' in navigator) {
         }
         window.addEventListener('online', () => updateConnectivity('online'));
         window.addEventListener('offline', () => updateConnectivity('offline'));
-        setInterval(() => {
+        _setPausableInterval(() => {
             if (!navigator.onLine) { updateConnectivity('offline'); return; }
             if (Date.now() - _lastDataTime > 30000) updateConnectivity('stale');
-        }, 10000);
+        }, 10000, 'connectivity');
         // Hook into loadAircraft to track data freshness
         const _origLoadAircraft = loadAircraft;
         loadAircraft = async function() {
@@ -6407,25 +6427,25 @@ if ('serviceWorker' in navigator) {
         setTimeout(() => document.getElementById('loading').classList.add('hidden'), 300);
         
         _startFetchInterval();
-        setInterval(saveAircraftCache, 30000);
+        _setPausableInterval(saveAircraftCache, 30000, 'saveCache');
         // Update route progress every 10 seconds for selected aircraft
-        setInterval(() => {
+        _setPausableInterval(() => {
             if (selectedHex) {
                 const ac = aircraftCache[selectedHex];
                 if (ac && (ac.from || ac.to)) {
                     updateRouteDisplay(ac);
                 }
             }
-        }, 10000);
+        }, 10000, 'routeProgress');
         
         // Phase 6: Periodic updates for visual features
-        setInterval(() => {
+        _setPausableInterval(() => {
             if (heatmapLayer.enabled) heatmapLayer.update();
-        }, 15000);
-        setInterval(() => airportBoard.refresh(), 10000);
-        setInterval(() => {
+        }, 15000, 'heatmap');
+        _setPausableInterval(() => airportBoard.refresh(), 10000, 'airportBoard');
+        _setPausableInterval(() => {
             if (view3D.enabled) view3D.updateAircraft();
-        }, 6000);
+        }, 6000, '3dView');
     });
 
     function initMap() {
@@ -6748,7 +6768,7 @@ if ('serviceWorker' in navigator) {
             }
             } catch(e) { _dbg('Error processing aircraft', ac?.hex, e); }
         });
-        const staleTime = now - 300000; Object.keys(aircraftCache).forEach(hex => { if (aircraftCache[hex].lastSeen < staleTime) { delete aircraftCache[hex]; if (markers[hex]) { map.removeLayer(markers[hex]); delete markers[hex]; } delete _iconCache[hex]; } });
+        const staleTime = now - 300000; Object.keys(aircraftCache).forEach(hex => { if (aircraftCache[hex].lastSeen < staleTime) { delete aircraftCache[hex]; if (markers[hex]) { map.removeLayer(markers[hex]); delete markers[hex]; } delete _iconCache[hex]; delete aircraftAnimation[hex]; delete photoCache[hex]; delete photoFailCache[hex]; } });
         updateCounts(); updateMarkersSync();
         
         // Update watchlist active status
@@ -12933,13 +12953,13 @@ To create a timelapse video:
     }
     
     // Phase 14: Periodic geofence check
-    setInterval(() => {
+    _setPausableInterval(() => {
         if (geofencing.zones.length > 0 && !timeMachine.active) {
             Object.values(aircraftCache).forEach(ac => {
                 geofencing.checkAircraft(ac);
             });
         }
-    }, 10000);
+    }, 10000, 'geofence');
     
     // ============ PHASE 15: MOBILE EXPERIENCE ============
     
@@ -13673,14 +13693,14 @@ To create a timelapse video:
     }
     
     // Phase 15: Update aircraft list periodically on mobile
-    setInterval(() => {
+    _setPausableInterval(() => {
         if (mobileSupport.isMobile && document.getElementById('aircraftListSheet')?.classList.contains('half')) {
             mobileSupport.updateAircraftList();
         }
         if (mobileSupport.isMobile && document.getElementById('watchlistSheet')?.classList.contains('half')) {
             mobileSupport.updateWatchlistSheet();
         }
-    }, 5000);
+    }, 5000, 'mobileList');
     
     // ============ PHASE 16: INITIALIZE RELIABILITY SYSTEMS ============
     offlineManager.init();
@@ -13800,7 +13820,7 @@ To create a timelapse video:
                 timeEl.textContent = ago < 5 ? 'just now' : ago + 's ago';
             }
         }
-        setInterval(updateStatusDock, 1500);
+        _setPausableInterval(updateStatusDock, 1500, "statusDock");
         
         // --- Dropdown Menus ---
         document.querySelectorAll('.hv2-dropdown-trigger').forEach(trigger => {
@@ -13849,7 +13869,7 @@ To create a timelapse video:
                 if (badge) badge.style.display = activeCount > 0 ? '' : 'none';
             });
         }
-        setInterval(syncDropdownStates, 2000);
+        _setPausableInterval(syncDropdownStates, 2000, "dropdownSync");
         setTimeout(syncDropdownStates, 500);
         
         // --- Filter Chips ---
@@ -13967,7 +13987,7 @@ To create a timelapse video:
             updateQuickGlance(hex);
         };
         // Also update periodically for selected aircraft
-        setInterval(() => { if (selectedHex) updateQuickGlance(selectedHex); }, 2000);
+        _setPausableInterval(() => { if (selectedHex) updateQuickGlance(selectedHex); }, 2000, 'quickGlance');
         
         // --- Wide Screen Sidebar Pin ---
         if (window.innerWidth >= 1400) {
