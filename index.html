@@ -2159,7 +2159,7 @@ if ('serviceWorker' in navigator) {
             <label class="settings-input-label">Client ID / Username</label>
             <input type="text" class="settings-input" id="apiClientId" placeholder="Enter Client ID...">
             <label class="settings-input-label">Client Secret / Password</label>
-            <input type="password" class="settings-input" id="apiClientSecret" placeholder="Enter Client Secret...">
+            <input type="password" class="settings-input" id="apiClientSecret" placeholder="Enter Client Secret..." autocomplete="off">
             <button class="settings-btn" id="saveApiBtn">Save Credentials</button>
             <button class="settings-btn secondary" id="clearApiBtn">Clear Credentials</button>
             <div class="api-status info" id="apiStatus">Credentials configured</div>
@@ -2764,9 +2764,10 @@ if ('serviceWorker' in navigator) {
         if (perfUtils.isTabVisible()) {
             _dbg('Tab visible - resuming updates');
             _tabPaused = false;
-            _startFetchInterval();
-            // Immediately fetch if we've been away for more than one interval
-            if (Date.now() - lastFetchTime > CONFIG.refreshInterval * 1.5) loadAircraft();
+            if (map) {
+                _startFetchInterval();
+                if (Date.now() - lastFetchTime > CONFIG.refreshInterval * 1.5) loadAircraft();
+            }
         } else {
             _dbg('Tab hidden - pausing fetches');
             _tabPaused = true;
@@ -2856,7 +2857,7 @@ if ('serviceWorker' in navigator) {
             
             this.processSyncQueue();
             
-            if (typeof loadAircraft === 'function') {
+            if (typeof loadAircraft === 'function' && typeof map !== 'undefined' && map) {
                 loadAircraft();
             }
         },
@@ -6364,7 +6365,7 @@ if ('serviceWorker' in navigator) {
             } catch(e) { 
                 if (!navigator.onLine) updateConnectivity('offline'); 
                 else updateConnectivity('stale');
-                throw e; // Re-throw so callers still see errors
+                _dbg('loadAircraft error:', e.message);
             }
         };
         
@@ -6578,6 +6579,7 @@ if ('serviceWorker' in navigator) {
         }
     };
     async function loadAircraft() {
+        if(!map)return; // Guard: map not yet initialized
         if(gridFetch.inProgress){if(gridFetch.abortController)gridFetch.abortController.abort();return;}
         if(Date.now()-lastFetchTime<2000)return;
         if(!offlineManager.isOnline){offlineManager.showCachedPositions();return;}
@@ -6789,6 +6791,7 @@ if ('serviceWorker' in navigator) {
 
     let _updateMarkersRaf = 0;
     function _updateMarkersCore() {
+        if (!map) return;
         const bounds = map.getBounds();
         const zoom = map.getZoom();
         
