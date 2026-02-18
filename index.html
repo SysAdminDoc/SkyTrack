@@ -5073,40 +5073,23 @@ if ('serviceWorker' in navigator) {
         ranges: [],
         loaded: false,
         
-        // Built-in military hex ranges (common known ranges)
+        // Built-in military hex ranges — ONLY ranges that are EXCLUSIVELY military
+        // Most countries mix civilian/military in the same ICAO allocation block,
+        // so we CANNOT use broad country ranges (they catch airlines).
+        // Only the US has dedicated military-only hex blocks (AE/AF).
         builtInRanges: {
             'US': [
-                ['AE0000', 'AEFFFF'],  // US Military
-                ['AF0000', 'AFFFFF']   // US Military alternate
+                ['AE0000', 'AEFFFF'],  // US DoD - exclusively military
+                ['AF0000', 'AFFFFF']   // US DoD - exclusively military
             ],
             'UK': [
-                ['43C000', '43CFFF']   // UK Military
-            ],
-            'France': [
-                ['3A0000', '3AFFFF'],  // French Military
-                ['3B0000', '3BFFFF']   // French Military alternate
-            ],
-            'Germany': [
-                ['3E0000', '3EFFFF']   // German Military
-            ],
-            'Russia': [
-                ['140000', '15FFFF']   // Russian Military
-            ],
-            'China': [
-                ['780000', '7BFFFF']   // Chinese Military
-            ],
-            'Australia': [
-                ['7CF800', '7CFAFF']   // Australian Military
-            ],
-            'Canada': [
-                ['C0CDF9', 'C0CDF9']   // Canadian Military
-            ],
-            'Israel': [
-                ['738000', '738FFF']   // Israeli Military
-            ],
-            'Italy': [
-                ['33E000', '33EFFF']   // Italian Military
+                ['43C000', '43CFFF']   // UK MoD - targeted military sub-block
             ]
+            // REMOVED: France (3A/3B), Germany (3E), Russia (14-15), China (78-7B),
+            // Australia (7CF8), Canada (C0CD), Israel (738), Italy (33E)
+            // These were entire national ICAO blocks catching Air France, Lufthansa,
+            // Aeroflot, Air China, etc. as military. Non-US/UK military aircraft
+            // are identified via the CSV databases (militaryDB, interestingDB) instead.
         },
         
         async init() {
@@ -5676,9 +5659,10 @@ if ('serviceWorker' in navigator) {
     let bookmarks = [];
     const settings = { mapStyle: 'google-streets', showLabels: false, showAirports: false, showRadar: true, altitudeColors: true, showWiki: true, showInterestingBadges: false, filter: 'all', followMode: false, compactMode: false };
     const baseMaps = {};
-    const MILITARY_TYPES = ['F16', 'F15', 'F18', 'F22', 'F35', 'KC135', 'KC10', 'E3', 'B52', 'B1', 'B2', 'A10'];
-    const MILITARY_TYPES_EXACT = ['C17', 'C130', 'C5'];  // These need exact matching to avoid hitting Cessnas/Citations
-    const HELI_TYPES = ['R22', 'R44', 'R66', 'EC35', 'EC45', 'EC55', 'EC75', 'AS50', 'AS55', 'AS65', 'B06', 'B105', 'B206', 'B212', 'B222', 'B230', 'B407', 'B412', 'B429', 'B430', 'BK17', 'S76', 'S92', 'MD50', 'MD52', 'MD60', 'MD90', 'A109', 'A119', 'A139', 'A149', 'A169', 'AW09', 'AW39', 'AW69', 'AW89', 'AW101', 'AW109', 'AW119', 'AW139', 'AW149', 'AW169', 'AW189', 'H125', 'H130', 'H135', 'H145', 'H155', 'H160', 'H175', 'H215', 'H225', 'AS32', 'AS33', 'AS35', 'AS36', 'AS55', 'AS65', 'EC20', 'EC30', 'EC55', 'EC65', 'UH1', 'UH60', 'AH1', 'AH64', 'CH47', 'CH53', 'MH6', 'MH47', 'MH53', 'MH60', 'HH60', 'SH60', 'V22'];
+    const MILITARY_TYPES = ['F16', 'F15', 'F18', 'F22', 'F35', 'KC35', 'K35R', 'KC10', 'B52', 'A400', 'EUFI', 'RFAL', 'TORD', 'P8', 'U2', 'RC35', 'E6', 'E8', 'EA18', 'EP3', 'T38', 'T45'];
+    const MILITARY_TYPES_EXACT = ['C17', 'C130', 'C5', 'C5M', 'B1', 'B1B', 'B2', 'A10', 'A10A', 'E3CF', 'E3TF', 'E3', 'V22', 'C2', 'C12', 'C30J', 'H60', 'C295', 'CN35', 'HAWK', 'MIAG', 'TUCA', 'F117', 'U28A', 'C146', 'C37A', 'C37B', 'C40A', 'C40B', 'P3', 'P8A', 'T6', 'T6A', 'T6B'];
+    const BEECHCRAFT_TYPES = ['B190', 'B200', 'B250', 'B300', 'B350', 'BE20', 'BE30', 'BE40', 'B18T', 'B19T'];
+    const HELI_TYPES = ['R22', 'R44', 'R66', 'EC35', 'EC45', 'EC55', 'EC75', 'AS50', 'AS55', 'AS65', 'B06', 'B105', 'B206', 'B212', 'B222', 'B230', 'B407', 'B412', 'B429', 'B430', 'BK17', 'S76', 'S92', 'MD50', 'MD52', 'MD60', 'MD90', 'A109', 'A119', 'A139', 'A149', 'A169', 'AW09', 'AW39', 'AW69', 'AW89', 'AW101', 'AW109', 'AW119', 'AW139', 'AW149', 'AW169', 'AW189', 'H125', 'H130', 'H135', 'H145', 'H155', 'H160', 'H175', 'H215', 'H225', 'AS32', 'AS33', 'AS35', 'AS36', 'EC20', 'EC30', 'EC65', 'UH1', 'UH60', 'AH1', 'AH64', 'CH47', 'CH53', 'MH6', 'MH47', 'MH53', 'MH60', 'HH60', 'SH60'];
     const CESSNA_TYPES = ['C120', 'C140', 'C150', 'C152', 'C162', 'C170', 'C172', 'C175', 'C177', 'C180', 'C182', 'C185', 'C188', 'C190', 'C195', 'C205', 'C206', 'C207', 'C208', 'C210', 'C303', 'C310', 'C320', 'C335', 'C336', 'C337', 'C340', 'C402', 'C404', 'C406', 'C411', 'C414', 'C421', 'C425', 'C441', 'C500', 'C501', 'C510', 'C525', 'C526', 'C550', 'C551', 'C560', 'C650', 'C680', 'C700', 'C750', 'C25A', 'C25B', 'C25C', 'C25M', 'C56X', 'C68A'];
     const PRIVATE_TYPES = ['BE35', 'BE36', 'BE55', 'BE58', 'BE76', 'BE95', 'BE99', 'PA18', 'PA22', 'PA23', 'PA24', 'PA28', 'PA30', 'PA31', 'PA32', 'PA34', 'PA38', 'PA44', 'PA46', 'SR20', 'SR22', 'DA20', 'DA40', 'DA42', 'DA50', 'DA62', 'M20', 'AA1', 'AA5', 'TB9', 'TB10', 'TB20', 'TB21', 'RV6', 'RV7', 'RV8', 'RV10', 'RV12', 'RV14', 'TRIN', 'SIRA', 'COLT', 'CHER', 'WARR', 'ARCH', 'ARRW'];
     const CARGO_CALLSIGNS = ['FDX', 'UPS', 'GTI', 'ABX', 'ATN', 'CLX', 'BOX'];
@@ -6216,10 +6200,14 @@ if ('serviceWorker' in navigator) {
         // VIP check (highest priority)
         if (ac.isVIP || badgersBestDB.isVIP(hex)) return 'vip';
         
-        // Cessna aircraft - classify as private FIRST (before any military checks)
+        // Cessna aircraft - classify as private (before any military checks)
         if (CESSNA_TYPES.some(t => type === t || type.startsWith(t + 'P') || type.startsWith(t + 'T'))) return 'private';
         
-        // Check interesting database
+        // Beechcraft King Air / 1900 - classify as private (before military checks)
+        if (BEECHCRAFT_TYPES.some(t => type === t || type.startsWith(t))) return 'private';
+        
+        // CSV database checks (high confidence — take priority over type-based heuristics)
+        // This ensures military helicopters (UH-60, CH-47 etc.) get 'military' not 'helicopter'
         if (ac.interesting) { 
             const category = ac.interesting.category?.toLowerCase(); 
             if (category === 'military' || category === 'mil') return 'military';
@@ -6228,39 +6216,32 @@ if ('serviceWorker' in navigator) {
             if (category === 'medical') return 'medical';
             if (category === 'pia') return 'pia';
         }
-        
-        // Check military database
         if (ac.militaryInfo) { 
             const milCat = ac.militaryInfo.category?.toLowerCase(); 
             if (milCat === 'military' || milCat === 'mil') return 'military';
             if (milCat === 'gov' || milCat === 'government') return 'government'; 
             if (milCat === 'police' || milCat === 'pol') return 'police'; 
         }
-        
-        // Check PIA database
         if (ac.piaInfo) return 'pia';
+        if (ac.civilianInteresting) return 'interesting';
         
-        // Check civilian interesting
-        if (civilianDB.isCivilianInteresting(hex)) return 'interesting';
-        
-        // Check military hex ranges
+        // Military hex ranges (known ICAO allocations)
         if (ac.militaryRangeInfo) return 'military';
-        if (milRangesDB.loaded) {
-            const rangeResult = milRangesDB.isMilitary(hex);
-            if (rangeResult) return 'military';
-        }
         
-        // Check dbFlags from API (bit 0 = military)
-        if (typeof ac.dbFlags === 'number' && (ac.dbFlags & 1)) return 'military';
+        // Helicopter check — AFTER database checks, BEFORE type-based military heuristics
+        // This prevents Bell 212/A109/etc from hitting military prefix matches
+        if (cat === 'A7' || HELI_TYPES.some(t => type === t || type.startsWith(t))) return 'helicopter';
         
-        // Existing hex prefix checks (US military)
-        if (hex.startsWith('AE') || hex.startsWith('AF')) return 'military';
+        // NOTE: dbFlags bit 0 ("military") is NOT used for classification.
+        // Tar1090-db sets this flag for government, contractor, and charter aircraft
+        // used by military — it's too broad and causes false positives.
+        // Real military aircraft are caught by the CSV databases and hex ranges above.
         
-        // Military type checks - exact match for C17/C130/C5 to avoid Cessna/Citation false positives
+        // Military type codes (exact match — no false positives)
         if (MILITARY_TYPES_EXACT.includes(type)) return 'military';
+        // Military type codes (prefix match — safe prefixes only, no civilian conflicts)
         if (MILITARY_TYPES.some(t => type.startsWith(t))) return 'military';
         
-        if (cat === 'A7' || HELI_TYPES.some(t => type.startsWith(t))) return 'helicopter';
         if (CARGO_CALLSIGNS.some(c => cs.startsWith(c))) return 'cargo';
         if (PRIVATE_TYPES.some(t => type.startsWith(t))) return 'private';
         return 'commercial';
@@ -6847,7 +6828,7 @@ if ('serviceWorker' in navigator) {
                 if (settings.filter === 'vip') {
                     if (!ac.isVIP && !badgersBestDB.isVIP(ac.hex)) { if (markers[ac.hex]) { map.removeLayer(markers[ac.hex]); delete markers[ac.hex]; delete aircraftAnimation[ac.hex]; } return; }
                 } else if (settings.filter === 'interesting') { 
-                    if (!ac.interesting && !ac.militaryInfo && !civilianDB.isCivilianInteresting(ac.hex)) { if (markers[ac.hex]) { map.removeLayer(markers[ac.hex]); delete markers[ac.hex]; delete aircraftAnimation[ac.hex]; } return; } 
+                    if (!ac.interesting && !ac.militaryInfo && !ac.civilianInteresting) { if (markers[ac.hex]) { map.removeLayer(markers[ac.hex]); delete markers[ac.hex]; delete aircraftAnimation[ac.hex]; } return; } 
                 } else if (settings.filter === 'pia') {
                     if (!ac.piaInfo) { if (markers[ac.hex]) { map.removeLayer(markers[ac.hex]); delete markers[ac.hex]; delete aircraftAnimation[ac.hex]; } return; }
                 } else if (ac.category_type !== settings.filter) { if (markers[ac.hex]) { map.removeLayer(markers[ac.hex]); delete markers[ac.hex]; delete aircraftAnimation[ac.hex]; } return; } 
@@ -13898,11 +13879,11 @@ To create a timelapse video:
                 if (!ac) return;
                 let show = false;
                 const ct = ac.category_type || '';
-                if (activeChips.includes('military') && (ct === 'military' || ct === 'government' || ct === 'police' || ac.militaryInfo || ac.militaryRangeInfo || (typeof ac.dbFlags === 'number' && (ac.dbFlags & 1)))) show = true;
+                if (activeChips.includes('military') && (ct === 'military' || ct === 'government' || ct === 'police')) show = true;
                 if (activeChips.includes('commercial') && (ct === 'commercial' || ct === 'cargo')) show = true;
-                if (activeChips.includes('cargo') && (ct === 'cargo' || (ac.t && /B74.*F|B77.*F|A33.*F|MD11|A30/.test(ac.t)))) show = true;
-                if (activeChips.includes('private') && (ct === 'private' || (!ac.category || /A[12]|B[12]/.test(ac.category)))) show = true;
-                if (activeChips.includes('helicopter') && (ct === 'helicopter' || (ac.category && /A7|B6/.test(ac.category)))) show = true;
+                if (activeChips.includes('cargo') && ct === 'cargo') show = true;
+                if (activeChips.includes('private') && ct === 'private') show = true;
+                if (activeChips.includes('helicopter') && ct === 'helicopter') show = true;
                 if (activeChips.includes('interesting') && (ac.interesting || ac.isVIP || ac.piaInfo || ct === 'interesting' || ct === 'vip' || ct === 'pia')) show = true;
                 marker.setOpacity(show ? 1 : 0.08);
             });
