@@ -1534,7 +1534,7 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
         try {
             const swCode = `
-                const CACHE_NAME = 'skytrack-v4.5';
+                const CACHE_NAME = 'skytrack-v4.6';
                 const STATIC_ASSETS = [
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
@@ -2538,8 +2538,9 @@ if ('serviceWorker' in navigator) {
         debug: (new URLSearchParams(window.location.search)).has('debug'),
         defaultCredentials: { clientId: 'mparker-api-client', clientSecret: 'aPEAJUp6WgZuN7UZxX83BionDNsozUTF' },
         corsProxies: [
-            url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
-            url => 'https://corsproxy.org/?' + encodeURIComponent(url)
+            url => 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(url),
+            url => 'https://corsproxy.io/?' + encodeURIComponent(url),
+            url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url)
         ],
         // Self-hosted asset URLs
         silhouetteUrl: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/silhouettes/',
@@ -3135,8 +3136,8 @@ if ('serviceWorker' in navigator) {
                 const testUrl = source.buildUrl({ lat: 40, lng: -74 }, 10);
                 
                 let response;
-                if (source.cors === false) { response = await fetchWithProxy(testUrl); if (!response) throw new Error('No proxy'); }
-                else { response = await fetch(testUrl, { method: 'GET', cache: 'no-cache', signal: AbortSignal.timeout(8000) }); }
+                if (source.cors !== false) { try { response = await fetch(testUrl, { method: 'GET', cache: 'no-cache', signal: AbortSignal.timeout(8000) }); } catch(e) { response = null; } }
+                if (!response || !response.ok) { response = await fetchWithProxy(testUrl); if (!response) throw new Error('No proxy'); }
                 
                 source.latency = Date.now() - startTime;
                 
@@ -6653,7 +6654,8 @@ if ('serviceWorker' in navigator) {
         },
         async fetchPoint(source, point, signal) {
             const url=source.buildUrl(point,250);
-            try{let r;if(source.cors===false){r=await fetchWithProxy(url);}else{r=await fetch(url,{signal,cache:'no-cache'});}
+            try{let r;if(source.cors!==false){try{r=await fetch(url,{signal,cache:'no-cache'});}catch(e){if(e.name==='AbortError')throw e;r=null;}}
+                if(!r||!r.ok){r=await fetchWithProxy(url);}
                 if(r?.ok){const d=await r.json();return source.parseResponse(d)||[];}}catch(e){if(e.name==='AbortError')throw e;}return[];
         }
     };
