@@ -1046,6 +1046,7 @@
                 padding-top: 0;
                 display: flex;
                 flex-direction: column;
+                transition: height 0.25s ease, opacity 0.2s ease;
             }
             
             #infoPanel.bottom-sheet .info-header {
@@ -1106,40 +1107,6 @@
             .mobile-fab svg {
                 width: 24px;
                 height: 24px;
-            }
-            
-            /* Mobile context menu */
-            .mobile-context-menu {
-                position: fixed;
-                background: var(--bg-panel);
-                border: 1px solid var(--border);
-                border-radius: 12px;
-                z-index: 3000;
-                min-width: 180px;
-                overflow: hidden;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-                transform: translate(-50%, -100%);
-            }
-            
-            .mobile-context-menu button {
-                display: block;
-                width: 100%;
-                padding: 14px 18px;
-                background: none;
-                border: none;
-                color: var(--text);
-                font-size: 14px;
-                text-align: left;
-                cursor: pointer;
-                transition: background 0.15s;
-            }
-            
-            .mobile-context-menu button:not(:last-child) {
-                border-bottom: 1px solid var(--border);
-            }
-            
-            .mobile-context-menu button:active {
-                background: rgba(255,255,255,0.05);
             }
             
             /* Hide desktop-only elements */
@@ -1409,21 +1376,114 @@
         /* ============ UI OVERHAUL: WIDE SIDEBAR ============ */
         @media (min-width: 1400px) {
             .info-panel.show { position: fixed !important; top: 50px !important; left: 0 !important; bottom: 32px !important; width: 360px !important; max-height: none !important; border-radius: 0 !important; border-left: none !important; border-top: none !important; border-bottom: none !important; }
-            body.panel-pinned #map { left: 360px !important; }
             body.panel-pinned .info-panel.show { box-shadow: 4px 0 20px rgba(0,0,0,0.3) !important; }
         }
 
         /* ============ UI OVERHAUL: MOBILE ============ */
         @media (max-width: 768px) {
+            /* Header: hidden on mobile — bottom nav has Settings, FAB has Locate */
+            .header { display: none !important; }
+
+            /* Filter bar: full-width top bar */
+            .filter-bar {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                transform: none !important;
+                max-width: none !important;
+                border-radius: 0 !important;
+                padding: 6px 10px !important;
+                gap: 6px !important;
+                flex-wrap: nowrap !important;
+                z-index: 1100 !important;
+                align-items: center !important;
+                border: none !important;
+                border-bottom: 1px solid var(--border) !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .filter-bar::-webkit-scrollbar { display: none; }
+            .filter-bar .logo span { display: none; }
+            .filter-bar .logo { gap: 0; flex-shrink: 0; }
+            .filter-bar .filter-divider { display: none; }
+            .filter-bar .connectivity-indicator { margin-left: -2px; margin-right: 2px; }
+            .filter-bar .search-container { flex: 1; min-width: 80px; }
+            .filter-bar .search-container .search-box,
+            .filter-bar .search-container .search-box:focus { width: 100% !important; }
+            .filter-bar .search-input-wrapper { width: 100%; }
+            .filter-bar .filter-btn { padding: 4px 8px; font-size: 10px; flex-shrink: 0; }
+
+            /* Search dropdown: full width on mobile */
+            .search-dropdown {
+                position: fixed !important;
+                top: 46px !important;
+                left: 8px !important;
+                right: 8px !important;
+                width: auto !important;
+                border-radius: 0 0 12px 12px !important;
+            }
+
+            /* Filter chips bar */
+            .filter-chips-bar { top: 46px; max-width: calc(100vw - 16px); overflow-x: auto; scrollbar-width: none; }
+            .filter-chips-bar::-webkit-scrollbar { display: none; }
+            .filter-chips-toggle { top: 46px; }
+
+            /* Map: below top bar, above bottom nav */
+            #map { top: 46px !important; bottom: 60px !important; left: 0 !important; }
+
+            /* Status dock: hide on mobile */
+            .status-dock { display: none !important; }
+
+            /* Settings panel: bottom sheet */
+            .settings-panel {
+                position: fixed !important;
+                top: auto !important;
+                bottom: 60px !important;
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                max-height: 70vh !important;
+                border-radius: 16px 16px 0 0 !important;
+                z-index: 1500 !important;
+            }
+
+            /* HUD and overlays above bottom nav */
+            .hud-3d { bottom: 72px !important; right: 8px; }
+            .mobile-fab { bottom: 76px !important; }
+            .toast { bottom: 80px !important; }
+            .alert-container { top: 54px; right: 8px; left: 8px; max-width: none; }
+            .install-prompt { bottom: 80px !important; width: calc(100% - 32px); }
+            .modal-overlay .modal { width: calc(100% - 32px); max-width: 400px; }
             .hv2-dropdown-trigger span:not(.hv2-dd-badge) { display: none; }
             .hv2-dropdown-trigger { padding: 5px 7px; }
-            .hv2-panel { min-width: 200px; left: auto; right: -10px; transform: translateY(-8px); }
-            .hv2-panel.show { transform: translateY(0); }
-            .filter-chips-bar { top: 46px; max-width: calc(100vw - 50px); overflow-x: auto; }
-            .status-dock { font-size: 10px; gap: 8px; }
-            .status-dock-label { display: none; }
-            .hud-3d { bottom: 40px; right: 8px; }
-            .filter-chips-toggle { top: 46px; }
+            .hv2-panel { min-width: 200px; left: auto; right: -10px; }
+            .bottom-panels { display: none !important; }
+            .onboard-card { width: 92%; max-width: 360px; padding: 24px 20px; }
+            .loading-logo { font-size: 22px; }
+            .loading-logo img { width: 36px; height: 36px; }
+        }
+
+        /* Landscape phone: info panel as side panel */
+        @media (max-width: 768px) and (orientation: landscape) {
+            #infoPanel.bottom-sheet {
+                left: auto !important;
+                right: 60px !important;
+                width: 50vw !important;
+                height: calc(100vh - 46px) !important;
+                max-height: none !important;
+                bottom: 0 !important;
+                top: 46px !important;
+                border-radius: 0 !important;
+                border-top: none !important;
+                border-left: 1px solid rgba(255,255,255,0.15) !important;
+            }
+        }
+
+        /* Tablet adjustments */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .filter-bar { max-width: calc(100vw - 200px); }
         }
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
@@ -1474,7 +1534,7 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
         try {
             const swCode = `
-                const CACHE_NAME = 'skytrack-v4.2';
+                const CACHE_NAME = 'skytrack-v4.3';
                 const STATIC_ASSETS = [
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
@@ -1741,13 +1801,12 @@ if ('serviceWorker' in navigator) {
         <div class="onboard-card">
             <div class="onboard-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 110-14h8.5"/><polyline points="21 12 17 8 21 12 17 16"/></svg></div>
             <div class="onboard-title">Welcome to SkyTrack</div>
-            <div class="onboard-desc">Real-time global aircraft tracking with military detection, 3D globe view, and aviation intelligence.</div>
+            <div class="onboard-desc">Real-time global aircraft tracking with military detection and aviation intelligence.</div>
             <div class="onboard-tips">
-                <div class="onboard-tip"><span class="onboard-tip-num">1</span><span>Click any aircraft on the map to see its details, route, and specs</span></div>
+                <div class="onboard-tip"><span class="onboard-tip-num">1</span><span>Tap any aircraft on the map to see its details, route, and specs</span></div>
                 <div class="onboard-tip"><span class="onboard-tip-num">2</span><span>Use the search bar to find flights by callsign, registration, or airport</span></div>
-                <div class="onboard-tip"><span class="onboard-tip-num">3</span><span>Click the globe icon to enter immersive 3D view</span></div>
-                <div class="onboard-tip"><span class="onboard-tip-num">4</span><span>Open Map, Tools, and View menus for layers, heatmaps, and more</span></div>
-                <div class="onboard-tip"><span class="onboard-tip-num">5</span><span>Use the filter button to show only military, cargo, or interesting aircraft</span></div>
+                <div class="onboard-tip"><span class="onboard-tip-num">3</span><span>Use the filter button to show only military, cargo, or interesting aircraft</span></div>
+                <div class="onboard-tip"><span class="onboard-tip-num">4</span><span>Swipe down on the aircraft panel to dismiss it</span></div>
             </div>
             <button class="onboard-btn" id="onboardDismiss">Start Tracking</button>
         </div>
@@ -6449,7 +6508,7 @@ if ('serviceWorker' in navigator) {
     });
 
     function initMap() {
-        map = L.map('map', { center: CONFIG.center, zoom: CONFIG.zoom, zoomControl: true, preferCanvas: true });
+        map = L.map('map', { center: CONFIG.center, zoom: CONFIG.zoom, zoomControl: true, preferCanvas: true, worldCopyJump: true });
         baseMaps['dark'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
         baseMaps['satellite'] = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
         baseMaps['google-streets'] = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'] });
@@ -13088,38 +13147,116 @@ To create a timelapse video:
         handleTouchStart(e) {
             this.touchStartY = e.touches[0].clientY;
             this.touchStartX = e.touches[0].clientX;
-            
+            this._infoDrag = false;
+            this._infoPending = false;
+            this._infoOffset = 0;
+            this._infoBaseHeight = 0;
+
+            // Check if touching info panel bottom-sheet (pull-to-dismiss)
+            const infoSheet = e.target.closest('#infoPanel.bottom-sheet');
+            if (infoSheet) {
+                if (e.target.closest('.sheet-handle')) {
+                    this._infoDrag = true;
+                    this._infoOffset = 0;
+                    this._infoBaseHeight = infoSheet.offsetHeight;
+                } else {
+                    this._infoPending = true;
+                    this._infoScrollEl = infoSheet.querySelector('.info-content') || infoSheet;
+                }
+                return;
+            }
+
             // Check if touching a bottom sheet handle
             const sheet = e.target.closest('.bottom-sheet');
             if (sheet && e.target.closest('.sheet-handle')) {
                 this.activeSheet = sheet;
             }
         },
-        
+
         handleTouchMove(e) {
+            const currentY = e.touches[0].clientY;
+            const deltaFromStart = currentY - this.touchStartY;
+
+            // Info panel pending: activate drag when scrolled to top and swiping down
+            if (this._infoPending && !this._infoDrag) {
+                const scrollEl = this._infoScrollEl;
+                const atTop = !scrollEl || scrollEl.scrollTop <= 0;
+                if (atTop && deltaFromStart > 5) {
+                    this._infoDrag = true;
+                    this._infoPending = false;
+                    this._infoOffset = 0;
+                    const infoPanel = _el('infoPanel');
+                    this._infoBaseHeight = infoPanel ? infoPanel.offsetHeight : window.innerHeight * 0.5;
+                    this.touchStartY = currentY;
+                } else if (deltaFromStart < -5) {
+                    this._infoPending = false;
+                }
+            }
+
+            // Active info panel drag: follow finger
+            if (this._infoDrag) {
+                e.preventDefault();
+                this._infoOffset = currentY - this.touchStartY;
+                const offset = Math.max(-20, this._infoOffset);
+                const infoPanel = _el('infoPanel');
+                if (infoPanel) {
+                    const newHeight = Math.max(0, this._infoBaseHeight - offset);
+                    infoPanel.style.height = newHeight + 'px';
+                    infoPanel.style.transition = 'none';
+                    const ratio = newHeight / this._infoBaseHeight;
+                    infoPanel.style.opacity = Math.max(0.3, ratio);
+                }
+                return;
+            }
+
             if (!this.activeSheet) return;
-            
-            const deltaY = e.touches[0].clientY - this.touchStartY;
+
+            const deltaY = currentY - this.touchStartY;
             const sheet = this.activeSheet;
-            
+
             // Prevent default to stop page scroll
             e.preventDefault();
-            
+
             // Move sheet with finger
             const currentHeight = sheet.offsetHeight;
             const newHeight = Math.max(60, Math.min(window.innerHeight * 0.9, currentHeight - deltaY));
             sheet.style.height = newHeight + 'px';
-            
-            this.touchStartY = e.touches[0].clientY;
+
+            this.touchStartY = currentY;
         },
-        
+
         handleTouchEnd(e) {
+            // Info panel drag end
+            if (this._infoDrag) {
+                this._infoDrag = false;
+                this._infoPending = false;
+                const infoPanel = _el('infoPanel');
+                const dismissed = this._infoOffset > 80;
+                if (infoPanel) {
+                    infoPanel.style.transition = '';
+                    infoPanel.style.opacity = '';
+                    if (dismissed) {
+                        infoPanel.style.height = '0px';
+                        infoPanel.style.opacity = '0';
+                        setTimeout(() => {
+                            infoPanel.style.height = '';
+                            infoPanel.style.opacity = '';
+                            deselectAircraft();
+                        }, 200);
+                    } else {
+                        infoPanel.style.height = '';
+                    }
+                }
+                return;
+            }
+            this._infoPending = false;
+
             if (!this.activeSheet) return;
-            
+
             const sheet = this.activeSheet;
             const height = sheet.offsetHeight;
             const maxHeight = window.innerHeight * 0.9;
-            
+
             // Snap to positions
             if (height < 100) {
                 this.collapseSheet(sheet);
@@ -13128,7 +13265,7 @@ To create a timelapse video:
             } else {
                 this.halfExpandSheet(sheet);
             }
-            
+
             this.activeSheet = null;
         },
         
@@ -13553,79 +13690,6 @@ To create a timelapse video:
                 this.lastTap = now;
             });
             
-            // Long press for context menu
-            mapEl.addEventListener('touchstart', (e) => {
-                if (e.target.closest('.leaflet-control') || e.target.closest('.aircraft-marker')) return;
-                
-                this.longPressTimer = setTimeout(() => {
-                    const touch = e.touches[0];
-                    this.showContextMenu(touch.clientX, touch.clientY);
-                }, 600);
-            }, { passive: true });
-            
-            mapEl.addEventListener('touchend', () => {
-                clearTimeout(this.longPressTimer);
-            });
-            
-            mapEl.addEventListener('touchmove', () => {
-                clearTimeout(this.longPressTimer);
-            });
-        },
-        
-        showContextMenu(x, y) {
-            haptics.medium();
-            
-            const containerPoint = L.point(x, y - 50);
-            const latlng = map.containerPointToLatLng(containerPoint);
-            
-            // Remove existing menu
-            document.querySelector('.mobile-context-menu')?.remove();
-            
-            const menu = document.createElement('div');
-            menu.className = 'mobile-context-menu';
-            menu.style.left = x + 'px';
-            menu.style.top = y + 'px';
-            menu.innerHTML = `
-                <button data-action="center">Center here</button>
-                <button data-action="measure">Measure from here</button>
-                <button data-action="geofence">Create zone here</button>
-            `;
-            
-            document.body.appendChild(menu);
-            
-            menu.addEventListener('click', (e) => {
-                const action = e.target.dataset.action;
-                switch (action) {
-                    case 'center':
-                        map.panTo(latlng);
-                        break;
-                    case 'measure':
-                        if (typeof measureTool !== 'undefined' && measureTool.startFrom) {
-                            measureTool.startFrom(latlng);
-                        } else {
-                            toast('Hold to start measuring');
-                        }
-                        break;
-                    case 'geofence':
-                        if (typeof geofencing !== 'undefined' && geofencing.startDrawing) {
-                            geofencing.startDrawing();
-                        }
-                        break;
-                }
-                menu.remove();
-                haptics.light();
-            });
-            
-            // Remove on tap elsewhere
-            setTimeout(() => {
-                const removeHandler = (e) => {
-                    if (!e.target.closest('.mobile-context-menu')) {
-                        menu.remove();
-                        document.removeEventListener('touchstart', removeHandler);
-                    }
-                };
-                document.addEventListener('touchstart', removeHandler);
-            }, 100);
         }
     };
     
