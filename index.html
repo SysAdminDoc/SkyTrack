@@ -1534,7 +1534,7 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
         try {
             const swCode = `
-                const CACHE_NAME = 'skytrack-v4.3';
+                const CACHE_NAME = 'skytrack-v4.4';
                 const STATIC_ASSETS = [
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
@@ -6515,7 +6515,7 @@ if ('serviceWorker' in navigator) {
         baseMaps['google-satellite'] = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'] });
         baseMaps['google-hybrid'] = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'] });
         baseMaps['google-terrain'] = L.tileLayer('https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'] });
-        currentBaseMap = settings.mapStyle || 'google-streets'; baseMaps[currentBaseMap].addTo(map); document.getElementById('mapStyleSelect').value = currentBaseMap;
+        currentBaseMap = settings.mapStyle || 'google-hybrid'; baseMaps[currentBaseMap].addTo(map); document.getElementById('mapStyleSelect').value = currentBaseMap;
         airportLayer = L.layerGroup().addTo(map);
         let moveTimeout; map.on('moveend', () => { clearTimeout(moveTimeout); moveTimeout = setTimeout(() => { loadAircraft(); if (settings.showAirports) updateAirportMarkers(); }, 800); saveMapPosition(); });
         map.on('zoomend', () => { if (settings.showAirports) updateAirportMarkers(); });
