@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SkyTrack - Live Flight Tracker</title>
+    <script>if(location.protocol!=='file:')document.write('<link rel="manifest" href="manifest.json">');</script>
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SkyTrack">
+    <meta name="description" content="Real-time aircraft tracking with military, VIP, and interesting aircraft alerts">
+    <meta property="og:title" content="SkyTrack - Live Flight Tracker">
+    <meta property="og:description" content="Track aircraft in real-time with military, VIP, and interesting aircraft alerts.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/banner.png">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="SkyTrack - Live Flight Tracker">
+    <meta name="twitter:description" content="Track aircraft in real-time with military, VIP, and interesting aircraft alerts.">
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-128x128.png">
+    <link rel="dns-prefetch" href="https://raw.githubusercontent.com">
+    <link rel="dns-prefetch" href="https://api.airplanes.live">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preload" href="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/silhouettes/aircraft.png" as="image">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" as="style">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" as="script">
+    <link rel="icon" href="data:image/x-icon;base64,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">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-32x32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-48x48.png">
+    <link rel="apple-touch-icon" sizes="128x128" href="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-128x128.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+    
+<script>
+// Inline PWA manifest for single-file deployment
+const manifest = {
+    name: 'SkyTrack - Live Flight Tracker',
+    short_name: 'SkyTrack',
+    description: 'Real-time aircraft tracking with military and interesting aircraft alerts',
+    start_url: window.location.href.split('?')[0],
+    display: 'standalone',
+    orientation: 'any',
+    background_color: '#1a1a2e',
+    theme_color: '#1a1a2e',
+    icons: [
+        {
+            src: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-16x16.png',
+            sizes: '16x16',
+            type: 'image/png'
+        },
+        {
+            src: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-32x32.png',
+            sizes: '32x32',
+            type: 'image/png'
+        },
+        {
+            src: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-48x48.png',
+            sizes: '48x48',
+            type: 'image/png'
+        },
+        {
+            src: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-128x128.png',
+            sizes: '128x128',
+            type: 'image/png',
+            purpose: 'any maskable'
+        }
+    ]
+};
+const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+const manifestUrl = URL.createObjectURL(manifestBlob);
+document.querySelector('link[rel="manifest"]')?.setAttribute('href', manifestUrl);
+</script>
+<script>
+// Service Worker Registration
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+        try {
+            const swCode = `
+                const CACHE_NAME = 'skytrack-v0.17.0';
+                const STATIC_ASSETS = [
+                    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
+                    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js',
+                    'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/silhouettes/aircraft.png',
+                    'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo.ico',
+                    'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-16x16.png',
+                    'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-32x32.png',
+                    'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-48x48.png',
+                    'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-128x128.png'
+                ];
+                
+                self.addEventListener('install', event => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
+                    );
+                    self.skipWaiting();
+                });
+                
+                self.addEventListener('activate', event => {
+                    event.waitUntil(
+                        caches.keys().then(keys => 
+                            Promise.all(keys.filter(k => k !== CACHE_NAME && k !== CACHE_NAME + '-tiles').map(k => caches.delete(k)))
+                        )
+                    );
+                    self.clients.claim();
+                });
+                
+                self.addEventListener('fetch', event => {
+                    const url = new URL(event.request.url);
+                    
+                    // Network-first for live API data (ADS-B feeds, traces, weather)
+                    if (url.hostname.includes('airplanes.live') ||
+                        url.hostname.includes('adsb.one') ||
+                        url.hostname.includes('adsb.lol') ||
+                        url.hostname.includes('opensky') ||
+                        url.hostname.includes('adsbexchange') ||
+                        url.hostname.includes('rainviewer') ||
+                        url.hostname.includes('planespotters') ||
+                        url.hostname.includes('wikipedia.org') ||
+                        url.pathname.includes('/traces/')) {
+                        event.respondWith(
+                            fetch(event.request).then(response => {
+                                if (response.ok) {
+                                    const clone = response.clone();
+                                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                                }
+                                return response;
+                            }).catch(() => caches.match(event.request))
+                        );
+                        return;
+                    }
+                    
+                    // Stale-while-revalidate for GitHub data files (CSVs, JSONs)
+                    if (url.hostname.includes('githubusercontent.com') && 
+                        (url.pathname.includes('/data/') || url.pathname.includes('/assets/'))) {
+                        event.respondWith(
+                            caches.match(event.request).then(cached => {
+                                const fetchPromise = fetch(event.request).then(response => {
+                                    if (response.ok) {
+                                        const clone = response.clone();
+                                        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                                    }
+                                    return response;
+                                }).catch(() => cached);
+                                return cached || fetchPromise;
+                            })
+                        );
+                        return;
+                    }
+                    
+                    // Cache-first for CDN static assets (Leaflet, pako, logos, sprites)
+                    if (STATIC_ASSETS.some(a => event.request.url.includes(a)) ||
+                        url.hostname.includes('cdnjs.cloudflare.com') ||
+                        (url.hostname.includes('githubusercontent.com') && url.pathname.includes('/logo/'))) {
+                        event.respondWith(
+                            caches.match(event.request).then(cached => {
+                                if (cached) return cached;
+                                return fetch(event.request).then(response => {
+                                    if (response.ok) {
+                                        const clone = response.clone();
+                                        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                                    }
+                                    return response;
+                                });
+                            })
+                        );
+                        return;
+                    }
+                    
+                    // Cache map tiles with deferred LRU eviction
+                    if (url.hostname.includes('tile') || url.hostname.includes('mt0.google') ||
+                        url.hostname.includes('mt1.google') || url.hostname.includes('mt2.google') ||
+                        url.hostname.includes('mt3.google') || url.pathname.includes('/{z}/{x}/{y}')) {
+                        event.respondWith(
+                            caches.match(event.request).then(cached => {
+                                const fetchPromise = fetch(event.request).then(response => {
+                                    if (response.ok) {
+                                        const clone = response.clone();
+                                        caches.open(CACHE_NAME + '-tiles').then(cache => {
+                                            cache.put(event.request, clone);
+                                            // Deferred eviction - don't block tile delivery
+                                            if (typeof self.requestIdleCallback === 'function') {
+                                                self.requestIdleCallback(() => cache.keys().then(keys => {
+                                                    if (keys.length > 600) {
+                                                        const toDelete = keys.slice(0, keys.length - 500);
+                                                        toDelete.forEach(k => cache.delete(k));
+                                                    }
+                                                }));
+                                            } else {
+                                                setTimeout(() => cache.keys().then(keys => {
+                                                    if (keys.length > 600) {
+                                                        const toDelete = keys.slice(0, keys.length - 500);
+                                                        toDelete.forEach(k => cache.delete(k));
+                                                    }
+                                                }), 5000);
+                                            }
+                                        });
+                                    }
+                                    return response;
+                                }).catch(() => cached);
+                                return cached || fetchPromise;
+                            })
+                        );
+                        return;
+                    }
+                    
+                    // Default: network with cache fallback
+                    event.respondWith(
+                        fetch(event.request).then(response => {
+                            if (response.ok && event.request.method === 'GET') {
+                                const clone = response.clone();
+                                caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                            }
+                            return response;
+                        }).catch(() => caches.match(event.request))
+                    );
+                });
+            `;
+            
+            // Service workers registered from a blob: URL inherit the origin's
+            // scope and cannot widen it via the `scope` option; asking for '/'
+            // triggers a SecurityError in some browsers. Let the browser use
+            // the default (origin-of-script) scope, which is what we want for
+            // a single-file app served from its own directory.
+            const swBlob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(swBlob);
+            const registration = await navigator.serviceWorker.register(swUrl);
+            _dbg('ServiceWorker registered:', registration.scope);
+        } catch (error) {
+            // Non-fatal: offline cache just won't work. Don't interrupt page load.
+            _dbg('ServiceWorker registration failed:', error);
+        }
+    });
+}
+</script>
+</head>
+<body>
+    <div class="loading-overlay" id="loading">
+        <div class="loading-logo">
+            <img src="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-128x128.png" alt="SkyTrack">
+            <span>SkyTrack<span class="version">v0.17.0</span></span>
+        </div>
+        <div class="spinner"></div>
+        <div class="loading-status" id="loadingStatus">Initializing...</div>
+        <div class="loading-progress"><div class="loading-progress-bar" id="loadingProgress"></div></div>
+    </div>
+    <div id="map"></div>
+    <!-- Phase 16: Reliability Indicators -->
+    <div class="data-source-indicator" id="dataSourceIndicator">
+        <span class="source-name">Connecting...</span>
+        <span class="source-status unknown">0/3</span>
+        <span class="source-latency">--</span>
+    </div>
+    <div class="circuit-breaker-warning" id="circuitBreakerWarning"></div>
+    <div class="sync-indicator" id="syncIndicator">
+        <div class="sync-spinner"></div>
+        <span class="sync-text">Syncing...</span>
+    </div>
+    <div class="legend">
+        <div class="legend-title">Altitude</div>
+        <div class="legend-items">
+            <div class="legend-item"><div class="legend-color" style="background:#9400d3"></div>> 40k ft</div>
+            <div class="legend-item"><div class="legend-color" style="background:#ff0000"></div>30-40k</div>
+            <div class="legend-item"><div class="legend-color" style="background:#ff4500"></div>20-30k</div>
+            <div class="legend-item"><div class="legend-color" style="background:#ffa500"></div>10-20k</div>
+            <div class="legend-item"><div class="legend-color" style="background:#ffff00"></div>5-10k</div>
+            <div class="legend-item"><div class="legend-color" style="background:#7fff00"></div>1-5k</div>
+            <div class="legend-item"><div class="legend-color" style="background:#00ff00"></div>Ground</div>
+        </div>
+    </div>
+    <header class="header">
+        <!-- Primary Actions (always visible) -->
+        <button class="header-btn" id="locateBtn" title="My Location" aria-label="My Location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg></button>
+        <button class="header-btn" id="view3DBtn" title="3D Globe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></button>
+        <button class="header-btn" id="settingsBtn" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+        <button class="header-btn" id="notifBtn" title="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-badge" id="notifBadge" style="display:none;">0</span></button>
+        
+        <div class="hv2-sep"></div>
+        
+        <!-- Map Dropdown -->
+        <div class="hv2-dropdown">
+            <button class="hv2-dropdown-trigger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><span>Map</span><span class="hv2-dd-badge" style="display:none"></span></button>
+            <div class="hv2-panel">
+                <div class="hv2-panel-title">Map & Layers</div>
+                <div class="hv2-item" data-btn="dayNightBtn"><div class="hv2-item-icon"><button class="header-btn" id="dayNightBtn" title="Map Style" aria-label="Map Style"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></button></div><div class="hv2-item-label">Map Style</div></div>
+                <div class="hv2-item" data-btn="labelBtn"><div class="hv2-item-icon"><button class="header-btn" id="labelBtn" title="Labels" aria-label="Toggle Labels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></button></div><div class="hv2-item-label">Labels</div><div class="hv2-item-status">OFF</div></div>
+                <div class="hv2-item" data-btn="airportsBtn"><div class="hv2-item-icon"><button class="header-btn" id="airportsBtn" title="Airports" aria-label="Toggle Airports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></button></div><div class="hv2-item-label">Airports</div><div class="hv2-item-status">OFF</div></div>
+                <div class="hv2-item" data-btn="radarBtn"><div class="hv2-item-icon"><button class="header-btn active" id="radarBtn" title="Radar" aria-label="Toggle Weather Radar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></button></div><div class="hv2-item-label">Weather Radar</div><div class="hv2-item-status">ON</div></div>
+                <div class="hv2-item" data-btn="weatherOverlayBtn"><div class="hv2-item-icon"><button class="header-btn" id="weatherOverlayBtn" title="Weather"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 14.7L12 12m2.7 2.7a5 5 0 1 0-7-7.1M20 20l-7-7M8 12a4 4 0 0 0 4 4"/><path d="M3 15l2-2 2 2"/><path d="M17 9l2-2 2 2"/></svg></button></div><div class="hv2-item-label">SIGMETs / Wind</div></div>
+                <div class="hv2-item" data-btn="airspaceBtn"><div class="hv2-item-icon"><button class="header-btn" id="airspaceBtn" title="Airspace"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></button></div><div class="hv2-item-label">Airspace</div></div>
+                <div class="hv2-item" data-btn="heatmapBtn"><div class="hv2-item-icon"><button class="header-btn" id="heatmapBtn" title="Heatmap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6" opacity="0.5"/><circle cx="12" cy="12" r="9" opacity="0.3"/></svg></button></div><div class="hv2-item-label">Traffic Heatmap</div></div>
+                <div class="hv2-item" data-btn="miniMapBtn"><div class="hv2-item-icon"><button class="header-btn" id="miniMapBtn" title="Mini-map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="6" height="6" fill="currentColor"/></svg></button></div><div class="hv2-item-label">Mini-map</div></div>
+            </div>
+        </div>
+        
+        <!-- Tools Dropdown -->
+        <div class="hv2-dropdown">
+            <button class="hv2-dropdown-trigger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg><span>Tools</span><span class="hv2-dd-badge" style="display:none"></span></button>
+            <div class="hv2-panel">
+                <div class="hv2-panel-title">Tools</div>
+                <div class="hv2-item" data-btn="measureBtn"><div class="hv2-item-icon"><button class="header-btn" id="measureBtn" title="Measure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21L21 3M3 21h7v-7M21 3h-7v7"/></svg></button></div><div class="hv2-item-label">Measure Distance</div></div>
+                <div class="hv2-item" data-btn="followBtn"><div class="hv2-item-icon"><button class="header-btn" id="followBtn" title="Follow" aria-label="Follow Aircraft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><path d="M12 8v8M8 12h8" stroke-dasharray="2 2"/></svg></button></div><div class="hv2-item-label">Follow Aircraft</div></div>
+                <div class="hv2-item" data-btn="multiSelectBtn"><div class="hv2-item-icon"><button class="header-btn" id="multiSelectBtn" title="Multi-Select" aria-label="Multi-Select Mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button></div><div class="hv2-item-label">Multi-Select</div></div>
+                <div class="hv2-item" data-btn="geofenceBtn"><div class="hv2-item-icon"><button class="header-btn" id="geofenceBtn" title="Geofence"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><circle cx="12" cy="12" r="3"/></svg></button></div><div class="hv2-item-label">Geofencing</div></div>
+                <div class="hv2-item" data-btn="captureBtn"><div class="hv2-item-icon"><button class="header-btn" id="captureBtn" title="Screenshot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M5 7h.01"/></svg></button></div><div class="hv2-item-label">Screenshot</div></div>
+                <div class="hv2-item" data-btn="statsBtn"><div class="hv2-item-icon"><button class="header-btn" id="statsBtn" title="Stats" aria-label="Statistics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></button></div><div class="hv2-item-label">Statistics</div></div>
+            </div>
+        </div>
+        
+        <!-- View Dropdown -->
+        <div class="hv2-dropdown">
+            <button class="hv2-dropdown-trigger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>View</span><span class="hv2-dd-badge" style="display:none"></span></button>
+            <div class="hv2-panel">
+                <div class="hv2-panel-title">View Options</div>
+                <div class="hv2-item" data-btn="clusterBtn"><div class="hv2-item-icon"><button class="header-btn" id="clusterBtn" title="Cluster"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.3"/></svg></button></div><div class="hv2-item-label">Clustering</div></div>
+                <div class="hv2-item" data-btn="timeMachineBtn"><div class="hv2-item-icon"><button class="header-btn" id="timeMachineBtn" title="Time Machine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><path d="M4 4l2 2M20 4l-2 2"/></svg></button></div><div class="hv2-item-label">Time Machine</div></div>
+            </div>
+        </div>
+    </header>
+    <!-- Status Dock -->
+    <div class="status-dock" id="statusDock">
+        <div class="status-dock-item"><span class="status-dock-dot grey" id="dockDot"></span><span class="status-dock-value" id="dockSource">Connecting</span></div>
+        <div class="status-dock-sep"></div>
+        <div class="status-dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 110-14h8.5M21 12l-4-4m4 4l-4 4"/></svg><span class="status-dock-value" id="dockCount">0</span><span class="status-dock-label"> aircraft</span></div>
+        <div class="status-dock-sep"></div>
+        <div class="status-dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="status-dock-value" id="dockTime">---</span></div>
+    </div>
+    
+    <!-- Filter Chips Bar -->
+    <button class="filter-chips-toggle" id="filterChipsToggle" title="Quick Filters" aria-label="Quick Filters" aria-expanded="false"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg></button>
+    <div class="filter-chips-bar" id="filterChipsBar">
+        <button class="filter-chip-btn" data-filter="commercial">Commercial</button>
+        <button class="filter-chip-btn" data-filter="military">Military</button>
+        <button class="filter-chip-btn" data-filter="cargo">Cargo</button>
+        <button class="filter-chip-btn" data-filter="private">Private</button>
+        <button class="filter-chip-btn" data-filter="helicopter">Helicopter</button>
+        <button class="filter-chip-btn" data-filter="interesting">Interesting</button>
+    </div>
+    
+    <!-- 3D HUD -->
+    <div class="hud-3d" id="hud3d">
+        <div class="hud-3d-title">3D Controls</div>
+        <div class="hud-3d-row"><span class="hud-3d-key">Drag</span> Rotate globe</div>
+        <div class="hud-3d-row"><span class="hud-3d-key">Scroll</span> Zoom in/out</div>
+        <div class="hud-3d-row"><span class="hud-3d-key">R-Drag</span> Tilt camera</div>
+        <div class="hud-3d-row"><span class="hud-3d-key">Click</span> Select aircraft</div>
+    </div>
+    
+    <!-- Onboarding Overlay -->
+    <div class="onboard-overlay" id="onboardOverlay">
+        <div class="onboard-card">
+            <div class="onboard-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 110-14h8.5"/><polyline points="21 12 17 8 21 12 17 16"/></svg></div>
+            <div class="onboard-title">Welcome to SkyTrack</div>
+            <div class="onboard-desc">Real-time global aircraft tracking with military detection and aviation intelligence.</div>
+            <div class="onboard-tips">
+                <div class="onboard-tip"><span class="onboard-tip-num">1</span><span>Tap any aircraft on the map to see its details, route, and specs</span></div>
+                <div class="onboard-tip"><span class="onboard-tip-num">2</span><span>Use the search bar to find flights by callsign, registration, or airport</span></div>
+                <div class="onboard-tip"><span class="onboard-tip-num">3</span><span>Use the filter button to show only military, cargo, or interesting aircraft</span></div>
+                <div class="onboard-tip"><span class="onboard-tip-num">4</span><span>Swipe down on the aircraft panel to dismiss it</span></div>
+            </div>
+            <button class="onboard-btn" id="onboardDismiss">Start Tracking</button>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-pulse"></div>
+        <div class="loading-text" id="loadingText">Scanning for aircraft...</div>
+    </div>
+    <div class="filter-bar" id="filterBar">
+        <div class="logo"><img src="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-32x32.png" alt="SkyTrack"><span>SkyTrack</span></div>
+        <div class="connectivity-indicator" id="connectivityIndicator" title="Online"><div class="connectivity-dot online"></div></div>
+        <div class="search-container" id="searchContainer">
+            <div class="search-input-wrapper">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="text" class="search-box" id="searchInput" aria-label="Search aircraft" placeholder="Search flights, airports, airlines..." autocomplete="off">
+                <button class="search-clear-btn" id="searchClearBtn" style="display:none;">x</button>
+                <button class="search-filter-btn" id="searchFilterBtn" title="Advanced Filters">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+                    </svg>
+                    <span class="filter-badge" id="filterBadge" style="display:none;">0</span>
+                </button>
+            </div>
+            <div class="search-dropdown" id="searchDropdown">
+                <div class="search-tabs">
+                    <button class="search-tab active" data-tab="results">Results</button>
+                    <button class="search-tab" data-tab="filters">Filters</button>
+                    <button class="search-tab" data-tab="history">History</button>
+                </div>
+                <div class="search-content">
+                    <div class="search-tab-panel active" id="tabResults">
+                        <div class="search-results" id="searchResults">
+                            <div class="search-placeholder">Start typing to search...</div>
+                        </div>
+                    </div>
+                    <div class="search-tab-panel" id="tabFilters">
+                        <div class="filter-section">
+                            <div class="filter-label">Aircraft Type</div>
+                            <div class="filter-chips" id="filterTypeChips">
+                                <button class="filter-chip" data-type="commercial">Commercial</button>
+                                <button class="filter-chip" data-type="cargo">Cargo</button>
+                                <button class="filter-chip" data-type="military">Military</button>
+                                <button class="filter-chip" data-type="private">Private</button>
+                                <button class="filter-chip" data-type="helicopter">Helicopter</button>
+                                <button class="filter-chip" data-type="government">Government</button>
+                            </div>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">Altitude</div>
+                            <div class="filter-range">
+                                <input type="number" id="altMin" placeholder="Min ft" class="filter-input">
+                                <span class="filter-range-sep">-</span>
+                                <input type="number" id="altMax" placeholder="Max ft" class="filter-input">
+                            </div>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">Speed</div>
+                            <div class="filter-range">
+                                <input type="number" id="speedMin" placeholder="Min kt" class="filter-input">
+                                <span class="filter-range-sep">-</span>
+                                <input type="number" id="speedMax" placeholder="Max kt" class="filter-input">
+                            </div>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">Airport (Origin/Destination)</div>
+                            <input type="text" id="filterAirport" placeholder="ICAO or IATA code" class="filter-input-full">
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">Airline</div>
+                            <input type="text" id="filterAirline" placeholder="Name or ICAO code" class="filter-input-full">
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">Special</div>
+                            <div class="filter-checkboxes">
+                                <label class="filter-checkbox">
+                                    <input type="checkbox" id="filterEmergency"> Emergency Squawk
+                                </label>
+                                <label class="filter-checkbox">
+                                    <input type="checkbox" id="filterInteresting"> Interesting Only
+                                </label>
+                                <label class="filter-checkbox">
+                                    <input type="checkbox" id="filterGrounded"> On Ground
+                                </label>
+                                <label class="filter-checkbox">
+                                    <input type="checkbox" id="filterNoCallsign"> No Callsign
+                                </label>
+                            </div>
+                        </div>
+                        <div class="filter-section">
+                            <div class="filter-label">Regex Pattern (Advanced)</div>
+                            <input type="text" id="filterRegex" placeholder="e.g., ^UAL\d+ or N\d{3}[A-Z]{2}" class="filter-input-full">
+                            <div class="filter-hint">Matches against callsign and registration</div>
+                        </div>
+                        <div class="filter-actions">
+                            <button class="adv-filter-btn secondary" id="clearFiltersBtn">Clear All</button>
+                            <button class="adv-filter-btn primary" id="applyFiltersBtn">Apply Filters</button>
+                        </div>
+                    </div>
+                    <div class="search-tab-panel" id="tabHistory">
+                        <div class="search-history" id="searchHistory">
+                            <div class="search-placeholder">No recent searches</div>
+                        </div>
+                        <button class="adv-filter-btn secondary full-width" id="clearHistoryBtn">Clear History</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-divider"></div>
+        <div role="radiogroup" aria-label="Aircraft category filter" style="display:contents">
+        <button class="filter-btn active" data-filter="all">All <span class="count" id="countAll">0</span></button>
+        <button class="filter-btn" data-filter="commercial">Comm <span class="count" id="countComm">0</span></button>
+        <button class="filter-btn" data-filter="military">Mil <span class="count" id="countMil">0</span></button>
+        <button class="filter-btn" data-filter="government">Gov <span class="count" id="countGov">0</span></button>
+        <button class="filter-btn" data-filter="cargo">Cargo <span class="count" id="countCargo">0</span></button>
+        <button class="filter-btn" data-filter="private">Private <span class="count" id="countPrivate">0</span></button>
+        <button class="filter-btn" data-filter="helicopter">Heli <span class="count" id="countHeli">0</span></button>
+        <button class="filter-btn flagged" data-filter="interesting">Flagged <span class="count" id="countInteresting">0</span></button>
+        <button class="filter-btn pia-btn" data-filter="pia">PIA <span class="count" id="countPIA">0</span></button>
+        <button class="filter-btn vip-btn" data-filter="vip" title="Badger's Best - Must-See Aircraft">VIP <span class="count" id="countVIP">0</span></button>
+        <button class="filter-share-btn" id="filterShareBtn" title="Share this filter view" aria-label="Share filter link" style="display:none;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v13"/></svg></button>
+    </div>
+    <div class="info-panel" id="infoPanel" role="dialog" aria-label="Aircraft Details">
+        <div class="aircraft-photo" id="aircraftPhoto"><div class="no-photo">Loading...</div></div>
+        <div class="airline-banner" id="airlineBanner" style="display:none;"><img src="" alt=""></div>
+        <div class="info-quickglance" id="infoQuickGlance">
+            <div class="info-qg-item"><div class="info-qg-val" id="qgCallsign">---</div><div class="info-qg-label">Flight</div></div>
+            <div class="info-qg-item"><div class="info-qg-val" id="qgAlt">---</div><div class="info-qg-label">Altitude</div></div>
+            <div class="info-qg-item"><div class="info-qg-val" id="qgSpeed">---</div><div class="info-qg-label">Speed</div></div>
+            <div class="info-qg-item"><div class="info-qg-val" id="qgDest">---</div><div class="info-qg-label">Dest</div></div>
+        </div>
+        <div class="info-header">
+            <div class="info-header-left">
+                <div class="info-header-top">
+                    <div class="info-callsign" id="infoCallsign">---</div>
+                    <span class="info-category-badge" id="infoCategoryBadge" style="display:none;"></span>
+                </div>
+                <div class="info-hex" id="infoHex">---</div>
+            </div>
+            <div class="info-header-actions">
+                <button class="watch-btn" id="watchBtn" title="Add to Watchlist">
+                    <span class="star">*</span>
+                    <span class="watch-text">Watch</span>
+                </button>
+                <button class="info-close" id="infoClose" aria-label="Close aircraft details">&times;</button>
+            </div>
+        </div>
+        <div class="info-tabs">
+            <button class="tab-btn active" data-tab="overview">Overview</button>
+            <button class="tab-btn" data-tab="aircraft">Aircraft</button>
+            <button class="tab-btn" data-tab="route">Route</button>
+        </div>
+        <div class="tab-content active" id="tabOverview">
+            <div class="info-section interesting-section" id="interestingSection" style="display:none;">
+                <div class="interesting-header" id="interestingHeader"><span class="interesting-icon" id="interestingIcon">*</span><span class="interesting-title" id="interestingTitle">Flagged Aircraft</span></div>
+                <div class="info-row"><span class="info-label">Category</span><span class="info-value" id="interestingCategory">---</span></div>
+                <div class="info-row"><span class="info-label">Tag</span><span class="info-value" id="interestingTag">---</span></div>
+                <div class="info-row"><span class="info-label">Operator</span><span class="info-value" id="interestingOperator">---</span></div>
+                <div id="categoryBadgeRow" style="margin-top: 8px;"></div>
+            </div>
+            <div class="info-section" id="routeSection" style="display:none;">
+                <div class="route-display">
+                    <div class="route-airport"><div class="route-code" id="routeFrom">---</div><div class="route-name" id="routeFromName">Departure</div></div>
+                    <div class="route-line"><div class="route-progress" id="routeProgress" style="width:50%"></div><span class="route-plane-icon" style="left:50%">&#9992;</span></div>
+                    <div class="route-airport"><div class="route-code" id="routeTo">---</div><div class="route-name" id="routeToName">Arrival</div></div>
+                </div>
+            </div>
+            <div class="info-section">
+                <div class="info-grid">
+                    <div class="info-stat"><div class="info-stat-value" id="infoAlt">---</div><div class="info-stat-label">Altitude</div></div>
+                    <div class="info-stat"><div class="info-stat-value" id="infoSpeed">---</div><div class="info-stat-label">Speed</div></div>
+                    <div class="info-stat"><div class="info-stat-value" id="infoTrack">---</div><div class="info-stat-label">Track</div></div>
+                    <div class="info-stat"><div class="info-stat-value" id="infoVRate">---</div><div class="info-stat-label">V/S</div></div>
+                </div>
+            </div>
+            <div class="altitude-chart-container"><div class="altitude-chart-title">Altitude Profile</div><canvas id="altitudeChart"></canvas></div>
+            <div class="info-section">
+                <div class="info-row"><span class="info-label">Registration</span><span class="info-value" id="infoReg">---</span></div>
+                <div class="info-row"><span class="info-label">Type</span><span class="info-value" id="infoType">---</span></div>
+                <div class="info-row" id="infoDescRow" style="display:none;"><span class="info-label">Aircraft</span><span class="info-value" id="infoDesc">---</span></div>
+                <div class="info-row" id="infoOperatorRow" style="display:none;"><span class="info-label">Operator</span><span class="info-value" id="infoOperator">---</span></div>
+                <div class="info-row" id="infoAirlineRow" style="display:none;"><span class="info-label">Airline</span><span class="info-value" id="infoAirline">---</span></div>
+                <div class="info-row"><span class="info-label">Category</span><span class="info-value" id="infoCat">---</span></div>
+                <div class="info-row"><span class="info-label">Squawk</span><span class="info-value"><span class="squawk-code squawk-normal" id="infoSquawk">----</span></span></div>
+                <div class="trail-status" id="trailStatus">Loading trail...</div>
+            </div>
+        </div>
+        <div class="tab-content" id="tabAircraft">
+            <div class="info-section">
+                <div class="info-row"><span class="info-label">Manufacturer</span><span class="info-value" id="acManufacturer">---</span></div>
+                <div class="info-row"><span class="info-label">Model</span><span class="info-value" id="acModel">---</span></div>
+                <div class="info-row"><span class="info-label">Type Code</span><span class="info-value" id="acTypeCode">---</span></div>
+                <div class="info-row" id="acYearRow" style="display:none;"><span class="info-label">Year Built</span><span class="info-value" id="acYear">---</span></div>
+            </div>
+            <div class="aircraft-specs">
+                <div class="spec-item"><div class="spec-value" id="specWingspan">---</div><div class="spec-label">Wingspan</div></div>
+                <div class="spec-item"><div class="spec-value" id="specLength">---</div><div class="spec-label">Length</div></div>
+                <div class="spec-item"><div class="spec-value" id="specRange">---</div><div class="spec-label">Range</div></div>
+                <div class="spec-item"><div class="spec-value" id="specSpeed">---</div><div class="spec-label">Cruise</div></div>
+                <div class="spec-item"><div class="spec-value" id="specEngines">---</div><div class="spec-label">Engines</div></div>
+                <div class="spec-item"><div class="spec-value" id="specPax">---</div><div class="spec-label">Capacity</div></div>
+            </div>
+            <div class="info-section flight-stats-section" id="flightStats" style="display:none;">
+                <div class="info-section-title">Flight Statistics</div>
+                <div class="info-row" id="acAgeRow" style="display:none;">
+                    <span class="info-label">Aircraft Age</span>
+                    <span class="info-value" id="acAge">---</span>
+                </div>
+                <div class="info-row" id="flightDistRow" style="display:none;">
+                    <span class="info-label">Distance</span>
+                    <span class="info-value" id="flightDist">---</span>
+                </div>
+                <div class="info-row" id="flightTimeRow" style="display:none;">
+                    <span class="info-label">Est. Flight Time</span>
+                    <span class="info-value" id="flightTimeEst">---</span>
+                </div>
+                <div class="info-row" id="fuelEstRow" style="display:none;">
+                    <span class="info-label">Est. Fuel</span>
+                    <span class="info-value" id="fuelEst">---</span>
+                </div>
+                <div class="info-row" id="co2EstRow" style="display:none;">
+                    <span class="info-label">Est. CO2</span>
+                    <span class="info-value" id="co2Est">---</span>
+                </div>
+            </div>
+            <div class="info-section military-section" id="militaryInfoSection" style="display:none;">
+                <div class="info-section-title">Military Information</div>
+                <div class="info-row">
+                    <span class="info-label">Branch</span>
+                    <span class="info-value" id="milBranch">---</span>
+                </div>
+                <div class="info-row" id="milOperatorRow" style="display:none;">
+                    <span class="info-label">Operator</span>
+                    <span class="info-value" id="milOperator">---</span>
+                </div>
+                <div class="info-row" id="milDescRow" style="display:none;">
+                    <span class="info-label">Details</span>
+                    <span class="info-value" id="milDesc">---</span>
+                </div>
+            </div>
+        </div>
+        <div class="tab-content" id="tabRoute">
+            <div class="info-section">
+                <div class="route-display" style="margin-bottom:0;">
+                    <div class="route-airport"><div class="route-code" id="routeFromFull">---</div><div class="route-name" id="routeFromNameFull">Departure</div></div>
+                    <div class="route-line"><div class="route-progress" style="width:50%"></div><span class="route-plane-icon" style="left:50%">&#9992;</span></div>
+                    <div class="route-airport"><div class="route-code" id="routeToFull">---</div><div class="route-name" id="routeToNameFull">Arrival</div></div>
+                </div>
+            </div>
+            <div class="info-section">
+                <div class="info-row"><span class="info-label">Distance Flown</span><span class="info-value" id="routeDistFlown">---</span></div>
+                <div class="info-row"><span class="info-label">Distance Remaining</span><span class="info-value" id="routeDistRemain">---</span></div>
+                <div class="info-row"><span class="info-label">Flight Time</span><span class="info-value" id="routeFlightTime">---</span></div>
+                <div class="info-row" id="routeDestNote" style="display:none;"><span class="info-label">Possible</span><span class="info-value" id="routeDestNoteValue" style="font-size:10px;color:var(--text-muted);">---</span></div>
+            </div>
+            <div class="info-section eta-section" id="etaSection" style="display:none;">
+                <div class="info-section-title">Estimated Arrival</div>
+                <div class="eta-display">
+                    <div class="eta-main">
+                        <div class="eta-time" id="etaTime">--:--</div>
+                        <div class="eta-label">Local Time</div>
+                    </div>
+                    <div class="eta-details">
+                        <div class="eta-row">
+                            <span>Distance Remaining</span>
+                            <span id="etaDistance">---</span>
+                        </div>
+                        <div class="eta-row">
+                            <span>Time Remaining</span>
+                            <span id="etaRemaining">---</span>
+                        </div>
+                        <div class="eta-row">
+                            <span>Progress</span>
+                            <div class="eta-progress">
+                                <div class="eta-progress-bar" id="etaProgressBar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="info-actions">
+            <button class="action-btn prediction" id="showPredictionBtn" title="Show 30-min Flight Prediction (P)"><span>P</span> Predict</button>
+            <button class="action-btn route" id="showRouteBtn" title="Show Route to Destination (R)"><span>R</span> Route</button>
+            <button class="action-btn" id="exportKMLBtn" title="Export to Google Earth (E)"><span>KML</span></button>
+            <button class="action-btn" id="shareFlightBtn" title="Share Flight Link"><span>Share</span></button>
+            <button class="action-btn" id="playbackBtn" title="Playback History"><span>Play</span></button>
+        </div>
+        <div class="info-section external-links-section">
+            <div class="info-section-title">Track Elsewhere</div>
+            <div class="external-links" id="externalLinks">
+                <a class="ext-link" id="linkFA" href="#" target="_blank" rel="noopener noreferrer" title="FlightAware">
+                    <span class="ext-icon fa">FA</span>
+                </a>
+                <a class="ext-link" id="linkFR24" href="#" target="_blank" rel="noopener noreferrer" title="FlightRadar24">
+                    <span class="ext-icon fr24">FR</span>
+                </a>
+                <a class="ext-link" id="linkADSBx" href="#" target="_blank" rel="noopener noreferrer" title="ADS-B Exchange">
+                    <span class="ext-icon adsbx">Ax</span>
+                </a>
+                <a class="ext-link" id="linkPS" href="#" target="_blank" rel="noopener noreferrer" title="Planespotters">
+                    <span class="ext-icon ps">PS</span>
+                </a>
+                <a class="ext-link" id="linkJP" href="#" target="_blank" rel="noopener noreferrer" title="JetPhotos">
+                    <span class="ext-icon jp">JP</span>
+                </a>
+            </div>
+        </div>
+        <div class="data-source" id="dataSource">Connecting...</div>
+    </div>
+    <div class="airport-panel" id="airportPanel" role="dialog" aria-label="Airport Details">
+        <div class="airport-header" id="airportHeader">
+            <div class="airport-flag" id="airportFlag"><img src="" alt=""></div>
+            <div class="airport-title"><div class="airport-name" id="airportName">---</div><div class="airport-codes" id="airportCodes">--- / ---</div></div>
+            <button class="info-close" id="airportClose" aria-label="Close airport details">&times;</button>
+        </div>
+        <div class="airport-photo" id="airportPhoto"><div class="no-photo">Loading...</div></div>
+        <div class="airport-stats">
+            <div class="airport-stat"><div class="airport-stat-value" id="airportElev">---</div><div class="airport-stat-label">Elevation</div></div>
+            <div class="airport-stat"><div class="airport-stat-value" id="airportTime">--:--</div><div class="airport-stat-label">Local Time</div></div>
+            <div class="airport-stat"><div class="airport-stat-value" id="airportType">---</div><div class="airport-stat-label">Type</div></div>
+        </div>
+        <div class="airport-frequencies" id="airportFrequencies" style="display:none;">
+            <div class="freq-title">Radio Frequencies</div>
+            <div class="freq-list" id="freqList"></div>
+        </div>
+        <div class="info-section">
+            <div class="info-row"><span class="info-label">City</span><span class="info-value" id="airportCity">---</span></div>
+            <div class="info-row"><span class="info-label">Country</span><span class="info-value" id="airportCountry">---</span></div>
+        </div>
+        <div class="wiki-section" id="airportWikiSection" style="display:none;">
+            <div class="wiki-summary" id="airportWikiSummary"></div>
+            <a class="wiki-link" id="airportWikiLink" href="#" target="_blank" rel="noopener noreferrer">Read more on Wikipedia</a>
+        </div>
+        <div class="airport-weather" id="airportWeather">
+            <div class="weather-loading">Loading weather...</div>
+        </div>
+        <div class="notams-section" id="notamsSection">
+            <div class="info-section-title">NOTAMs</div>
+            <div class="notams-list" id="airportNotams">
+                <div class="notams-empty">Loading NOTAMs...</div>
+            </div>
+        </div>
+        <div class="airport-atc-section" id="atcSection">
+            <div class="info-section-title">ATC Audio</div>
+            <div class="atc-feeds" id="atcFeeds">
+                <div class="atc-loading">Checking feeds...</div>
+            </div>
+        </div>
+        <div class="airport-actions">
+            <button class="airport-action-btn" id="btnShowDepartures">Departures</button>
+            <button class="airport-action-btn" id="btnShowArrivals">Arrivals</button>
+            <button class="airport-action-btn" id="showBoardBtn">Flight Board</button>
+            <button class="airport-action-btn" id="btnZoomAirport">Zoom To</button>
+        </div>
+    </div>
+    <div class="settings-panel" id="settingsPanel" role="dialog" aria-label="Settings">
+        <div class="settings-title">Settings</div>
+        <div class="settings-section">
+            <div class="settings-section-title">Layout</div>
+            <div class="layout-presets">
+                <button class="layout-preset-btn active" data-preset="default">Default</button>
+                <button class="layout-preset-btn" data-preset="minimal">Minimal</button>
+                <button class="layout-preset-btn" data-preset="analyst">Analyst</button>
+            </div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-section-title">Map Style</div>
+            <div class="setting-row"><span class="setting-label">Base Map</span>
+                <select id="mapStyleSelect" class="setting-select">
+                    <option value="dark">Dark (CartoDB)</option>
+                    <option value="satellite">Satellite (ArcGIS)</option>
+                    <option value="google-streets">Google Streets</option>
+                    <option value="google-satellite">Google Satellite</option>
+                    <option value="google-hybrid">Google Hybrid</option>
+                    <option value="google-terrain">Google Terrain</option>
+                </select>
+            </div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-section-title">Display Options</div>
+            <div class="setting-row"><span class="setting-label">Show Labels</span><div class="toggle" id="toggleLabels"></div></div>
+            <div class="setting-row"><span class="setting-label">Show Airports</span><div class="toggle" id="toggleAirports"></div></div>
+            <div class="setting-row"><span class="setting-label">Weather Radar</span><div class="toggle on" id="toggleRadar"></div></div>
+            <div class="setting-row"><span class="setting-label">Altitude-Colored Trails</span><div class="toggle on" id="toggleAltColors"></div></div>
+            <div class="setting-row"><span class="setting-label">Wikipedia Info</span><div class="toggle on" id="toggleWiki"></div></div>
+            <div class="setting-row"><span class="setting-label">Interesting Badges</span><div class="toggle" id="toggleInterestingBadges"></div></div>
+            <div class="setting-row"><span class="setting-label">Weather Overlay (SIGMETs)</span><div class="toggle" id="toggleWeatherOverlay"></div></div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-section-title">Trail Display</div>
+            <div class="setting-row">
+                <span class="setting-label">Color By</span>
+                <select id="trailColorBy" class="setting-select">
+                    <option value="altitude">Altitude</option>
+                    <option value="speed">Speed</option>
+                    <option value="time">Time (Old to New)</option>
+                    <option value="solid">Solid Color</option>
+                </select>
+            </div>
+            <div class="setting-row"><span class="setting-label">Show Direction Arrows</span><div class="toggle on" id="toggleTrailArrows"></div></div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-section-title">OpenSky API Credentials</div>
+            <label class="settings-input-label">Client ID / Username</label>
+            <input type="text" class="settings-input" id="apiClientId" placeholder="Enter Client ID...">
+            <label class="settings-input-label">Client Secret / Password</label>
+            <input type="password" class="settings-input" id="apiClientSecret" placeholder="Enter Client Secret..." autocomplete="off">
+            <button class="settings-btn" id="saveApiBtn">Save Credentials</button>
+            <button class="settings-btn secondary" id="clearApiBtn">Clear Credentials</button>
+            <div class="api-status info" id="apiStatus">Credentials configured</div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-section-title">Theme</div>
+            <div class="theme-grid" id="themeGrid">
+                <div class="theme-option" data-theme="dark">
+                    <div class="theme-preview">
+                        <div class="theme-preview-stripe" style="background:#1a1a2e"></div>
+                        <div class="theme-preview-stripe" style="background:#ffd700"></div>
+                        <div class="theme-preview-stripe" style="background:#00ffff"></div>
+                    </div>
+                    <div class="theme-name">Dark</div>
+                </div>
+                <div class="theme-option active" data-theme="midnight">
+                    <div class="theme-preview">
+                        <div class="theme-preview-stripe" style="background:#0a0a14"></div>
+                        <div class="theme-preview-stripe" style="background:#00d4ff"></div>
+                        <div class="theme-preview-stripe" style="background:#ff00ff"></div>
+                    </div>
+                    <div class="theme-name">Midnight</div>
+                </div>
+                <div class="theme-option" data-theme="light">
+                    <div class="theme-preview">
+                        <div class="theme-preview-stripe" style="background:#f5f5f5"></div>
+                        <div class="theme-preview-stripe" style="background:#0066cc"></div>
+                        <div class="theme-preview-stripe" style="background:#ff6600"></div>
+                    </div>
+                    <div class="theme-name">Light</div>
+                </div>
+                <div class="theme-option" data-theme="highContrast">
+                    <div class="theme-preview">
+                        <div class="theme-preview-stripe" style="background:#000000"></div>
+                        <div class="theme-preview-stripe" style="background:#ffff00"></div>
+                        <div class="theme-preview-stripe" style="background:#00ff00"></div>
+                    </div>
+                    <div class="theme-name">High Contrast</div>
+                </div>
+                <div class="theme-option" data-theme="colorBlind">
+                    <div class="theme-preview">
+                        <div class="theme-preview-stripe" style="background:#1a1a2e"></div>
+                        <div class="theme-preview-stripe" style="background:#f0e442"></div>
+                        <div class="theme-preview-stripe" style="background:#56b4e9"></div>
+                    </div>
+                    <div class="theme-name">Color Blind</div>
+                </div>
+            </div>
+            <div class="setting-row"><span class="setting-label">Auto Day/Night</span><div class="toggle" id="toggleAutoTheme"></div></div>
+            <div class="theme-custom">
+                <div class="setting-row"><span class="setting-label">Accent Color</span><input type="color" id="accentColorPicker" value="#ffd700" class="color-picker"></div>
+                <div class="setting-row"><span class="setting-label">Selection Color</span><input type="color" id="selectionColorPicker" value="#00ffff" class="color-picker"></div>
+                <button class="settings-btn secondary" id="resetThemeBtn">Reset Colors</button>
+            </div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-section-title">Alerts</div>
+            <div class="setting-row"><span class="setting-label">Enable Alerts</span><div class="toggle on" id="toggleAlerts"></div></div>
+            <div class="setting-row"><span class="setting-label">Sound Effects</span><div class="toggle on" id="toggleAlertSounds"></div></div>
+            <div class="setting-row"><span class="setting-label">Browser Notifications</span><div class="toggle" id="toggleNotifications"></div></div>
+            <div class="setting-row">
+                <span class="setting-label">Military Alert Radius</span>
+                <select id="militaryAlertRadius" class="setting-select">
+                    <option value="0">Disabled</option>
+                    <option value="25">25 km</option>
+                    <option value="50" selected>50 km</option>
+                    <option value="100">100 km</option>
+                    <option value="200">200 km</option>
+                </select>
+            </div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-section-title">Data Sources (Phase 16)</div>
+            <div id="dataSourceList" style="font-size: 11px; margin-bottom: 10px;"></div>
+            <button class="btn-secondary" id="checkSourcesBtn" style="width: 100%; margin-bottom: 8px;">Check All Sources</button>
+            <button class="btn-secondary" id="clearOfflineCacheBtn" style="width: 100%;">Clear Offline Cache</button>
+        </div>
+    </div>
+    <div class="stats-panel" id="statsPanel" role="dialog" aria-label="Statistics">
+        <div class="stats-header">
+            <span class="stats-title">Statistics</span>
+            <button class="stats-close" id="statsClose">x</button>
+        </div>
+        <div class="stats-content">
+            <div class="stats-summary">
+                <div class="stat-card">
+                    <div class="stat-value" id="statTotalAircraft">0</div>
+                    <div class="stat-label">Aircraft Tracked</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statTotalToday">0</div>
+                    <div class="stat-label">Seen Today</div>
+                </div>
+                <div class="stat-card highlight">
+                    <div class="stat-value" id="statInteresting">0</div>
+                    <div class="stat-label">Interesting</div>
+                </div>
+                <div class="stat-card military">
+                    <div class="stat-value" id="statMilitary">0</div>
+                    <div class="stat-label">Military</div>
+                </div>
+            </div>
+            
+            <div class="stats-section">
+                <div class="stats-section-title">Aircraft Types</div>
+                <div class="stats-chart" id="typeChart"></div>
+            </div>
+            
+            <div class="stats-section">
+                <div class="stats-section-title">Altitude Distribution</div>
+                <div class="stats-histogram" id="altitudeHistogram"></div>
+                <div class="histogram-labels">
+                    <span>0</span><span>10k</span><span>20k</span><span>30k</span><span>40k+</span>
+                </div>
+            </div>
+            
+            <div class="stats-section">
+                <div class="stats-section-title">Speed Distribution</div>
+                <div class="stats-histogram" id="speedHistogram"></div>
+                <div class="histogram-labels">
+                    <span>0</span><span>200</span><span>400</span><span>600+kt</span>
+                </div>
+            </div>
+            
+            <div class="stats-section">
+                <div class="stats-section-title">Top Airlines</div>
+                <div class="stats-list" id="topAirlines"></div>
+            </div>
+            
+            <div class="stats-section">
+                <div class="stats-section-title">Busiest Airports</div>
+                <div class="stats-list" id="busiestAirports"></div>
+            </div>
+            
+            <div class="stats-section">
+                <div class="stats-section-title">Records</div>
+                <div class="records-grid">
+                    <div class="record-item">
+                        <div class="record-label">Highest</div>
+                        <div class="record-value" id="recordHighest">---</div>
+                        <div class="record-aircraft" id="recordHighestAc">---</div>
+                    </div>
+                    <div class="record-item">
+                        <div class="record-label">Fastest</div>
+                        <div class="record-value" id="recordFastest">---</div>
+                        <div class="record-aircraft" id="recordFastestAc">---</div>
+                    </div>
+                    <div class="record-item">
+                        <div class="record-label">Slowest (airborne)</div>
+                        <div class="record-value" id="recordSlowest">---</div>
+                        <div class="record-aircraft" id="recordSlowestAc">---</div>
+                    </div>
+                    <div class="record-item">
+                        <div class="record-label">Oldest Aircraft</div>
+                        <div class="record-value" id="recordOldest">---</div>
+                        <div class="record-aircraft" id="recordOldestAc">---</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats-section">
+                <div class="stats-section-title">Session Info</div>
+                <div class="session-stats">
+                    <div class="session-row">
+                        <span>Session Started</span>
+                        <span id="sessionStart">---</span>
+                    </div>
+                    <div class="session-row">
+                        <span>Data Refreshes</span>
+                        <span id="sessionRefreshes">0</span>
+                    </div>
+                    <div class="session-row">
+                        <span>Unique Aircraft</span>
+                        <span id="sessionUnique">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Phase 13: Comparison Panel -->
+    <div class="comparison-panel" id="comparisonPanel">
+        <div class="comparison-header">
+            <span class="comparison-title">Aircraft Comparison</span>
+            <button class="comparison-close" id="comparisonClose">&times;</button>
+        </div>
+        <div class="comparison-content" id="comparisonContent">
+            <!-- Generated by JS -->
+        </div>
+    </div>
+    <!-- Phase 14: Time Machine Controls -->
+    <div class="time-machine-controls" id="timeMachineControls">
+        <div class="tm-header">
+            <span class="tm-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Time Machine
+            </span>
+            <span class="tm-count"><span id="historicalCount">0</span> aircraft</span>
+            <button class="tm-exit" id="tmExit">Exit</button>
+        </div>
+        <div class="tm-time" id="currentTimeLabel">---</div>
+        <input type="range" class="tm-slider" id="timeSlider" min="0" max="100" value="0">
+        <div class="tm-progress">
+            <span id="tmStartTime">---</span>
+            <span id="tmEndTime">---</span>
+        </div>
+        <div class="tm-playback">
+            <button class="tm-btn" id="tmRewind" title="Rewind">&#9664;&#9664;</button>
+            <button class="tm-btn" id="tmStepBack" title="Step Back">&#9664;</button>
+            <button class="tm-btn play" id="playPauseBtn" title="Play/Pause">&#9654;</button>
+            <button class="tm-btn" id="tmStepForward" title="Step Forward">&#9654;</button>
+            <button class="tm-btn" id="tmFastForward" title="Fast Forward">&#9654;&#9654;</button>
+            <div style="width:1px;height:24px;background:var(--border);margin:0 4px;"></div>
+            <button class="tm-btn" id="speedDownBtn" title="Slower">-</button>
+            <span class="tm-speed" id="speedLabel">1x</span>
+            <button class="tm-btn" id="speedUpBtn" title="Faster">+</button>
+        </div>
+    </div>
+    <!-- Phase 14: History Mode Indicator -->
+    <div class="history-mode-indicator" id="historyIndicator">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>Historical Mode</span>
+    </div>
+    <!-- Phase 14: Geofencing Controls -->
+    <div class="geofence-controls" id="geofenceControls">
+        <span>Drawing zone - click to add points</span>
+        <button class="gf-btn" id="gfFinish">Finish</button>
+        <button class="gf-btn danger" id="gfCancel">Cancel</button>
+    </div>
+    <!-- Phase 14: Geofence Zone List -->
+    <div class="geofence-list" id="geofenceList">
+        <div class="gf-list-header">
+            <span>Alert Zones</span>
+            <button class="gf-btn" id="gfAddNew" title="Draw new zone">+ Add</button>
+        </div>
+        <div class="gf-list-content" id="gfListContent">
+            <div class="gf-list-empty">No zones defined<br>Click + Add to create one</div>
+        </div>
+    </div>
+    <!-- Phase 14: Capture Menu -->
+    <div class="capture-menu" id="captureMenu">
+        <div class="capture-menu-header">Capture</div>
+        <div class="capture-menu-item" id="captureScreenshot">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M5 7h.01"/></svg>
+            <span>Screenshot (PNG)</span>
+        </div>
+        <div class="capture-menu-divider"></div>
+        <div class="capture-menu-item" id="captureRecord">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>
+            <span>Start Recording</span>
+        </div>
+        <div class="capture-menu-item" id="captureTimelapse">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/><line x1="11" y1="5" x2="11" y2="19"/></svg>
+            <span>Create Timelapse</span>
+        </div>
+    </div>
+    <div class="notification-center" id="notificationCenter">
+        <div class="notification-header">
+            <span class="notification-title">Notifications</span>
+            <div class="notification-actions">
+                <button class="notif-action-btn" id="markAllRead" title="Mark all read">&#10003;</button>
+                <button class="notif-action-btn" id="clearNotifs" title="Clear all">&#128465;</button>
+                <button class="notif-close-btn" id="notifClose">&times;</button>
+            </div>
+        </div>
+        <div class="notification-filters">
+            <button class="notif-filter active" data-filter="all">All</button>
+            <button class="notif-filter" data-filter="emergency">Emergency</button>
+            <button class="notif-filter" data-filter="watchlist">Watchlist</button>
+            <button class="notif-filter" data-filter="military">Military</button>
+        </div>
+        <div class="notification-list" id="notificationList">
+            <div class="notif-empty">No notifications</div>
+        </div>
+    </div>
+    <div class="bottom-panels">
+        <div class="bookmarks-panel">
+            <div class="bookmarks-header"><span class="bookmarks-title">Saved Locations</span><button class="bookmark-add-btn" id="addBookmarkBtn" title="Save current view">+</button></div>
+            <div class="bookmarks-list" id="bookmarksList"><div class="bookmarks-empty">No saved locations</div></div>
+        </div>
+        <div class="watchlist-panel">
+            <div class="watchlist-header">
+                <span class="watchlist-title">Watchlist</span>
+                <span class="watchlist-count" id="watchlistCount">0</span>
+            </div>
+            <div class="watchlist-items" id="watchlistItems">
+                <div class="watchlist-empty">No aircraft watched<br><span>Click star on any aircraft to add</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="bookmarkModal">
+        <div class="modal">
+            <div class="modal-title">Save Location</div>
+            <input type="text" class="modal-input" id="bookmarkNameInput" placeholder="Enter location name...">
+            <div class="modal-btns"><button class="modal-btn secondary" id="bookmarkCancelBtn">Cancel</button><button class="modal-btn primary" id="bookmarkSaveBtn">Save</button></div>
+        </div>
+    </div>
+    <div class="install-prompt" id="installPrompt">
+        <div class="install-content">
+            <span class="install-icon">+</span>
+            <span class="install-text">Install SkyTrack for offline access</span>
+            <button class="install-btn" id="installBtn">Install</button>
+            <button class="install-dismiss" id="installDismiss">x</button>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <script src="app.js"></script>
+
+</body>
+</html>
