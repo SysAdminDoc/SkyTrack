@@ -1,6 +1,16 @@
+<!-- codex-branding:start -->
+<p align="center"><img src="icon.png" width="128" alt="Sky Track"></p>
+
+<p align="center">
+  <img alt="Version" src="https://img.shields.io/badge/version-preview-58A6FF?style=for-the-badge">
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-4ade80?style=for-the-badge">
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Web%20App-58A6FF?style=for-the-badge">
+</p>
+<!-- codex-branding:end -->
+
 # SkyTrack
 
-![Version](https://img.shields.io/badge/version-0.16.0-blue)
+![Version](https://img.shields.io/badge/version-0.17.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-Web-4285F4)
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES2020+-F7DF1E?logo=javascript&logoColor=black)
@@ -27,7 +37,40 @@ cd SkyTrack
 # Open index.html in any browser — no build step, no dependencies
 ```
 
-SkyTrack is a zero-dependency, single-file web application. No npm, no bundler, no server required. Just open `index.html`.
+SkyTrack deploys as a zero-dependency, single-file web application. No npm, no
+bundler, no server required to run it — just open `index.html`.
+
+### Repository layout
+
+For maintainability the app is *authored* as three files and *built* back into
+one for release:
+
+```
+SkyTrack/
+├── src/
+│   ├── index.html   # HTML shell + inline PWA manifest + service-worker reg
+│   ├── styles.css   # All stylesheet rules
+│   └── app.js       # The main application script
+├── build.mjs        # Builder: inlines styles.css + app.js into index.html
+├── package.json     # Declares `npm run build` / `npm run check`
+└── index.html       # Generated single-file release (checked in for GitHub Pages)
+```
+
+Edit the files under `src/`, then regenerate the deployable single file:
+
+```bash
+node build.mjs        # or: npm run build
+node build.mjs --check # exit 2 if root index.html is stale (for CI)
+```
+
+The builder has no external dependencies — it uses Node's standard library
+only. The build is a verbatim concatenation: the rebuilt `index.html` is
+byte-identical in content to the `src/` files, so running it and committing the
+output is completely mechanical.
+
+During development you can also just open `src/index.html` directly in a
+browser and edit `src/styles.css` / `src/app.js` with live reload; the build
+step is only needed when you want to ship a fresh single-file `index.html`.
 
 ## Features
 
@@ -252,12 +295,17 @@ SkyTrack loads curated databases including military, VIP/government, PIA (Privac
 
 ## Contributing
 
-Issues and PRs welcome. SkyTrack is a single-file application — all changes go into `index.html`.
+Issues and PRs welcome. Edit source files under `src/` (`index.html`,
+`styles.css`, `app.js`) and regenerate the root `index.html` with
+`node build.mjs` before committing. Do not hand-edit the generated
+`index.html` — it will be overwritten on the next build.
 
 When contributing:
+- Edit `src/` files; run `node build.mjs` before committing
 - Test in both 2D and 3D modes
 - Verify CORS compatibility for any new data sources
-- Maintain the single-file architecture
+- Keep the single-file *release* intact (the root `index.html` is what GitHub
+  Pages serves — every PR should include a rebuilt `index.html`)
 - Dark theme is the default — ensure new UI elements support it
 
 ## License
