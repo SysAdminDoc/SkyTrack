@@ -1,1141 +1,16 @@
 
-    // ============================================================
-    // SKYTRACK - Full Featured Aviation Intelligence Platform
-    // ============================================================
-    const CONFIG = {
-        center: [39.8, -98.5],
-        zoom: 5,
-        localZoom: 9,
-        refreshInterval: 6000,
-        cacheExpiry: 300000,
-        debug: (new URLSearchParams(window.location.search)).has('debug'),
-        isLocalFile: window.location.protocol === 'file:',
-        // Defaults for the optional API credentials panel.
-        // Left empty on purpose — previously shipped defaults here were public,
-        // which is a leak. Users can enter their own in the Settings panel.
-        defaultCredentials: { clientId: '', clientSecret: '' },
-        corsProxies: [
-            url => 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(url),
-            url => 'https://corsproxy.io/?' + encodeURIComponent(url),
-            url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url)
-        ],
-        // Self-hosted asset URLs
-        silhouetteUrl: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/silhouettes/',
-        airlineBannerUrl: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/airlines/',
-        flagUrl: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/flags/',
-        // External APIs (cannot self-host)
-        traceUrl: 'https://globe.airplanes.live/data/traces/',
-        planespottersApi: 'https://api.planespotters.net/pub/photos/hex/'
-    };
-    const DATA_URLS = {
-        // Aircraft Registration (tar1090-db)
-        registrations: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/aircraft/registrations.json',
-            fallback: 'https://raw.githubusercontent.com/wiedehopf/tar1090-db/master/db.json.gz'
-        },
-        types: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/aircraft/types.json',
-        icaoTypes: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/aircraft/icao_types.json',
-            fallback: 'https://raw.githubusercontent.com/wiedehopf/tar1090-db/master/icao_aircraft_types.json'
-        },
-        ranges: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/aircraft/ranges.json',
-            fallback: 'https://raw.githubusercontent.com/wiedehopf/tar1090-db/master/ranges.json'
-        },
-        
-        // Interesting Aircraft (plane-alert-db)
-        interesting: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/aircraft/interesting.csv',
-            fallback: 'https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/main/plane-alert-db.csv'
-        },
-        categories: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/categories/plane-alert-categories.csv',
-            fallback: 'https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/main/plane-alert-categories.csv'
-        },
-        badgersBest: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/aircraft/badgers-best.csv',
-            fallback: 'https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/main/badgers-best.csv'
-        },
-        civilianInteresting: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/aircraft/plane-alert-civ.csv',
-            fallback: 'https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/main/plane-alert-civ.csv'
-        },
-        planeImages: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/images/plane_images.csv',
-            fallback: 'https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/main/plane_images.csv'
-        },
-        
-        // Military/Government (plane-alert-db)
-        military: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/military/plane-alert-mil.csv',
-            fallback: 'https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/main/plane-alert-mil.csv'
-        },
-        militaryImages: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/images/plane-alert-mil-images.csv',
-            fallback: 'https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/main/plane-alert-mil-images.csv'
-        },
-        government: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/military/plane-alert-gov.csv',
-            fallback: 'https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/main/plane-alert-gov.csv'
-        },
-        governmentImages: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/images/plane-alert-gov-images.csv',
-            fallback: 'https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/main/plane-alert-gov-images.csv'
-        },
-        police: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/military/plane-alert-pol.csv',
-            fallback: 'https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/main/plane-alert-pol.csv'
-        },
-        policeImages: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/images/plane-alert-pol-images.csv',
-            fallback: 'https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/main/plane-alert-pol-images.csv'
-        },
-        pia: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/military/plane-alert-pia.csv',
-            fallback: 'https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/main/plane-alert-pia.csv'
-        },
-        civilianImages: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/images/plane-alert-civ-images.csv',
-            fallback: 'https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/main/plane-alert-civ-images.csv'
-        },
-        
-        // Airlines
-        airlines: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/airlines/airlines.csv',
-            fallback: 'https://raw.githubusercontent.com/jpatokal/openflights/master/data/airlines.dat'
-        },
-        alliances: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/airlines/alliances.csv',
-            fallback: null
-        },
-        callsignPrefix: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/airlines/callsign-prefix.json',
-            fallback: null
-        },
-        
-        // Airports
-        airports: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/airports/airports.csv',
-            fallback: 'https://davidmegginson.github.io/ourairports-data/airports.csv'
-        },
-        airportCoords: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/airports/airport-coords.json',
-            fallback: 'https://raw.githubusercontent.com/wiedehopf/tar1090-db/master/airport-coords.json'
-        },
-        frequencies: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/airports/frequencies.csv',
-            fallback: 'https://davidmegginson.github.io/ourairports-data/airport-frequencies.csv'
-        },
-        runways: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/airports/runways.csv',
-            fallback: 'https://davidmegginson.github.io/ourairports-data/runways.csv'
-        },
-        countries: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/airports/countries.csv',
-            fallback: 'https://davidmegginson.github.io/ourairports-data/countries.csv'
-        },
-        
-        // Routes
-        routes: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/routes/routes.csv',
-            fallback: 'https://raw.githubusercontent.com/jpatokal/openflights/master/data/routes.dat'
-        },
-        
-        // Images (self-hosted)
-        aircraftPhotos: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/aircraft_photos/',
-        airlineLogos: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/airlines/',
-        silhouettes: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/silhouettes/',
-        flags: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/flags/'
-    };
+    // CONFIG and DATA_URLS now live in src/modules/00-config.js (loaded first
+    // by build.mjs). All downstream code references them at script scope.
 
-    // ============ DEBUG LOGGING ============
-    // Guarded debug logger. Only emits when ?debug is present. Failing silently if
-    // console is unavailable. NOTE: previously this function called itself,
-    // causing infinite recursion (stack overflow) when debug was enabled.
-    function _dbg() {
-        if (!CONFIG.debug) return;
-        try {
-            if (typeof console !== 'undefined' && console.log) {
-                console.log.apply(console, ['[SkyTrack]'].concat(Array.prototype.slice.call(arguments)));
-            }
-        } catch (_) { /* ignore logging failures */ }
-    }
+    // Debug logging, escape helper, errorHandler, perfUtils,
+    // and pausable-interval scaffolding now live in src/modules/10-utils.js.
 
-    // Small HTML escape helper for interpolating live feed / user-supplied
-    // strings into innerHTML. ADS-B payloads and user-entered watchlist names
-    // should not be trusted to be plain text.
-    function _escHtml(v) {
-        if (v === null || v === undefined) return '';
-        return String(v)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
 
-    // ============ ERROR HANDLING UTILITY ============
-    const errorHandler = {
-        errors: [],
-        maxErrors: 50,
-        
-        log(context, error, severity = 'warn') {
-            const entry = {
-                time: Date.now(),
-                context,
-                message: error?.message || String(error),
-                severity
-            };
-            
-            this.errors.unshift(entry);
-            if (this.errors.length > this.maxErrors) {
-                this.errors.pop();
-            }
-            
-            if (severity === 'error') {
-                console.error(`[SkyTrack ${context}]`, error);
-            } else {
-                console.warn(`[SkyTrack ${context}]`, error);
-            }
-            
-            // Update error indicator if visible
-            this.updateIndicator();
-        },
-        
-        updateIndicator() {
-            const indicator = document.getElementById('errorIndicator');
-            const recentErrors = this.errors.filter(e => Date.now() - e.time < 60000);
-            
-            if (indicator) {
-                if (recentErrors.length > 0) {
-                    indicator.style.display = 'flex';
-                    indicator.querySelector('.error-count').textContent = recentErrors.length;
-                    indicator.title = recentErrors[0].message;
-                } else {
-                    indicator.style.display = 'none';
-                }
-            }
-        },
-        
-        getRecent(count = 10) {
-            return this.errors.slice(0, count);
-        },
-        
-        clear() {
-            this.errors = [];
-            this.updateIndicator();
-        },
-        
-        // Wrapper for async operations with retry
-        async withRetry(fn, context, maxRetries = 3, delay = 1000) {
-            let lastError;
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    return await fn();
-                } catch (error) {
-                    lastError = error;
-                    this.log(context, `Attempt ${i + 1}/${maxRetries} failed: ${error.message}`, 'warn');
-                    if (i < maxRetries - 1) {
-                        await new Promise(r => setTimeout(r, delay * (i + 1)));
-                    }
-                }
-            }
-            this.log(context, `All ${maxRetries} attempts failed`, 'error');
-            throw lastError;
-        },
-        
-        // Wrapper for fetch with timeout
-        async fetchWithTimeout(url, options = {}, timeout = 10000) {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeout);
-            
-            try {
-                const response = await fetch(url, {
-                    ...options,
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-                return response;
-            } catch (error) {
-                clearTimeout(timeoutId);
-                if (error.name === 'AbortError') {
-                    throw new Error(`Request timeout after ${timeout}ms`);
-                }
-                throw error;
-            }
-        }
-    };
+    // Connection monitor, offline mode, data-source manager, auto-retry,
+    // error recovery, and circuit breaker now live in src/modules/20-reliability.js.
 
-    // ============ PERFORMANCE UTILITIES ============
-    const perfUtils = {
-        // Throttle function - limits how often a function can be called
-        throttle(func, limit) {
-            let inThrottle;
-            return function(...args) {
-                if (!inThrottle) {
-                    func.apply(this, args);
-                    inThrottle = true;
-                    setTimeout(() => inThrottle = false, limit);
-                }
-            };
-        },
-        
-        // Debounce function - delays execution until after wait period
-        debounce(func, wait) {
-            let timeout;
-            return function(...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
-            };
-        },
-        
-        // Request animation frame throttle
-        rafThrottle(func) {
-            let ticking = false;
-            return function(...args) {
-                if (!ticking) {
-                    requestAnimationFrame(() => {
-                        func.apply(this, args);
-                        ticking = false;
-                    });
-                    ticking = true;
-                }
-            };
-        },
-        
-        // Check if tab is visible
-        isTabVisible() {
-            return document.visibilityState === 'visible';
-        }
-    };
+    // IndexedDB storage (skytrackDB) now lives in src/modules/30-storage.js.
 
-    // Pause updates when tab is not visible
-    let _fetchIntervalId = null;
-    let _tabPaused = false;
-    const _pausableIntervals = []; // {id, fn, ms, name}
-    function _setPausableInterval(fn, ms, name) {
-        const entry = { id: setInterval(fn, ms), fn, ms, name: name || '' };
-        _pausableIntervals.push(entry);
-        return entry;
-    }
-    function _pauseAllIntervals() {
-        _pausableIntervals.forEach(entry => { if (entry.id) { clearInterval(entry.id); entry.id = null; } });
-    }
-    function _resumeAllIntervals() {
-        _pausableIntervals.forEach(entry => { if (!entry.id) { entry.id = setInterval(entry.fn, entry.ms); } });
-    }
-    function _startFetchInterval() {
-        if (_fetchIntervalId) return;
-        _fetchIntervalId = setInterval(loadAircraft, CONFIG.refreshInterval);
-    }
-    function _stopFetchInterval() {
-        if (_fetchIntervalId) { clearInterval(_fetchIntervalId); _fetchIntervalId = null; }
-    }
-    document.addEventListener('visibilitychange', () => {
-        if (perfUtils.isTabVisible()) {
-            _dbg('Tab visible - resuming updates');
-            _tabPaused = false;
-            _resumeAllIntervals();
-            if (map) {
-                _startFetchInterval();
-                if (Date.now() - lastFetchTime > CONFIG.refreshInterval * 1.5) loadAircraft();
-            }
-        } else {
-            _dbg('Tab hidden - pausing all intervals');
-            _tabPaused = true;
-            _stopFetchInterval();
-            _pauseAllIntervals();
-        }
-    });
-
-    // ============ CONNECTION MONITORING ============
-    const connectionMonitor = {
-        lastSuccess: Date.now(),
-        consecutiveFailures: 0,
-        status: 'online', // online, stale, offline
-        
-        recordSuccess() {
-            this.lastSuccess = Date.now();
-            this.consecutiveFailures = 0;
-            this.updateStatus('online');
-        },
-        
-        recordFailure() {
-            this.consecutiveFailures++;
-            const timeSinceSuccess = Date.now() - this.lastSuccess;
-            
-            if (this.consecutiveFailures >= 5 || timeSinceSuccess > 60000) {
-                this.updateStatus('offline');
-            } else if (timeSinceSuccess > 30000) {
-                this.updateStatus('stale');
-            }
-        },
-        
-        updateStatus(status) {
-            if (this.status === status) return;
-            this.status = status;
-            
-            const statusEl = document.getElementById('connectionStatus');
-            if (!statusEl) return;
-            
-            const dot = statusEl.querySelector('.status-dot');
-            const text = statusEl.querySelector('.status-text');
-            
-            dot.className = 'status-dot ' + status;
-            
-            switch (status) {
-                case 'online':
-                    text.textContent = 'Live';
-                    statusEl.title = 'Receiving live data';
-                    break;
-                case 'stale':
-                    text.textContent = 'Delayed';
-                    statusEl.title = 'Data may be delayed';
-                    break;
-                case 'offline':
-                    text.textContent = 'Offline';
-                    statusEl.title = 'Unable to connect to data source';
-                    break;
-            }
-        }
-    };
-
-    // ============ PHASE 16: OFFLINE MODE MANAGER ============
-    const offlineManager = {
-        isOnline: navigator.onLine,
-        lastOnlineTime: Date.now(),
-        offlineData: null,
-        syncQueue: [],
-        
-        init() {
-            window.addEventListener('online', () => this.handleOnline());
-            window.addEventListener('offline', () => this.handleOffline());
-            
-            if (!this.isOnline) {
-                this.handleOffline();
-            }
-            
-            setInterval(() => this.checkConnection(), 30000);
-            this.loadCachedData();
-            this.loadSyncQueue();
-        },
-        
-        handleOnline() {
-            this.isOnline = true;
-            this.lastOnlineTime = Date.now();
-            
-            document.body.classList.remove('offline-mode');
-            connectionMonitor.updateStatus('online');
-            toast('Connection restored');
-            
-            this.processSyncQueue();
-            
-            if (typeof loadAircraft === 'function' && typeof map !== 'undefined' && map) {
-                loadAircraft();
-            }
-        },
-        
-        handleOffline() {
-            this.isOnline = false;
-            
-            document.body.classList.add('offline-mode');
-            connectionMonitor.updateStatus('offline');
-            toast('You are offline - showing cached data');
-            
-            this.showCachedPositions();
-        },
-        
-        async checkConnection() {
-            try {
-                const response = await fetchWithProxy('https://api.adsb.one/v2/point/0/0/1', {}, true);
-
-                if (response?.ok && !this.isOnline) {
-                    this.handleOnline();
-                }
-            } catch (e) {
-                if (this.isOnline && !navigator.onLine) {
-                    this.handleOffline();
-                }
-            }
-        },
-        
-        cachePositions() {
-            if (!this.isOnline) return;
-            
-            const positions = {};
-            Object.entries(aircraftCache).forEach(([hex, ac]) => {
-                if (ac.lat !== undefined) {
-                    positions[hex] = {
-                        lat: ac.lat,
-                        lon: ac.lon,
-                        alt: ac.alt_baro,
-                        track: ac.track,
-                        gs: ac.gs,
-                        flight: ac.flight,
-                        r: ac.r,
-                        t: ac.t,
-                        timestamp: Date.now()
-                    };
-                }
-            });
-            
-            this.offlineData = {
-                positions,
-                timestamp: Date.now(),
-                mapCenter: map ? { lat: map.getCenter().lat, lng: map.getCenter().lng } : null,
-                mapZoom: map ? map.getZoom() : 8
-            };
-            
-            skytrackDB.saveDatabase('offlineCache', this.offlineData, 86400000).catch(e => {
-                console.warn('Failed to save offline cache:', e);
-            });
-        },
-        
-        async loadCachedData() {
-            try {
-                this.offlineData = await skytrackDB.loadDatabase('offlineCache');
-            } catch (e) {
-                console.warn('Failed to load offline cache:', e);
-            }
-        },
-        
-        showCachedPositions() {
-            if (!this.offlineData || !this.offlineData.positions) {
-                toast('No cached data available');
-                return;
-            }
-            
-            const age = Date.now() - this.offlineData.timestamp;
-            const ageMinutes = Math.round(age / 60000);
-            
-            toast('Showing data from ' + ageMinutes + ' minutes ago');
-            
-            Object.keys(markers).forEach(hex => {
-                if (markers[hex] && map) {
-                    map.removeLayer(markers[hex]);
-                }
-                delete markers[hex];
-            });
-            
-            Object.entries(this.offlineData.positions).forEach(([hex, data]) => {
-                aircraftCache[hex] = {
-                    ...aircraftCache[hex],
-                    ...data,
-                    hex,
-                    _cached: true,
-                    lastSeen: data.timestamp
-                };
-            });
-            
-            if (typeof updateMarkers === 'function') {
-                updateMarkers();
-            }
-            
-            if (this.offlineData.mapCenter && map) {
-                map.setView(
-                    [this.offlineData.mapCenter.lat, this.offlineData.mapCenter.lng],
-                    this.offlineData.mapZoom || 8
-                );
-            }
-        },
-        
-        queueAction(action, description) {
-            this.syncQueue.push({
-                action,
-                description,
-                timestamp: Date.now()
-            });
-            
-            localStorage.setItem('skytrack_sync_queue', JSON.stringify(
-                this.syncQueue.map(item => ({ description: item.description, timestamp: item.timestamp }))
-            ));
-        },
-        
-        loadSyncQueue() {
-            try {
-                const saved = localStorage.getItem('skytrack_sync_queue');
-                if (saved) {
-                    const items = JSON.parse(saved);
-                    _dbg('Loaded sync queue with', items.length, 'items');
-                }
-            } catch (e) {
-                console.warn('Failed to load sync queue:', e);
-            }
-        },
-        
-        async processSyncQueue() {
-            if (this.syncQueue.length === 0) return;
-            
-            const syncIndicator = document.getElementById('syncIndicator');
-            if (syncIndicator) {
-                syncIndicator.classList.add('show');
-                syncIndicator.querySelector('.sync-text').textContent = 'Syncing ' + this.syncQueue.length + ' items...';
-            }
-            
-            while (this.syncQueue.length > 0) {
-                const item = this.syncQueue.shift();
-                
-                try {
-                    if (typeof item.action === 'function') {
-                        await item.action();
-                    }
-                } catch (e) {
-                    console.warn('Failed to process queued action:', e);
-                }
-            }
-            
-            localStorage.removeItem('skytrack_sync_queue');
-            
-            if (syncIndicator) {
-                syncIndicator.classList.remove('show');
-            }
-            
-            toast('Sync complete');
-        }
-    };
-
-    // ============ PHASE 16: ENHANCED DATA SOURCE MANAGER ============
-    const dataSourceManager = {
-        sources: [
-            { key: 'adsbone', name: 'ADSB One', buildUrl: (c, r) => 'https://api.adsb.one/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 1, cors: false },
-            { key: 'adsblol', name: 'ADSB.lol', buildUrl: (c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 2, cors: false }
-        ],
-        
-        currentSource: null,
-        healthCheckInterval: null,
-        
-        init() {
-            this.healthCheckInterval = setInterval(() => this.checkAllSources(), 60000);
-            setTimeout(() => this.checkAllSources(), 5000);
-        },
-        
-        async checkAllSources() {
-            for (const source of this.sources) {
-                // On GitHub Pages, cors:false sources can't be direct-tested — let actual fetches determine health
-                if (source.cors === false && location.hostname.includes('github.io')) { source.status = 'degraded'; source.latency = 9999; continue; }
-                await this.checkSource(source);
-            }
-            
-            this.sources.sort((a, b) => {
-                if (a.status === 'healthy' && b.status !== 'healthy') return -1;
-                if (b.status === 'healthy' && a.status !== 'healthy') return 1;
-                if (a.latency !== b.latency) return a.latency - b.latency;
-                return a.priority - b.priority;
-            });
-            
-            this.updateUI();
-        },
-        
-        async checkSource(source) {
-            const startTime = Date.now();
-            
-            try {
-                const testUrl = source.buildUrl({ lat: 40, lng: -74 }, 10);
-                
-                let response;
-                if (source.cors !== false) { try { response = await fetch(testUrl, { method: 'GET', cache: 'no-cache', signal: AbortSignal.timeout(8000) }); } catch(e) { response = null; } }
-                if (!response || !response.ok) { response = await fetchWithProxy(testUrl); if (!response) throw new Error('No proxy'); }
-                
-                source.latency = Date.now() - startTime;
-                
-                if (response.ok) {
-                    source.status = 'healthy';
-                    source.lastSuccess = Date.now();
-                    source.errorCount = 0;
-                } else {
-                    throw new Error('HTTP ' + response.status);
-                }
-            } catch (e) {
-                source.status = source.errorCount > 5 ? 'unhealthy' : 'degraded';
-                source.lastError = Date.now();
-                source.errorCount++;
-                source.latency = 9999;
-            }
-        },
-        
-        getBestSource() {
-            const healthy = this.sources.find(s => s.status === 'healthy');
-            if (healthy) return healthy;
-            
-            const degraded = this.sources.find(s => s.status === 'degraded');
-            if (degraded) return degraded;
-            
-            return this.sources[0];
-        },
-        
-        getSourcesInOrder() {
-            return [...this.sources].sort((a, b) => {
-                if (a.status === 'healthy' && b.status !== 'healthy') return -1;
-                if (b.status === 'healthy' && a.status !== 'healthy') return 1;
-                if (a.latency !== b.latency) return a.latency - b.latency;
-                return a.priority - b.priority;
-            });
-        },
-        
-        recordSuccess(source) {
-            source.status = 'healthy';
-            source.lastSuccess = Date.now();
-            source.errorCount = 0;
-            this.currentSource = source;
-            this.updateUI();
-        },
-        
-        recordFailure(source) {
-            source.errorCount++;
-            source.lastError = Date.now();
-            if (source.errorCount > 3) {
-                source.status = 'unhealthy';
-            } else {
-                source.status = 'degraded';
-            }
-            this.updateUI();
-        },
-        
-        updateUI() {
-            const indicator = document.getElementById('dataSourceIndicator');
-            if (!indicator) return;
-            
-            const best = this.getBestSource();
-            const healthy = this.sources.filter(s => s.status === 'healthy').length;
-            
-            indicator.innerHTML = '<span class="source-name">' + best.name + '</span>' +
-                '<span class="source-status ' + best.status + '">' + healthy + '/' + this.sources.length + '</span>' +
-                '<span class="source-latency">' + (best.latency < 9999 ? best.latency + 'ms' : '--') + '</span>';
-        },
-        
-        getStats() {
-            return this.sources.map(s => ({
-                name: s.name,
-                status: s.status,
-                latency: s.latency,
-                errorCount: s.errorCount,
-                lastSuccess: s.lastSuccess ? new Date(s.lastSuccess).toISOString() : 'never'
-            }));
-        }
-    };
-
-    // ============ PHASE 16: AUTO-RETRY SYSTEM ============
-    const retrySystem = {
-        defaultConfig: {
-            maxRetries: 3,
-            baseDelay: 1000,
-            maxDelay: 30000,
-            backoffMultiplier: 2,
-            retryOn: [408, 429, 500, 502, 503, 504]
-        },
-        
-        async withRetry(fn, config = {}) {
-            const options = { ...this.defaultConfig, ...config };
-            let lastError;
-            let delay = options.baseDelay;
-            
-            for (let attempt = 0; attempt <= options.maxRetries; attempt++) {
-                try {
-                    return await fn();
-                } catch (error) {
-                    lastError = error;
-                    
-                    const shouldRetry = this.shouldRetry(error, options, attempt);
-                    
-                    if (!shouldRetry) {
-                        throw error;
-                    }
-                    
-                    _dbg('Retry attempt ' + (attempt + 1) + '/' + options.maxRetries + ' after ' + delay + 'ms');
-                    
-                    await new Promise(r => setTimeout(r, delay));
-                    
-                    delay = Math.min(
-                        options.maxDelay,
-                        delay * options.backoffMultiplier * (0.5 + Math.random())
-                    );
-                }
-            }
-            
-            throw lastError;
-        },
-        
-        shouldRetry(error, options, attempt) {
-            if (attempt >= options.maxRetries) return false;
-            
-            if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                return true;
-            }
-            
-            if (error.status && options.retryOn.includes(error.status)) {
-                return true;
-            }
-            
-            if (error.name === 'AbortError' || error.message.includes('timeout')) {
-                return true;
-            }
-            
-            return false;
-        },
-        
-        async fetch(url, options = {}) {
-            return this.withRetry(async () => {
-                const response = await fetch(url, {
-                    ...options,
-                    signal: options.signal || AbortSignal.timeout(options.timeout || 10000)
-                });
-                
-                if (!response.ok) {
-                    const error = new Error('HTTP ' + response.status);
-                    error.status = response.status;
-                    throw error;
-                }
-                
-                return response;
-            }, options.retry);
-        }
-    };
-
-    // ============ PHASE 16: ERROR RECOVERY SYSTEM ============
-    const errorRecovery = {
-        errorCounts: new Map(),
-        recoveryActions: new Map(),
-        
-        init() {
-            this.registerRecovery('data-load', this.recoverDataLoad.bind(this));
-            this.registerRecovery('database', this.recoverDatabase.bind(this));
-            this.registerRecovery('map', this.recoverMap.bind(this));
-        },
-        
-        registerRecovery(type, action) {
-            this.recoveryActions.set(type, action);
-        },
-        
-        async handleError(type, error, context = {}) {
-            const count = (this.errorCounts.get(type) || 0) + 1;
-            this.errorCounts.set(type, count);
-            
-            errorHandler.log(type, error.message, count > 5 ? 'error' : 'warn');
-            
-            const recovery = this.recoveryActions.get(type);
-            if (recovery && count <= 3) {
-                try {
-                    await recovery(error, context);
-                    this.errorCounts.set(type, 0);
-                    return true;
-                } catch (recoveryError) {
-                    console.error('Recovery failed:', recoveryError);
-                }
-            }
-            
-            if (count === 3) {
-                toast('Having trouble with ' + type + '. Will keep trying...');
-            } else if (count === 10) {
-                toast('Persistent ' + type + ' issues. Check your connection.');
-            }
-            
-            return false;
-        },
-        
-        async recoverDataLoad(error, context) {
-            _dbg('Attempting data load recovery...');
-            
-            const nextSource = dataSourceManager.sources.find(s => 
-                s.name !== dataSourceManager.currentSource?.name && s.status !== 'unhealthy'
-            );
-            
-            if (nextSource) {
-                toast('Switching to ' + nextSource.name + '...');
-                return true;
-            }
-            
-            offlineManager.showCachedPositions();
-            return false;
-        },
-        
-        async recoverDatabase(error, context) {
-            _dbg('Attempting database recovery...');
-            
-            try {
-                await skytrackDB.init();
-                toast('Database reconnected');
-                return true;
-            } catch (e) {
-                _dbg('Falling back to localStorage');
-                return false;
-            }
-        },
-        
-        async recoverMap(error, context) {
-            _dbg('Attempting map recovery...');
-            
-            if (map) {
-                map.invalidateSize();
-                
-                map.eachLayer(layer => {
-                    if (layer._url && typeof layer.redraw === 'function') {
-                        layer.redraw();
-                    }
-                });
-            }
-            
-            return true;
-        },
-        
-        resetCounts() {
-            this.errorCounts.clear();
-        }
-    };
-
-    // ============ PHASE 16: CIRCUIT BREAKER ============
-    class CircuitBreaker {
-        constructor(options = {}) {
-            this.name = options.name || 'unnamed';
-            this.failureThreshold = options.failureThreshold || 5;
-            this.resetTimeout = options.resetTimeout || 30000;
-            this.monitorInterval = options.monitorInterval || 10000;
-            
-            this.state = 'closed';
-            this.failures = 0;
-            this.lastFailure = 0;
-            this.successCount = 0;
-        }
-        
-        async execute(fn) {
-            if (this.state === 'open') {
-                if (Date.now() - this.lastFailure > this.resetTimeout) {
-                    this.state = 'half-open';
-                    _dbg('Circuit breaker ' + this.name + ' half-open');
-                } else {
-                    const error = new Error('Circuit breaker ' + this.name + ' is open');
-                    error.circuitBreakerOpen = true;
-                    throw error;
-                }
-            }
-            
-            try {
-                const result = await fn();
-                this.onSuccess();
-                return result;
-            } catch (error) {
-                this.onFailure();
-                throw error;
-            }
-        }
-        
-        onSuccess() {
-            this.failures = 0;
-            
-            if (this.state === 'half-open') {
-                this.successCount++;
-                if (this.successCount >= 3) {
-                    this.state = 'closed';
-                    this.successCount = 0;
-                    _dbg('Circuit breaker ' + this.name + ' closed');
-                    this.hideWarning();
-                }
-            }
-        }
-        
-        onFailure() {
-            this.failures++;
-            this.lastFailure = Date.now();
-            this.successCount = 0;
-            
-            if (this.failures >= this.failureThreshold) {
-                this.state = 'open';
-                _dbg('Circuit breaker ' + this.name + ' opened');
-                this.showWarning();
-            }
-        }
-        
-        showWarning() {
-            // Disabled per user request - don't show retry popup
-            // const warning = document.getElementById('circuitBreakerWarning');
-            // if (warning) {
-            //     warning.textContent = 'Data source temporarily unavailable - retrying...';
-            //     warning.classList.add('show');
-            // }
-        }
-        
-        hideWarning() {
-            const warning = document.getElementById('circuitBreakerWarning');
-            if (warning) {
-                warning.classList.remove('show');
-            }
-        }
-        
-        getState() {
-            return {
-                name: this.name,
-                state: this.state,
-                failures: this.failures,
-                lastFailure: this.lastFailure
-            };
-        }
-    }
-
-    const circuitBreakers = {
-        aircraft: new CircuitBreaker({ name: 'aircraft', failureThreshold: 5, resetTimeout: 30000 }),
-        weather: new CircuitBreaker({ name: 'weather', failureThreshold: 3, resetTimeout: 60000 }),
-        database: new CircuitBreaker({ name: 'database', failureThreshold: 10, resetTimeout: 120000 })
-    };
-
-    // Reset error counts periodically
-    setInterval(() => errorRecovery.resetCounts(), 300000);
-
-    // ============ INDEXEDDB STORAGE ============
-    const skytrackDB = {
-        dbName: 'SkyTrackDB',
-        dbVersion: 1,
-        db: null,
-        
-        async init() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(this.dbName, this.dbVersion);
-                
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => {
-                    this.db = request.result;
-                    resolve(true);
-                };
-                
-                request.onupgradeneeded = (event) => {
-                    const db = event.target.result;
-                    
-                    // Store for large databases (registrations, airports, etc.)
-                    if (!db.objectStoreNames.contains('databases')) {
-                        const store = db.createObjectStore('databases', { keyPath: 'name' });
-                        store.createIndex('timestamp', 'timestamp', { unique: false });
-                    }
-                    
-                    // Store for aircraft cache
-                    if (!db.objectStoreNames.contains('aircraftCache')) {
-                        db.createObjectStore('aircraftCache', { keyPath: 'hex' });
-                    }
-                    
-                    // Store for user data (watchlist, bookmarks, settings)
-                    if (!db.objectStoreNames.contains('userData')) {
-                        db.createObjectStore('userData', { keyPath: 'key' });
-                    }
-                    
-                    // Store for trail history
-                    if (!db.objectStoreNames.contains('trailHistory')) {
-                        const trailStore = db.createObjectStore('trailHistory', { keyPath: 'id', autoIncrement: true });
-                        trailStore.createIndex('hex', 'hex', { unique: false });
-                        trailStore.createIndex('timestamp', 'timestamp', { unique: false });
-                    }
-                };
-            });
-        },
-        
-        async saveDatabase(name, data, maxAge = 86400000) {
-            if (!this.db) await this.init();
-            return new Promise((resolve, reject) => {
-                const transaction = this.db.transaction(['databases'], 'readwrite');
-                const store = transaction.objectStore('databases');
-                const request = store.put({
-                    name,
-                    data,
-                    timestamp: Date.now(),
-                    maxAge
-                });
-                request.onsuccess = () => resolve(true);
-                request.onerror = () => reject(request.error);
-            });
-        },
-        
-        async loadDatabase(name) {
-            if (!this.db) await this.init();
-            return new Promise((resolve, reject) => {
-                const transaction = this.db.transaction(['databases'], 'readonly');
-                const store = transaction.objectStore('databases');
-                const request = store.get(name);
-                request.onsuccess = () => {
-                    const result = request.result;
-                    if (result && Date.now() - result.timestamp < result.maxAge) {
-                        resolve(result.data);
-                    } else {
-                        resolve(null);
-                    }
-                };
-                request.onerror = () => reject(request.error);
-            });
-        },
-        
-        async saveUserData(key, value) {
-            if (!this.db) await this.init();
-            return new Promise((resolve, reject) => {
-                const transaction = this.db.transaction(['userData'], 'readwrite');
-                const store = transaction.objectStore('userData');
-                const request = store.put({ key, value, timestamp: Date.now() });
-                request.onsuccess = () => resolve(true);
-                request.onerror = () => reject(request.error);
-            });
-        },
-        
-        async loadUserData(key) {
-            if (!this.db) await this.init();
-            return new Promise((resolve, reject) => {
-                const transaction = this.db.transaction(['userData'], 'readonly');
-                const store = transaction.objectStore('userData');
-                const request = store.get(key);
-                request.onsuccess = () => resolve(request.result?.value ?? null);
-                request.onerror = () => reject(request.error);
-            });
-        },
-        
-        async saveTrailHistory(hex, trailData) {
-            if (!this.db) await this.init();
-            return new Promise((resolve, reject) => {
-                const transaction = this.db.transaction(['trailHistory'], 'readwrite');
-                const store = transaction.objectStore('trailHistory');
-                const request = store.add({
-                    hex,
-                    data: trailData,
-                    timestamp: Date.now()
-                });
-                request.onsuccess = () => resolve(true);
-                request.onerror = () => reject(request.error);
-            });
-        },
-        
-        async getTrailHistory(hex, limit = 10) {
-            if (!this.db) await this.init();
-            return new Promise((resolve, reject) => {
-                const transaction = this.db.transaction(['trailHistory'], 'readonly');
-                const store = transaction.objectStore('trailHistory');
-                const index = store.index('hex');
-                const request = index.getAll(hex);
-                request.onsuccess = () => {
-                    const results = request.result
-                        .sort((a, b) => b.timestamp - a.timestamp)
-                        .slice(0, limit);
-                    resolve(results);
-                };
-                request.onerror = () => reject(request.error);
-            });
-        },
-        
-        async clearOldData(maxAgeDays = 7) {
-            if (!this.db) await this.init();
-            const cutoff = Date.now() - (maxAgeDays * 86400000);
-            
-            return new Promise((resolve, reject) => {
-                const transaction = this.db.transaction(['trailHistory'], 'readwrite');
-                const store = transaction.objectStore('trailHistory');
-                const index = store.index('timestamp');
-                const range = IDBKeyRange.upperBound(cutoff);
-                const request = index.openCursor(range);
-                
-                request.onsuccess = (event) => {
-                    const cursor = event.target.result;
-                    if (cursor) {
-                        cursor.delete();
-                        cursor.continue();
-                    } else {
-                        resolve(true);
-                    }
-                };
-                request.onerror = () => reject(request.error);
-            });
-        }
-    };
 
     // ============ ALERT SYSTEM ============
     const alertSystem = {
@@ -1492,144 +367,8 @@
         }
     };
 
-    // ============ WEATHER SYSTEM ============
-    const weatherSystem = {
-        cache: new Map(),
-        cacheExpiry: 600000, // 10 minutes
-        
-        async getMETAR(icao) {
-            if (!icao || icao.length !== 4) return null;
-            
-            // Check cache
-            const cached = this.cache.get(icao);
-            if (cached && Date.now() - cached.timestamp < this.cacheExpiry) {
-                return cached.data;
-            }
-            
-            try {
-                const url = `https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`;
-                const resp = await errorHandler.fetchWithTimeout(url, {}, 8000);
-                
-                if (!resp.ok) {
-                    throw new Error(`HTTP ${resp.status}`);
-                }
-                
-                const data = await resp.json();
-                if (!data || data.length === 0) {
-                    // No data available, cache empty result to prevent repeated requests
-                    this.cache.set(icao, { data: null, timestamp: Date.now() });
-                    return null;
-                }
-                
-                const metar = this.parseMETAR(data[0]);
-                this.cache.set(icao, { data: metar, timestamp: Date.now() });
-                return metar;
-                
-            } catch (e) {
-                errorHandler.log('Weather', `METAR fetch failed for ${icao}: ${e.message}`);
-                // Return cached data if available (even if expired)
-                if (cached) {
-                    return cached.data;
-                }
-                return null;
-            }
-        },
-        
-        parseMETAR(raw) {
-            if (!raw) return null;
-            
-            return {
-                raw: raw.rawOb || raw.raw || '',
-                station: raw.icaoId || '',
-                time: raw.obsTime || raw.reportTime || '',
-                temp: raw.temp !== undefined ? raw.temp : null,
-                dewpoint: raw.dewp !== undefined ? raw.dewp : null,
-                humidity: this.calcHumidity(raw.temp, raw.dewp),
-                wind: {
-                    direction: raw.wdir || null,
-                    speed: raw.wspd || null,
-                    gust: raw.wgst || null,
-                    variable: raw.wdir === 'VRB'
-                },
-                visibility: raw.visib || null,
-                altimeter: raw.altim || null,
-                clouds: raw.clouds || [],
-                weather: raw.wxString || '',
-                flightCategory: raw.fltcat || this.getFlightCategory(raw),
-                ceiling: this.getCeiling(raw.clouds)
-            };
-        },
-        
-        calcHumidity(temp, dewpoint) {
-            if (temp === null || dewpoint === null) return null;
-            // Magnus formula approximation
-            const h = 100 * Math.pow((112 - (0.1 * temp) + dewpoint) / (112 + (0.9 * temp)), 8);
-            return Math.round(Math.min(100, Math.max(0, h)));
-        },
-        
-        getCeiling(clouds) {
-            if (!clouds || !Array.isArray(clouds)) return null;
-            for (const layer of clouds) {
-                if (['BKN', 'OVC', 'VV'].includes(layer.cover)) {
-                    return layer.base;
-                }
-            }
-            return null;
-        },
-        
-        getFlightCategory(data) {
-            const vis = data.visib;
-            const ceil = this.getCeiling(data.clouds);
-            
-            if (vis === null && ceil === null) return 'UNKN';
-            
-            // LIFR: Ceiling < 500ft or Visibility < 1mi
-            if ((ceil !== null && ceil < 500) || (vis !== null && vis < 1)) return 'LIFR';
-            // IFR: Ceiling 500-999ft or Visibility 1-3mi
-            if ((ceil !== null && ceil < 1000) || (vis !== null && vis < 3)) return 'IFR';
-            // MVFR: Ceiling 1000-3000ft or Visibility 3-5mi
-            if ((ceil !== null && ceil < 3000) || (vis !== null && vis <= 5)) return 'MVFR';
-            // VFR: Ceiling > 3000ft and Visibility > 5mi
-            return 'VFR';
-        },
-        
-        getFlightCategoryColor(cat) {
-            switch (cat) {
-                case 'VFR': return '#22c55e';
-                case 'MVFR': return '#3b82f6';
-                case 'IFR': return '#ef4444';
-                case 'LIFR': return '#a855f7';
-                default: return '#6b7280';
-            }
-        },
-        
-        formatWind(wind) {
-            if (!wind || (!wind.direction && !wind.speed)) return 'Calm';
-            
-            let str = '';
-            if (wind.variable) {
-                str = 'Variable';
-            } else if (wind.direction) {
-                str = wind.direction + ' deg';
-            }
-            
-            if (wind.speed) {
-                str += ' at ' + wind.speed + ' kt';
-                if (wind.gust) {
-                    str += ' (gusts ' + wind.gust + ')';
-                }
-            }
-            
-            return str || 'Unknown';
-        },
-        
-        formatClouds(clouds) {
-            if (!clouds || clouds.length === 0) return 'Clear';
-            
-            const coverMap = { 'SKC': 'Clear', 'CLR': 'Clear', 'FEW': 'Few', 'SCT': 'Scattered', 'BKN': 'Broken', 'OVC': 'Overcast', 'VV': 'Vert Vis' };
-            return clouds.map(c => (coverMap[c.cover] || c.cover) + ' at ' + (c.base ? c.base.toLocaleString() : '?') + ' ft').join(', ');
-        }
-    };
+    // Weather system (METAR/TAF per-airport) now lives in src/modules/35-weather.js.
+
 
     // ============ AIRCRAFT DATA ENRICHMENT ============
     const aircraftDataEnricher = {
@@ -2808,6 +1547,9 @@
         }
     };
 
+    // Route API lookup (adsbdb + hexdb fallback) now lives in src/modules/50-route-lookup.js.
+
+
     // ============ FLIGHT ORIGIN DETECTION ============
     const flightTracker = {
         // Detect origin airport from trail data
@@ -3274,9 +2016,10 @@
     const DATA_SOURCES = {
         airplaneslive: { name: 'Airplanes.live', buildUrl: (b, c, r) => 'https://api.airplanes.live/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null },
         adsbone: { name: 'ADSB One', buildUrl: (b, c, r) => 'https://api.adsb.one/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null },
-        adsblol: { name: 'ADSB.lol', buildUrl: (b, c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null }
+        adsblol: { name: 'ADSB.lol', buildUrl: (b, c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null },
+        adsbfi: { name: 'ADSB.fi', buildUrl: (b, c, r) => 'https://opendata.adsb.fi/api/v2/lat/' + c.lat.toFixed(4) + '/lon/' + c.lng.toFixed(4) + '/dist/' + r, parseResponse: d => d?.ac?.length ? d.ac : null }
     };
-    const SOURCE_ORDER = ['adsbone', 'adsblol', 'airplaneslive'];
+    const SOURCE_ORDER = ['adsbone', 'adsblol', 'adsbfi', 'airplaneslive'];
 
     // ============ STATE ============
     let apiCredentials = { clientId: '', clientSecret: '' };
@@ -4141,6 +2884,11 @@
         map.on('zoomend', () => { if (settings.showAirports) updateAirportMarkers(); });
         map.on('click', () => { deselectAircraft(); _el('settingsPanel').classList.remove('show'); _el('airportPanel').classList.remove('show'); _el('statsPanel').classList.remove('show'); _el('statsBtn')?.classList.remove('active'); document.getElementById('comparisonPanel')?.classList.remove('show'); });
         if (settings.showAirports) updateAirportMarkers();
+        // Notify feature modules that the Leaflet map is live. Modules defined
+        // under src/modules/9x-*.js listen for this event to bootstrap.
+        try {
+            document.dispatchEvent(new CustomEvent('skytrack:map-ready', { detail: { map, baseMaps } }));
+        } catch (_) { /* very old browsers */ }
     }
 
     function updateAirportMarkers() {
@@ -5100,7 +3848,22 @@
     function selectAircraft(hex) {
         if (trailLine) { if (trailLine._originMarker) map.removeLayer(trailLine._originMarker); if (trailLine._group) map.removeLayer(trailLine._group); else map.removeLayer(trailLine); trailLine = null; }
         selectedHex = hex; const ac = aircraftCache[hex]; if (!ac) return;
-        document.getElementById('infoCallsign').textContent = ac.flight || 'N/A'; document.getElementById('infoHex').textContent = ac.hex; document.getElementById('infoReg').textContent = ac.r || 'N/A';
+        // Callsign + phase-of-flight chip + surveillance-orbit chip
+        // (v0.19.0/v0.20.0 — modules 91-phase-of-flight.js, 94-surveillance-orbit.js)
+        phaseClassifier.annotate(ac);
+        surveillanceOrbit.annotate(ac);
+        const callsignEl = document.getElementById('infoCallsign');
+        if (callsignEl) {
+            callsignEl.innerHTML = _escHtml(ac.flight || 'N/A') +
+                phaseClassifier.chipHtml(ac) +
+                surveillanceOrbit.chipHtml(ac);
+        }
+        // Hex + country flag badge (v0.19.0 — module 92-country-flag.js)
+        const hexEl = document.getElementById('infoHex');
+        if (hexEl) {
+            hexEl.innerHTML = _escHtml(ac.hex) + countryFlag.badgeHtml(ac.hex);
+        }
+        document.getElementById('infoReg').textContent = ac.r || 'N/A';
         const typeDesc = aircraftTypeDB.getDescription(ac.t); document.getElementById('infoType').textContent = typeDesc || ac.t || 'N/A';
         const descRow = document.getElementById('infoDescRow'); if (ac.desc) { document.getElementById('infoDesc').textContent = ac.desc; descRow.style.display = 'flex'; } else descRow.style.display = 'none';
         const opRow = document.getElementById('infoOperatorRow'); if (ac.ownOp) { document.getElementById('infoOperator').textContent = ac.ownOp; opRow.style.display = 'flex'; } else opRow.style.display = 'none';
@@ -5202,6 +3965,24 @@
                 }
                 updateRouteDisplay(ac);
             }
+        }
+        // External API route fallback — adsbdb/hexdb cover ~400k callsigns beyond
+        // the static routes DB. Only query when we still have no from/to and
+        // we haven't already looked up this callsign for the current aircraft.
+        if ((!ac.from || !ac.to) && ac.flight && !ac.routeApiTried) {
+            const cs = ac.flight.trim();
+            ac.routeApiTried = true;
+            routeApiLookup.get(cs).then(rec => {
+                if (!rec || selectedHex !== ac.hex) return;
+                let changed = false;
+                if (!ac.from && rec.from) { ac.from = rec.from; changed = true; }
+                if (!ac.to && rec.to)     { ac.to = rec.to;     changed = true; }
+                if (changed) {
+                    ac.destinationInferred = false; // this is a definitive route
+                    ac.routeApiSource = rec.source;
+                    updateRouteDisplay(ac);
+                }
+            }).catch(() => { /* silent — fallback only */ });
         }
         const catMap = { commercial: 'Commercial', military: 'Military', government: 'Government', police: 'Police', medical: 'Medical', cargo: 'Cargo', private: 'Private', helicopter: 'Helicopter', ground: 'Ground', pia: 'PIA' }; document.getElementById('infoCat').textContent = catMap[ac.category_type] || 'Unknown';
         const alt = ac.alt_baro === 'ground' ? 'Ground' : (ac.alt_baro ? ac.alt_baro.toLocaleString() + ' ft' : '---'); document.getElementById('infoAlt').textContent = alt;
@@ -5542,6 +4323,50 @@
         
         // Phase 5: New button handlers
         document.getElementById('measureBtn')?.addEventListener('click', () => measureTool.toggle());
+        // Range rings (v0.19.0 — module 90-range-rings.js)
+        const rangeRingsBtn = document.getElementById('rangeRingsBtn');
+        if (rangeRingsBtn) {
+            rangeRingsBtn.classList.toggle('active', rangeRings.enabled);
+            rangeRingsBtn.addEventListener('click', async () => {
+                const on = await rangeRings.toggle();
+                rangeRingsBtn.classList.toggle('active', on);
+                if (!on && !rangeRings.center) {
+                    // Permission not granted — offer to use the current map center as fallback.
+                    toast('Geolocation unavailable — using map center');
+                    rangeRings.useMapCenter();
+                    await rangeRings.enable();
+                    rangeRingsBtn.classList.add('active');
+                } else {
+                    toast(on ? 'Range rings on' : 'Range rings off');
+                }
+            });
+        }
+        // Fires + hurricanes overlay (v0.20.0 — module 95-fires-hurricanes.js)
+        const firesBtn = document.getElementById('firesBtn');
+        if (firesBtn) {
+            firesBtn.classList.toggle('active', firesHurricanes.enabled);
+            firesBtn.addEventListener('click', async () => {
+                toast('Loading fires & storms…');
+                const on = await firesHurricanes.toggle();
+                firesBtn.classList.toggle('active', on);
+                if (on) {
+                    const fc = firesHurricanes.fireLayer?.getLayers()?.length || 0;
+                    const sc = firesHurricanes.stormLayer?.getLayers()?.length || 0;
+                    toast('Fires: ' + fc + ' · Storms: ' + sc);
+                } else {
+                    toast('Overlay off');
+                }
+            });
+        }
+        // Plane Over My House widget (v0.20.0 — module 96-plane-over-my-house.js)
+        const homeWidgetBtn = document.getElementById('homeWidgetBtn');
+        if (homeWidgetBtn) {
+            homeWidgetBtn.classList.toggle('active', planeOverHome.enabled);
+            homeWidgetBtn.addEventListener('click', () => {
+                const on = planeOverHome.toggle();
+                homeWidgetBtn.classList.toggle('active', on);
+            });
+        }
         document.getElementById('exportKMLBtn')?.addEventListener('click', () => { if (selectedHex) exportTrail(selectedHex, 'kml'); });
         document.getElementById('shareFlightBtn')?.addEventListener('click', () => { if (selectedHex) shareManager.share(selectedHex); });
         document.getElementById('playbackBtn')?.addEventListener('click', () => { if (selectedHex) playbackController.start(selectedHex); });
@@ -5571,7 +4396,111 @@
         });
     }
     function changeBasemap(style) { Object.values(baseMaps).forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); }); baseMaps[style].addTo(map); currentBaseMap = style; settings.mapStyle = style; document.getElementById('mapStyleSelect').value = style; saveSettings(); updateMarkers(); if (typeof miniMap !== 'undefined' && miniMap.updateMapStyle) miniMap.updateMapStyle(style); }
-    async function toggleRadar() { settings.showRadar = !settings.showRadar; document.getElementById('radarBtn').classList.toggle('active', settings.showRadar); document.getElementById('toggleRadar').classList.toggle('on', settings.showRadar); saveSettings(); if (settings.showRadar) { try { const resp = await fetch('https://api.rainviewer.com/public/weather-maps.json'); const data = await resp.json(); const frame = data.radar?.past?.slice(-1)[0]; if (!frame) return; if (radarLayer) map.removeLayer(radarLayer); radarLayer = L.tileLayer(data.host + frame.path + '/256/{z}/{x}/{y}/4/1_1.png', { opacity: 0.4, maxNativeZoom: 12 }).addTo(map); radarLayer.setZIndex(50); toast('Radar loaded'); } catch(e) { toast('Radar unavailable'); } } else if (radarLayer) { map.removeLayer(radarLayer); radarLayer = null; } }
+    // Animated RainViewer radar: cycles past frames + short-term nowcast.
+    // Replaces the single-frame implementation so the radar visibly moves.
+    const radarAnimator = {
+        frames: [],       // [{ path, time }, ...] past → present → nowcast
+        layers: [],       // parallel Leaflet tileLayers, only one visible at a time
+        host: '',
+        idx: 0,
+        timer: null,
+        active: false,
+
+        async load() {
+            const resp = await fetch('https://api.rainviewer.com/public/weather-maps.json', {
+                cache: 'no-cache'
+            });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const data = await resp.json();
+            this.host = data.host;
+            const past = Array.isArray(data?.radar?.past) ? data.radar.past : [];
+            const now  = Array.isArray(data?.radar?.nowcast) ? data.radar.nowcast : [];
+            // Keep the most recent 10 past frames + all nowcast frames so the
+            // loop feels responsive but stays well under ~15 tile layers.
+            this.frames = past.slice(-10).concat(now);
+            if (this.frames.length === 0) throw new Error('No radar frames');
+            this._buildLayers();
+        },
+
+        _buildLayers() {
+            this._tearDownLayers();
+            for (const f of this.frames) {
+                const layer = L.tileLayer(
+                    this.host + f.path + '/256/{z}/{x}/{y}/4/1_1.png',
+                    { opacity: 0, maxNativeZoom: 12, updateWhenIdle: true }
+                );
+                layer.setZIndex(50);
+                layer.addTo(map);
+                this.layers.push(layer);
+            }
+            // Start with the most recent past frame visible (last "real" frame).
+            const lastPastIdx = Math.min(9, this.frames.length - 1);
+            this.idx = lastPastIdx;
+            if (this.layers[this.idx]) this.layers[this.idx].setOpacity(0.45);
+        },
+
+        _tearDownLayers() {
+            for (const l of this.layers) {
+                try { map.removeLayer(l); } catch (_) {}
+            }
+            this.layers = [];
+        },
+
+        start() {
+            if (!this.active || this.frames.length < 2) return;
+            this.stop();
+            this.timer = setInterval(() => this._advance(), 700);
+        },
+
+        stop() {
+            if (this.timer) {
+                clearInterval(this.timer);
+                this.timer = null;
+            }
+        },
+
+        _advance() {
+            if (this.layers.length < 2) return;
+            const prev = this.idx;
+            this.idx = (this.idx + 1) % this.layers.length;
+            if (this.layers[prev]) this.layers[prev].setOpacity(0);
+            // Nowcast frames (indices 10+, since we keep the last 10 past frames)
+            // render at lower opacity so forecasts read as "less certain".
+            const opacity = (this.idx > 9) ? 0.35 : 0.45;
+            if (this.layers[this.idx]) this.layers[this.idx].setOpacity(opacity);
+        },
+
+        async enable() {
+            this.active = true;
+            await this.load();
+            this.start();
+        },
+
+        disable() {
+            this.active = false;
+            this.stop();
+            this._tearDownLayers();
+            this.frames = [];
+        }
+    };
+
+    async function toggleRadar() {
+        settings.showRadar = !settings.showRadar;
+        document.getElementById('radarBtn')?.classList.toggle('active', settings.showRadar);
+        document.getElementById('toggleRadar')?.classList.toggle('on', settings.showRadar);
+        saveSettings();
+        if (radarLayer) { map.removeLayer(radarLayer); radarLayer = null; } // legacy cleanup
+        if (settings.showRadar) {
+            try {
+                await radarAnimator.enable();
+                toast('Radar: ' + radarAnimator.frames.length + ' frames loaded');
+            } catch (e) {
+                toast('Radar unavailable');
+            }
+        } else {
+            radarAnimator.disable();
+        }
+    }
     function geolocate() { if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(pos => { map.setView([pos.coords.latitude, pos.coords.longitude], CONFIG.localZoom); toast('Location updated'); }, () => toast('Location denied')); } }
     function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 3000); }
 
@@ -8890,179 +7819,9 @@ ${trailData.map(p => {
         }
     }
 
-    // ============ PHASE 11: WEATHER OVERLAY ============
-    const weatherOverlay = {
-        windLayer: null,
-        sigmetLayer: null,
-        enabled: false,
-        windData: null,
-        
-        async toggle() {
-            this.enabled = !this.enabled;
-            document.getElementById('weatherOverlayBtn')?.classList.toggle('active', this.enabled);
-            
-            if (this.enabled) {
-                await this.load();
-            } else {
-                this.clear();
-            }
-        },
-        
-        async load() {
-            toast('Loading weather data...');
-            
-            try {
-                // Load wind data from Open-Meteo
-                await this.loadWindData();
-                this.drawWindBarbs();
-                
-                // Load SIGMETs
-                await this.loadSigmets();
-                
-                toast('Weather overlay loaded');
-            } catch (e) {
-                errorHandler.log('Weather Overlay', e.message);
-                toast('Weather data unavailable');
-            }
-        },
-        
-        async loadWindData() {
-            const bounds = map.getBounds();
-            const center = map.getCenter();
-            
-            // Open-Meteo API for wind data
-            const url = `https://api.open-meteo.com/v1/forecast?` +
-                `latitude=${center.lat}&longitude=${center.lng}` +
-                `&current=wind_speed_10m,wind_direction_10m` +
-                `&hourly=wind_speed_180hPa,wind_direction_180hPa` +
-                `&forecast_days=1`;
-            
-            try {
-                const resp = await fetch(url);
-                const data = await resp.json();
-                
-                this.windData = {
-                    surface: {
-                        speed: data.current?.wind_speed_10m || 0,
-                        direction: data.current?.wind_direction_10m || 0
-                    },
-                    upper: {
-                        speed: data.hourly?.wind_speed_180hPa?.[0] || 0,
-                        direction: data.hourly?.wind_direction_180hPa?.[0] || 0
-                    }
-                };
-            } catch (e) {
-                console.warn('Wind data fetch failed:', e);
-            }
-        },
-        
-        drawWindBarbs() {
-            if (this.windLayer) {
-                map.removeLayer(this.windLayer);
-            }
-            
-            if (!this.windData) return;
-            
-            const center = map.getCenter();
-            const wind = map.getZoom() > 8 ? this.windData.surface : this.windData.upper;
-            const altLabel = map.getZoom() > 8 ? 'Surface' : 'FL400';
-            
-            // Convert m/s to knots
-            const speedKt = Math.round(wind.speed * 1.944);
-            const direction = Math.round(wind.direction);
-            
-            const barbHtml = this.createWindBarbSVG(speedKt, direction);
-            
-            this.windLayer = L.marker(center, {
-                icon: L.divIcon({
-                    className: 'wind-barb',
-                    html: barbHtml,
-                    iconSize: [60, 60],
-                    iconAnchor: [30, 30]
-                })
-            }).addTo(map);
-            
-            this.windLayer.bindTooltip(
-                `${altLabel} Wind: ${speedKt} kt from ${direction}deg`,
-                { direction: 'top' }
-            );
-        },
-        
-        createWindBarbSVG(speedKt, direction) {
-            const speed = speedKt;
-            
-            return `
-                <svg viewBox="0 0 60 60" style="transform: rotate(${direction}deg)">
-                    <line x1="30" y1="50" x2="30" y2="10" stroke="#fff" stroke-width="2"/>
-                    ${speed >= 50 ? '<polygon points="30,10 25,20 30,15" fill="#fff"/>' : ''}
-                    ${speed >= 10 ? '<line x1="30" y1="15" x2="40" y2="10" stroke="#fff" stroke-width="2"/>' : ''}
-                    ${speed >= 20 ? '<line x1="30" y1="20" x2="40" y2="15" stroke="#fff" stroke-width="2"/>' : ''}
-                    ${speed >= 30 ? '<line x1="30" y1="25" x2="40" y2="20" stroke="#fff" stroke-width="2"/>' : ''}
-                    ${speed >= 40 ? '<line x1="30" y1="30" x2="40" y2="25" stroke="#fff" stroke-width="2"/>' : ''}
-                    ${speed >= 5 && speed < 10 ? '<line x1="30" y1="15" x2="35" y2="12" stroke="#fff" stroke-width="2"/>' : ''}
-                    <circle cx="30" cy="50" r="3" fill="#fff"/>
-                </svg>
-            `;
-        },
-        
-        async loadSigmets() {
-            try {
-                // AWC SIGMET API
-                const resp = await fetch('https://aviationweather.gov/api/data/isigmet?format=json');
-                if (!resp.ok) return;
-                
-                const data = await resp.json();
-                
-                if (this.sigmetLayer) {
-                    map.removeLayer(this.sigmetLayer);
-                }
-                
-                this.sigmetLayer = L.layerGroup();
-                
-                data.forEach(sigmet => {
-                    if (sigmet.coords && sigmet.coords.length > 2) {
-                        const coords = sigmet.coords.map(c => [c.lat, c.lon]);
-                        
-                        const color = sigmet.hazard === 'TURB' ? '#f97316' :
-                                     sigmet.hazard === 'ICE' ? '#3b82f6' :
-                                     sigmet.hazard === 'CONVECTIVE' ? '#ef4444' : '#888';
-                        
-                        const polygon = L.polygon(coords, {
-                            color: color,
-                            fillColor: color,
-                            fillOpacity: 0.2,
-                            weight: 2
-                        });
-                        
-                        polygon.bindPopup(`
-                            <div class="sigmet-popup">
-                                <strong>${sigmet.hazard || 'SIGMET'}</strong><br>
-                                ${sigmet.qualifier || ''}<br>
-                                FL${sigmet.altLo || '000'} - FL${sigmet.altHi || '999'}
-                            </div>
-                        `);
-                        
-                        this.sigmetLayer.addLayer(polygon);
-                    }
-                });
-                
-                this.sigmetLayer.addTo(map);
-            } catch (e) {
-                console.warn('SIGMET load failed:', e);
-            }
-        },
-        
-        clear() {
-            if (this.windLayer) {
-                map.removeLayer(this.windLayer);
-                this.windLayer = null;
-            }
-            if (this.sigmetLayer) {
-                map.removeLayer(this.sigmetLayer);
-                this.sigmetLayer = null;
-            }
-        }
-    };
+    // Weather overlay (SIGMET/G-AIRMET/CWA/PIREP/wind/radar anim)
+    // now lives in src/modules/36-weather-overlay.js.
+
 
     // ============ PHASE 11: RUNWAY VISUALIZATION ============
     const runwayDisplay = {

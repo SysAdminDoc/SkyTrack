@@ -2,6 +2,111 @@
 
 All notable changes to SkyTrack will be documented in this file.
 
+## [v0.20.0] - 2026-04-17
+
+### Project layout
+- Weather stack split out of `src/app.js`: `35-weather.js` (METAR/TAF per-airport
+  lookup) and `36-weather-overlay.js` (SIGMET / G-AIRMET / CWA / PIREP / wind
+  barbs / animated radar). `app.js` shrinks from ~11000 to ~10600 lines.
+
+### Added
+- **Squawk emergency pulse** (module 93). Triple expanding CSS ring under every
+  aircraft broadcasting 7500 / 7600 / 7700. Own Leaflet layer, colors by
+  squawk (hijack red / radio failure amber / general emergency orange). No
+  modification to the main marker renderer — runs as a polled overlay.
+- **Surveillance-orbit detector** (module 94). Rule-based loiter detection on
+  the selected aircraft's trail: ≥15 min airborne, ≤3 nm bounding radius,
+  cumulative heading sweep ≥720°, min altitude <12,000 ft. Renders a purple
+  **LOITER** chip next to the callsign when all four gates fire. Tuned
+  conservatively so GA pattern work doesn't false-trigger.
+- **NIFC fires + NHC hurricane cones overlay** (module 95). Single toolbar
+  toggle pulls active-fire incidents from NIFC WFIGS GeoJSON
+  (`services3.arcgis.com/.../WFIGS_Incident_Locations_Current`) as acreage-
+  sized orange circles, and current-storm centers from NOAA NHC
+  (`nhc.noaa.gov/CurrentStorms.json`) colored by intensity (hurricane red /
+  TS amber / TD cyan) with dashed forecast tracks. Refreshes every 10 min.
+  Both endpoints are CORS-enabled.
+- **Plane Over My House widget** (module 96). Sticky bottom-right panel
+  listing aircraft passing within a configurable radius (2 / 5 / 10 / 20 /
+  50 nm cycle) of a user-set home coordinate. Uses the existing
+  `aircraftCache` — no extra network traffic. Auto-plays a soft chime when
+  a new closest aircraft enters the radius; click any row to select the
+  aircraft. Home coord + radius + enabled state persist via localStorage.
+  No unsolicited geolocation prompt — user sets home by clicking "Use map
+  center" on the first run.
+
+### Previous
+## [v0.19.0] - 2026-04-17
+
+### Project layout
+- **Modular source tree.** `src/app.js` split into `src/modules/*.js` authored
+  as concatenated chunks, loaded by `build.mjs` in lexicographic order
+  (numeric prefixes control ordering) and inlined into the single deployable
+  `index.html`. Same runtime scope, same `file://` compatibility — just
+  readable. Initial extractions:
+  - `00-config.js` — `CONFIG` + `DATA_URLS`
+  - `10-utils.js` — `_dbg`, `_escHtml`, `errorHandler`, `perfUtils`, pausable
+    interval scaffolding
+  - `20-reliability.js` — connection monitor, offline manager, data-source
+    manager, auto-retry, error recovery, circuit breaker
+  - `30-storage.js` — `skytrackDB` (IndexedDB)
+  - `50-route-lookup.js` — adsbdb + hexdb callsign→route fallback
+  - `90-range-rings.js`, `91-phase-of-flight.js`, `92-country-flag.js` —
+    new feature modules (below)
+- `src/app.js` shrinks from ~11900 to ~11000 lines this round; remaining
+  sections will follow in later bumps. The module banner comment is emitted
+  by `build.mjs` so stack traces stay readable.
+
+### Added
+- **Range rings** (module 90). Dashed concentric circles at 50/100/150/200 nm
+  centered on the user's geolocation (or map center as fallback). Tar1090
+  `SiteCirclesDistances` convention. Toggle from Tools dropdown; persists
+  across sessions via localStorage; no unsolicited geolocation prompt
+  (honours the same prior-permission gate used by the military-alert feature).
+- **Phase-of-flight classifier** (module 91). Pure rule-based labeller
+  (`ground` / `taxi` / `takeoff` / `climb` / `cruise` / `descent` /
+  `approach` / `landing`) from `alt_baro` + `gs` + `baro_rate`. Renders as
+  a colored chip next to the callsign in the info panel and sets `ac.phase`
+  so downstream analytics can key off it.
+- **Country flag badge** (module 92). ICAO 24-bit hex → ISO-2 country code +
+  regional-indicator emoji. Compact in-memory allocation table (~180 rows),
+  memoised `Map` cache. Renders next to the hex code in the info panel.
+  No image assets — just Unicode emoji.
+
+### Previous
+## [v0.18.0] - 2026-04-17
+
+### Added
+- **ADSB.fi as 4th position feed.** Europe-strong Finnish ADS-B network joins
+  ADSB One / ADSB.lol / Airplanes.live in the round-robin. CORS-enabled, so it
+  works without the proxy chain on failover — improves coverage over Scandinavia
+  and the Baltics and gives one more independent source during outages.
+- **adsbdb.com + hexdb.io callsign → route fallback.** When the selected
+  aircraft has a callsign but the bundled routes.csv doesn't know the route,
+  SkyTrack now queries `api.adsbdb.com/v2/callsign/{cs}` (400k+ routes,
+  CORS-enabled) and falls back to `hexdb.io/api/v1/route/icao/{cs}`. Results
+  cached per callsign with 4 h positive / 15 min negative TTL and coalesced
+  with `inflight` map so rapid re-selects don't stampede the APIs. Replaces
+  the previous behaviour of showing `???` for any callsign missing from the
+  static routes DB.
+- **G-AIRMET + CWA polygons in the weather overlay.** In addition to the
+  existing international SIGMETs, the weather overlay now renders:
+  - Graphical AIRMETs from `aviationweather.gov/api/data/gairmet` —
+    color-coded by hazard (turbulence/icing/IFR/mountain obscuration) with
+    forecast altitude band in the popup.
+  - Center Weather Advisories from `/api/data/cwa` — US short-term convective
+    / turbulence / icing cells, rendered at higher opacity than G-AIRMET.
+- **PIREPs (pilot reports) as circle markers.** Viewport-scoped fetch from
+  `/api/data/pirep?bbox=...&age=2` — the endpoint 400s without a bbox, so
+  scope is required. Urgent (UUA) reports render larger and in red; routine
+  reports in cyan. Raw report text shown in popup.
+- **Animated RainViewer radar.** The previous implementation rendered only
+  the single most-recent past frame. The new `radarAnimator` cycles the last
+  10 past frames + all nowcast forecast frames at 700 ms/frame, with nowcast
+  frames at lower opacity so forecasts read as less certain. Re-entering the
+  overlay reloads the frame manifest.
+
+### Previous
 ## [v0.17.0] - 2026-04-16
 
 ### Project layout
