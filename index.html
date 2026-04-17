@@ -1489,6 +1489,195 @@
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
         }
+
+        /* Range-ring labels (module 90-range-rings.js) */
+        .range-ring-label {
+            pointer-events: none;
+        }
+        .range-ring-label span {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: #58a6ff;
+            background: rgba(10, 14, 26, 0.75);
+            padding: 1px 5px;
+            border-radius: 3px;
+            border: 1px solid rgba(88, 166, 255, 0.35);
+            white-space: nowrap;
+        }
+        /* Country-flag badge (module 92-country-flag.js) */
+        .country-flag-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 6px;
+            padding: 1px 5px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.08);
+            font-size: 11px;
+            line-height: 1.4;
+        }
+        .country-flag-badge .flag-emoji {
+            font-size: 13px;
+        }
+        .country-flag-badge .flag-code {
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        /* Emergency squawk pulse (module 93-emergency-pulse.js) */
+        .sq-pulse-icon {
+            background: transparent !important;
+            border: 0 !important;
+            pointer-events: none;
+        }
+        .sq-pulse {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        .sq-pulse .sq-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border-radius: 50%;
+            border: 2px solid var(--sq-color, #ef4444);
+            opacity: 0;
+            transform: scale(0.6);
+            animation: sqpulse 1.8s ease-out infinite;
+            pointer-events: none;
+        }
+        .sq-pulse .sq-ring:nth-child(2) { animation-delay: 0.6s; }
+        .sq-pulse .sq-ring:nth-child(3) { animation-delay: 1.2s; }
+        @keyframes sqpulse {
+            0%   { transform: scale(0.6); opacity: 0.85; }
+            70%  { transform: scale(3.5); opacity: 0.05; }
+            100% { transform: scale(3.8); opacity: 0; }
+        }
+        /* Phase-of-flight chip (module 91-phase-of-flight.js) */
+        .phase-chip {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: #0a0e1a;
+            margin-left: 6px;
+        }
+        .phase-chip.phase-ground   { background: #9ca3af; }
+        .phase-chip.phase-taxi     { background: #facc15; }
+        .phase-chip.phase-takeoff  { background: #f97316; color: #fff; }
+        .phase-chip.phase-climb    { background: #22c55e; color: #fff; }
+        .phase-chip.phase-cruise   { background: #3b82f6; color: #fff; }
+        .phase-chip.phase-descent  { background: #8b5cf6; color: #fff; }
+        .phase-chip.phase-approach { background: #ec4899; color: #fff; }
+        .phase-chip.phase-landing  { background: #ef4444; color: #fff; }
+        /* Plane-over-my-house widget (module 96-plane-over-my-house.js) */
+        .home-widget {
+            position: fixed;
+            bottom: 14px;
+            right: 14px;
+            z-index: 900;
+            width: 280px;
+            background: rgba(10, 14, 26, 0.92);
+            color: #e2e8f0;
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 12px;
+            line-height: 1.4;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+        }
+        @media (max-width: 768px) {
+            .home-widget { width: calc(100vw - 28px); right: 14px; bottom: 60px; }
+        }
+        .home-widget-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .home-widget-title {
+            flex: 1;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .home-widget-btn {
+            background: rgba(255,255,255,0.08);
+            color: #cbd5e1;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font: inherit;
+            cursor: pointer;
+        }
+        .home-widget-btn:hover { background: rgba(88, 166, 255, 0.2); color: #fff; }
+        .home-widget-btn.primary {
+            background: #2563eb;
+            color: #fff;
+            border-color: #1e40af;
+        }
+        .home-widget-btn.primary:hover { background: #3b82f6; }
+        .home-widget-x {
+            background: transparent;
+            color: rgba(255,255,255,0.7);
+            border: 0;
+            font-size: 18px;
+            line-height: 1;
+            padding: 0 4px;
+            cursor: pointer;
+        }
+        .home-widget-x:hover { color: #fff; }
+        .home-widget-sub {
+            font-size: 10px;
+            color: rgba(226, 232, 240, 0.65);
+            margin-top: 4px;
+        }
+        .home-widget-rows { margin-top: 6px; }
+        .home-widget-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 4px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+        .home-widget-row:hover { background: rgba(88, 166, 255, 0.1); }
+        .home-widget-row .hw-callsign { flex: 1; font-weight: 600; color: #e2e8f0; }
+        .home-widget-row .hw-type     { color: #94a3b8; font-size: 10px; }
+        .home-widget-row .hw-alt      { color: #cbd5e1; font-variant-numeric: tabular-nums; }
+        .home-widget-row .hw-dist     { color: #58a6ff; font-variant-numeric: tabular-nums; width: 56px; text-align: right; }
+        .home-widget-empty-row {
+            font-size: 11px;
+            color: rgba(226, 232, 240, 0.55);
+            padding: 8px 4px;
+            text-align: center;
+        }
+        .home-widget-empty p { margin: 6px 0; color: rgba(226, 232, 240, 0.75); }
+
+        /* Loiter / surveillance-orbit chip (module 94-surveillance-orbit.js) */
+        .loiter-chip {
+            display: inline-block;
+            padding: 1px 6px;
+            margin-left: 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: #fff;
+            background: #8b5cf6;
+            box-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
+            cursor: help;
+        }
     </style>
     <script>
 // Inline PWA manifest for single-file deployment
@@ -1535,7 +1724,7 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
         try {
             const swCode = `
-                const CACHE_NAME = 'skytrack-v0.17.0';
+                const CACHE_NAME = 'skytrack-v0.20.0';
                 const STATIC_ASSETS = [
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
@@ -1697,7 +1886,7 @@ if ('serviceWorker' in navigator) {
     <div class="loading-overlay" id="loading">
         <div class="loading-logo">
             <img src="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-128x128.png" alt="SkyTrack">
-            <span>SkyTrack<span class="version">v0.17.0</span></span>
+            <span>SkyTrack<span class="version">v0.20.0</span></span>
         </div>
         <div class="spinner"></div>
         <div class="loading-status" id="loadingStatus">Initializing...</div>
@@ -1758,6 +1947,9 @@ if ('serviceWorker' in navigator) {
             <div class="hv2-panel">
                 <div class="hv2-panel-title">Tools</div>
                 <div class="hv2-item" data-btn="measureBtn"><div class="hv2-item-icon"><button class="header-btn" id="measureBtn" title="Measure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21L21 3M3 21h7v-7M21 3h-7v7"/></svg></button></div><div class="hv2-item-label">Measure Distance</div></div>
+                <div class="hv2-item" data-btn="rangeRingsBtn"><div class="hv2-item-icon"><button class="header-btn" id="rangeRingsBtn" title="Range Rings" aria-label="Toggle Range Rings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="11" stroke-dasharray="3 3"/></svg></button></div><div class="hv2-item-label">Range Rings</div></div>
+                <div class="hv2-item" data-btn="firesBtn"><div class="hv2-item-icon"><button class="header-btn" id="firesBtn" title="Fires &amp; Hurricanes" aria-label="Toggle Fires and Hurricanes Overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c1 4 4 5 4 9a4 4 0 01-8 0c0-2 1-3 2-4.5C11 4 12 3 12 2z"/><circle cx="12" cy="17" r="2"/></svg></button></div><div class="hv2-item-label">Fires &amp; Hurricanes</div></div>
+                <div class="hv2-item" data-btn="homeWidgetBtn"><div class="hv2-item-icon"><button class="header-btn" id="homeWidgetBtn" title="Plane Over My House" aria-label="Toggle Plane Over My House Widget"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></button></div><div class="hv2-item-label">Over My House</div></div>
                 <div class="hv2-item" data-btn="followBtn"><div class="hv2-item-icon"><button class="header-btn" id="followBtn" title="Follow" aria-label="Follow Aircraft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><path d="M12 8v8M8 12h8" stroke-dasharray="2 2"/></svg></button></div><div class="hv2-item-label">Follow Aircraft</div></div>
                 <div class="hv2-item" data-btn="multiSelectBtn"><div class="hv2-item-icon"><button class="header-btn" id="multiSelectBtn" title="Multi-Select" aria-label="Multi-Select Mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button></div><div class="hv2-item-label">Multi-Select</div></div>
                 <div class="hv2-item" data-btn="geofenceBtn"><div class="hv2-item-icon"><button class="header-btn" id="geofenceBtn" title="Geofence"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><circle cx="12" cy="12" r="3"/></svg></button></div><div class="hv2-item-label">Geofencing</div></div>
@@ -2535,6 +2727,7 @@ if ('serviceWorker' in navigator) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script>
+    // ─── module: modules/00-config.js ───────────────────────────────────────────
 
     // ============================================================
     // SKYTRACK - Full Featured Aviation Intelligence Platform
@@ -2579,7 +2772,7 @@ if ('serviceWorker' in navigator) {
             primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/aircraft/ranges.json',
             fallback: 'https://raw.githubusercontent.com/wiedehopf/tar1090-db/master/ranges.json'
         },
-        
+
         // Interesting Aircraft (plane-alert-db)
         interesting: {
             primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/aircraft/interesting.csv',
@@ -2601,7 +2794,7 @@ if ('serviceWorker' in navigator) {
             primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/images/plane_images.csv',
             fallback: 'https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/main/plane_images.csv'
         },
-        
+
         // Military/Government (plane-alert-db)
         military: {
             primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/military/plane-alert-mil.csv',
@@ -2635,7 +2828,7 @@ if ('serviceWorker' in navigator) {
             primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/images/plane-alert-civ-images.csv',
             fallback: 'https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/main/plane-alert-civ-images.csv'
         },
-        
+
         // Airlines
         airlines: {
             primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/airlines/airlines.csv',
@@ -2649,7 +2842,7 @@ if ('serviceWorker' in navigator) {
             primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/airlines/callsign-prefix.json',
             fallback: null
         },
-        
+
         // Airports
         airports: {
             primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/airports/airports.csv',
@@ -2671,19 +2864,20 @@ if ('serviceWorker' in navigator) {
             primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/airports/countries.csv',
             fallback: 'https://davidmegginson.github.io/ourairports-data/countries.csv'
         },
-        
+
         // Routes
         routes: {
             primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/routes/routes.csv',
             fallback: 'https://raw.githubusercontent.com/jpatokal/openflights/master/data/routes.dat'
         },
-        
+
         // Images (self-hosted)
         aircraftPhotos: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/aircraft_photos/',
         airlineLogos: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/airlines/',
         silhouettes: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/silhouettes/',
         flags: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/flags/'
     };
+    // ─── module: modules/10-utils.js ───────────────────────────────────────────
 
     // ============ DEBUG LOGGING ============
     // Guarded debug logger. Only emits when ?debug is present. Failing silently if
@@ -2715,7 +2909,7 @@ if ('serviceWorker' in navigator) {
     const errorHandler = {
         errors: [],
         maxErrors: 50,
-        
+
         log(context, error, severity = 'warn') {
             const entry = {
                 time: Date.now(),
@@ -2723,26 +2917,26 @@ if ('serviceWorker' in navigator) {
                 message: error?.message || String(error),
                 severity
             };
-            
+
             this.errors.unshift(entry);
             if (this.errors.length > this.maxErrors) {
                 this.errors.pop();
             }
-            
+
             if (severity === 'error') {
                 console.error(`[SkyTrack ${context}]`, error);
             } else {
                 console.warn(`[SkyTrack ${context}]`, error);
             }
-            
+
             // Update error indicator if visible
             this.updateIndicator();
         },
-        
+
         updateIndicator() {
             const indicator = document.getElementById('errorIndicator');
             const recentErrors = this.errors.filter(e => Date.now() - e.time < 60000);
-            
+
             if (indicator) {
                 if (recentErrors.length > 0) {
                     indicator.style.display = 'flex';
@@ -2753,16 +2947,16 @@ if ('serviceWorker' in navigator) {
                 }
             }
         },
-        
+
         getRecent(count = 10) {
             return this.errors.slice(0, count);
         },
-        
+
         clear() {
             this.errors = [];
             this.updateIndicator();
         },
-        
+
         // Wrapper for async operations with retry
         async withRetry(fn, context, maxRetries = 3, delay = 1000) {
             let lastError;
@@ -2780,12 +2974,12 @@ if ('serviceWorker' in navigator) {
             this.log(context, `All ${maxRetries} attempts failed`, 'error');
             throw lastError;
         },
-        
+
         // Wrapper for fetch with timeout
         async fetchWithTimeout(url, options = {}, timeout = 10000) {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), timeout);
-            
+
             try {
                 const response = await fetch(url, {
                     ...options,
@@ -2816,7 +3010,7 @@ if ('serviceWorker' in navigator) {
                 }
             };
         },
-        
+
         // Debounce function - delays execution until after wait period
         debounce(func, wait) {
             let timeout;
@@ -2825,7 +3019,7 @@ if ('serviceWorker' in navigator) {
                 timeout = setTimeout(() => func.apply(this, args), wait);
             };
         },
-        
+
         // Request animation frame throttle
         rafThrottle(func) {
             let ticking = false;
@@ -2839,7 +3033,7 @@ if ('serviceWorker' in navigator) {
                 }
             };
         },
-        
+
         // Check if tab is visible
         isTabVisible() {
             return document.visibilityState === 'visible';
@@ -2884,6 +3078,7 @@ if ('serviceWorker' in navigator) {
             _pauseAllIntervals();
         }
     });
+    // ─── module: modules/20-reliability.js ───────────────────────────────────────────
 
     // ============ CONNECTION MONITORING ============
     const connectionMonitor = {
@@ -3135,7 +3330,8 @@ if ('serviceWorker' in navigator) {
     const dataSourceManager = {
         sources: [
             { key: 'adsbone', name: 'ADSB One', buildUrl: (c, r) => 'https://api.adsb.one/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 1, cors: false },
-            { key: 'adsblol', name: 'ADSB.lol', buildUrl: (c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 2, cors: false }
+            { key: 'adsblol', name: 'ADSB.lol', buildUrl: (c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 2, cors: false },
+            { key: 'adsbfi', name: 'ADSB.fi', buildUrl: (c, r) => 'https://opendata.adsb.fi/api/v2/lat/' + c.lat.toFixed(4) + '/lon/' + c.lng.toFixed(4) + '/dist/' + r, parseResponse: d => d?.ac?.length ? d.ac : null, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 3, cors: true }
         ],
         
         currentSource: null,
@@ -3515,6 +3711,7 @@ if ('serviceWorker' in navigator) {
 
     // Reset error counts periodically
     setInterval(() => errorRecovery.resetCounts(), 300000);
+    // ─── module: modules/30-storage.js ───────────────────────────────────────────
 
     // ============ INDEXEDDB STORAGE ============
     const skytrackDB = {
@@ -3673,6 +3870,1655 @@ if ('serviceWorker' in navigator) {
             });
         }
     };
+    // ─── module: modules/35-weather.js ───────────────────────────────────────────
+
+    // ============ WEATHER SYSTEM ============
+    const weatherSystem = {
+        cache: new Map(),
+        cacheExpiry: 600000, // 10 minutes
+        
+        async getMETAR(icao) {
+            if (!icao || icao.length !== 4) return null;
+            
+            // Check cache
+            const cached = this.cache.get(icao);
+            if (cached && Date.now() - cached.timestamp < this.cacheExpiry) {
+                return cached.data;
+            }
+            
+            try {
+                const url = `https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`;
+                const resp = await errorHandler.fetchWithTimeout(url, {}, 8000);
+                
+                if (!resp.ok) {
+                    throw new Error(`HTTP ${resp.status}`);
+                }
+                
+                const data = await resp.json();
+                if (!data || data.length === 0) {
+                    // No data available, cache empty result to prevent repeated requests
+                    this.cache.set(icao, { data: null, timestamp: Date.now() });
+                    return null;
+                }
+                
+                const metar = this.parseMETAR(data[0]);
+                this.cache.set(icao, { data: metar, timestamp: Date.now() });
+                return metar;
+                
+            } catch (e) {
+                errorHandler.log('Weather', `METAR fetch failed for ${icao}: ${e.message}`);
+                // Return cached data if available (even if expired)
+                if (cached) {
+                    return cached.data;
+                }
+                return null;
+            }
+        },
+        
+        parseMETAR(raw) {
+            if (!raw) return null;
+            
+            return {
+                raw: raw.rawOb || raw.raw || '',
+                station: raw.icaoId || '',
+                time: raw.obsTime || raw.reportTime || '',
+                temp: raw.temp !== undefined ? raw.temp : null,
+                dewpoint: raw.dewp !== undefined ? raw.dewp : null,
+                humidity: this.calcHumidity(raw.temp, raw.dewp),
+                wind: {
+                    direction: raw.wdir || null,
+                    speed: raw.wspd || null,
+                    gust: raw.wgst || null,
+                    variable: raw.wdir === 'VRB'
+                },
+                visibility: raw.visib || null,
+                altimeter: raw.altim || null,
+                clouds: raw.clouds || [],
+                weather: raw.wxString || '',
+                flightCategory: raw.fltcat || this.getFlightCategory(raw),
+                ceiling: this.getCeiling(raw.clouds)
+            };
+        },
+        
+        calcHumidity(temp, dewpoint) {
+            if (temp === null || dewpoint === null) return null;
+            // Magnus formula approximation
+            const h = 100 * Math.pow((112 - (0.1 * temp) + dewpoint) / (112 + (0.9 * temp)), 8);
+            return Math.round(Math.min(100, Math.max(0, h)));
+        },
+        
+        getCeiling(clouds) {
+            if (!clouds || !Array.isArray(clouds)) return null;
+            for (const layer of clouds) {
+                if (['BKN', 'OVC', 'VV'].includes(layer.cover)) {
+                    return layer.base;
+                }
+            }
+            return null;
+        },
+        
+        getFlightCategory(data) {
+            const vis = data.visib;
+            const ceil = this.getCeiling(data.clouds);
+            
+            if (vis === null && ceil === null) return 'UNKN';
+            
+            // LIFR: Ceiling < 500ft or Visibility < 1mi
+            if ((ceil !== null && ceil < 500) || (vis !== null && vis < 1)) return 'LIFR';
+            // IFR: Ceiling 500-999ft or Visibility 1-3mi
+            if ((ceil !== null && ceil < 1000) || (vis !== null && vis < 3)) return 'IFR';
+            // MVFR: Ceiling 1000-3000ft or Visibility 3-5mi
+            if ((ceil !== null && ceil < 3000) || (vis !== null && vis <= 5)) return 'MVFR';
+            // VFR: Ceiling > 3000ft and Visibility > 5mi
+            return 'VFR';
+        },
+        
+        getFlightCategoryColor(cat) {
+            switch (cat) {
+                case 'VFR': return '#22c55e';
+                case 'MVFR': return '#3b82f6';
+                case 'IFR': return '#ef4444';
+                case 'LIFR': return '#a855f7';
+                default: return '#6b7280';
+            }
+        },
+        
+        formatWind(wind) {
+            if (!wind || (!wind.direction && !wind.speed)) return 'Calm';
+            
+            let str = '';
+            if (wind.variable) {
+                str = 'Variable';
+            } else if (wind.direction) {
+                str = wind.direction + ' deg';
+            }
+            
+            if (wind.speed) {
+                str += ' at ' + wind.speed + ' kt';
+                if (wind.gust) {
+                    str += ' (gusts ' + wind.gust + ')';
+                }
+            }
+            
+            return str || 'Unknown';
+        },
+        
+        formatClouds(clouds) {
+            if (!clouds || clouds.length === 0) return 'Clear';
+            
+            const coverMap = { 'SKC': 'Clear', 'CLR': 'Clear', 'FEW': 'Few', 'SCT': 'Scattered', 'BKN': 'Broken', 'OVC': 'Overcast', 'VV': 'Vert Vis' };
+            return clouds.map(c => (coverMap[c.cover] || c.cover) + ' at ' + (c.base ? c.base.toLocaleString() : '?') + ' ft').join(', ');
+        }
+    };
+    // ─── module: modules/36-weather-overlay.js ───────────────────────────────────────────
+
+    // ============ PHASE 11: WEATHER OVERLAY ============
+    const weatherOverlay = {
+        windLayer: null,
+        sigmetLayer: null,
+        enabled: false,
+        windData: null,
+        
+        async toggle() {
+            this.enabled = !this.enabled;
+            document.getElementById('weatherOverlayBtn')?.classList.toggle('active', this.enabled);
+            
+            if (this.enabled) {
+                await this.load();
+            } else {
+                this.clear();
+            }
+        },
+        
+        async load() {
+            toast('Loading weather data...');
+            
+            try {
+                // Load wind data from Open-Meteo
+                await this.loadWindData();
+                this.drawWindBarbs();
+                
+                // Load SIGMETs / G-AIRMETs / CWAs (combined hazards layer)
+                await this.loadSigmets();
+                // Load PIREPs (pilot reports) scoped to the current viewport
+                await this.loadPireps();
+
+                toast('Weather overlay loaded');
+            } catch (e) {
+                errorHandler.log('Weather Overlay', e.message);
+                toast('Weather data unavailable');
+            }
+        },
+        
+        async loadWindData() {
+            const bounds = map.getBounds();
+            const center = map.getCenter();
+            
+            // Open-Meteo API for wind data
+            const url = `https://api.open-meteo.com/v1/forecast?` +
+                `latitude=${center.lat}&longitude=${center.lng}` +
+                `&current=wind_speed_10m,wind_direction_10m` +
+                `&hourly=wind_speed_180hPa,wind_direction_180hPa` +
+                `&forecast_days=1`;
+            
+            try {
+                const resp = await fetch(url);
+                const data = await resp.json();
+                
+                this.windData = {
+                    surface: {
+                        speed: data.current?.wind_speed_10m || 0,
+                        direction: data.current?.wind_direction_10m || 0
+                    },
+                    upper: {
+                        speed: data.hourly?.wind_speed_180hPa?.[0] || 0,
+                        direction: data.hourly?.wind_direction_180hPa?.[0] || 0
+                    }
+                };
+            } catch (e) {
+                console.warn('Wind data fetch failed:', e);
+            }
+        },
+        
+        drawWindBarbs() {
+            if (this.windLayer) {
+                map.removeLayer(this.windLayer);
+            }
+            
+            if (!this.windData) return;
+            
+            const center = map.getCenter();
+            const wind = map.getZoom() > 8 ? this.windData.surface : this.windData.upper;
+            const altLabel = map.getZoom() > 8 ? 'Surface' : 'FL400';
+            
+            // Convert m/s to knots
+            const speedKt = Math.round(wind.speed * 1.944);
+            const direction = Math.round(wind.direction);
+            
+            const barbHtml = this.createWindBarbSVG(speedKt, direction);
+            
+            this.windLayer = L.marker(center, {
+                icon: L.divIcon({
+                    className: 'wind-barb',
+                    html: barbHtml,
+                    iconSize: [60, 60],
+                    iconAnchor: [30, 30]
+                })
+            }).addTo(map);
+            
+            this.windLayer.bindTooltip(
+                `${altLabel} Wind: ${speedKt} kt from ${direction}deg`,
+                { direction: 'top' }
+            );
+        },
+        
+        createWindBarbSVG(speedKt, direction) {
+            const speed = speedKt;
+            
+            return `
+                <svg viewBox="0 0 60 60" style="transform: rotate(${direction}deg)">
+                    <line x1="30" y1="50" x2="30" y2="10" stroke="#fff" stroke-width="2"/>
+                    ${speed >= 50 ? '<polygon points="30,10 25,20 30,15" fill="#fff"/>' : ''}
+                    ${speed >= 10 ? '<line x1="30" y1="15" x2="40" y2="10" stroke="#fff" stroke-width="2"/>' : ''}
+                    ${speed >= 20 ? '<line x1="30" y1="20" x2="40" y2="15" stroke="#fff" stroke-width="2"/>' : ''}
+                    ${speed >= 30 ? '<line x1="30" y1="25" x2="40" y2="20" stroke="#fff" stroke-width="2"/>' : ''}
+                    ${speed >= 40 ? '<line x1="30" y1="30" x2="40" y2="25" stroke="#fff" stroke-width="2"/>' : ''}
+                    ${speed >= 5 && speed < 10 ? '<line x1="30" y1="15" x2="35" y2="12" stroke="#fff" stroke-width="2"/>' : ''}
+                    <circle cx="30" cy="50" r="3" fill="#fff"/>
+                </svg>
+            `;
+        },
+        
+        async loadSigmets() {
+            // Build a single combined hazards layer with SIGMETs, G-AIRMETs,
+            // and CWAs (Center Weather Advisories). AWC serves all three as
+            // polygon JSON, CORS-enabled.
+            if (this.sigmetLayer) {
+                map.removeLayer(this.sigmetLayer);
+            }
+            this.sigmetLayer = L.layerGroup();
+
+            const addPolygon = (coords, color, label, fill = 0.2) => {
+                if (!Array.isArray(coords) || coords.length < 3) return;
+                const poly = L.polygon(coords, {
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: fill,
+                    weight: 2
+                });
+                poly.bindPopup('<div class="sigmet-popup">' + label + '</div>');
+                this.sigmetLayer.addLayer(poly);
+            };
+
+            // 1. International SIGMETs — existing behaviour, preserved.
+            try {
+                const resp = await fetch('https://aviationweather.gov/api/data/isigmet?format=json');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    for (const s of (Array.isArray(data) ? data : [])) {
+                        if (!s?.coords || s.coords.length < 3) continue;
+                        const coords = s.coords.map(c => [c.lat, c.lon]);
+                        const color = s.hazard === 'TURB' ? '#f97316' :
+                                     s.hazard === 'ICE' ? '#3b82f6' :
+                                     s.hazard === 'CONVECTIVE' ? '#ef4444' : '#888';
+                        const label = '<strong>' + _escHtml(s.hazard || 'SIGMET') + '</strong><br>' +
+                            _escHtml(s.qualifier || '') + '<br>FL' + _escHtml(s.altLo || '000') +
+                            ' - FL' + _escHtml(s.altHi || '999');
+                        addPolygon(coords, color, label);
+                    }
+                }
+            } catch (e) {
+                errorHandler?.log('SIGMET', e?.message || e);
+            }
+
+            // 2. Graphical AIRMETs — lower-severity turbulence / icing / IFR
+            // guidance. Payload uses `latlonpairs`: array of coord rings each
+            // "lat1,lon1,lat2,lon2,...".
+            try {
+                const resp = await fetch('https://aviationweather.gov/api/data/gairmet?format=json');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    for (const g of (Array.isArray(data) ? data : [])) {
+                        const rings = Array.isArray(g?.latlonpairs) ? g.latlonpairs : [];
+                        const haz = (g?.hazard || '').toUpperCase();
+                        const color = haz.includes('TURB') ? '#fbbf24' :
+                                     haz.includes('ICE')  ? '#60a5fa' :
+                                     haz.includes('IFR')  ? '#a855f7' :
+                                     haz.includes('MTN')  ? '#a16207' : '#9ca3af';
+                        const label = '<strong>G-AIRMET: ' + _escHtml(g?.hazard || 'Advisory') + '</strong><br>' +
+                            _escHtml(g?.forecast || '') +
+                            (g?.fcstFromFLB ? '<br>Base FL' + _escHtml(g.fcstFromFLB) : '') +
+                            (g?.fcstToFLT ? ' Top FL' + _escHtml(g.fcstToFLT) : '');
+                        for (const ring of rings) {
+                            if (typeof ring !== 'string') continue;
+                            const nums = ring.split(',').map(Number).filter(Number.isFinite);
+                            const coords = [];
+                            for (let i = 0; i + 1 < nums.length; i += 2) {
+                                coords.push([nums[i], nums[i + 1]]);
+                            }
+                            addPolygon(coords, color, label, 0.15);
+                        }
+                    }
+                }
+            } catch (e) {
+                errorHandler?.log('G-AIRMET', e?.message || e);
+            }
+
+            // 3. Center Weather Advisories (US convective/turbulence short-term).
+            try {
+                const resp = await fetch('https://aviationweather.gov/api/data/cwa?format=json');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    for (const c of (Array.isArray(data) ? data : [])) {
+                        const coords = Array.isArray(c?.coords)
+                            ? c.coords.map(p => [p.lat, p.lon])
+                            : null;
+                        if (!coords) continue;
+                        const haz = (c?.hazard || c?.phenomenon || '').toUpperCase();
+                        const color = haz.includes('TURB') ? '#f59e0b' :
+                                     haz.includes('ICE')  ? '#38bdf8' :
+                                     haz.includes('TS')   ? '#ef4444' :
+                                     haz.includes('CONV') ? '#dc2626' : '#a3a3a3';
+                        const label = '<strong>CWA: ' + _escHtml(c?.cwsu || '') + ' ' +
+                            _escHtml(c?.hazard || c?.phenomenon || '') + '</strong><br>' +
+                            _escHtml(c?.remarks || c?.text || '');
+                        addPolygon(coords, color, label, 0.25);
+                    }
+                }
+            } catch (e) {
+                errorHandler?.log('CWA', e?.message || e);
+            }
+
+            if (this.sigmetLayer.getLayers().length > 0) {
+                this.sigmetLayer.addTo(map);
+            }
+        },
+
+        async loadPireps() {
+            // PIREPs (pilot reports) — scoped to the viewport because the
+            // endpoint 400s without a bbox. Refreshed whenever the overlay is
+            // toggled or the map pans far.
+            if (this.pirepLayer) {
+                map.removeLayer(this.pirepLayer);
+                this.pirepLayer = null;
+            }
+            try {
+                const b = map.getBounds();
+                const bbox = [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()]
+                    .map(n => n.toFixed(2)).join(',');
+                const resp = await fetch(
+                    'https://aviationweather.gov/api/data/pirep?format=json&bbox=' + bbox + '&age=2'
+                );
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (!Array.isArray(data) || data.length === 0) return;
+                this.pirepLayer = L.layerGroup();
+                for (const p of data) {
+                    const lat = Number(p?.lat);
+                    const lon = Number(p?.lon);
+                    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+                    const isUrgent = (p?.urgent || '').toString().toUpperCase() === 'Y' ||
+                        (p?.rawOb || '').includes('UUA');
+                    const color = isUrgent ? '#ef4444' : '#22d3ee';
+                    const marker = L.circleMarker([lat, lon], {
+                        radius: isUrgent ? 7 : 5,
+                        fillColor: color,
+                        fillOpacity: 0.85,
+                        color: '#111',
+                        weight: 1
+                    });
+                    marker.bindPopup(
+                        '<div class="sigmet-popup"><strong>PIREP' +
+                        (isUrgent ? ' (URGENT)' : '') + '</strong><br>' +
+                        _escHtml(p?.rawOb || p?.raw || 'No report text') +
+                        (p?.fltlvl ? '<br>FL' + _escHtml(p.fltlvl) : '') +
+                        (p?.acType ? '<br>Aircraft: ' + _escHtml(p.acType) : '') +
+                        '</div>'
+                    );
+                    this.pirepLayer.addLayer(marker);
+                }
+                if (this.pirepLayer.getLayers().length > 0) {
+                    this.pirepLayer.addTo(map);
+                }
+            } catch (e) {
+                errorHandler?.log('PIREP', e?.message || e);
+            }
+        },
+
+        clear() {
+            if (this.windLayer) {
+                map.removeLayer(this.windLayer);
+                this.windLayer = null;
+            }
+            if (this.sigmetLayer) {
+                map.removeLayer(this.sigmetLayer);
+                this.sigmetLayer = null;
+            }
+            if (this.pirepLayer) {
+                map.removeLayer(this.pirepLayer);
+                this.pirepLayer = null;
+            }
+        }
+    };
+    // ─── module: modules/50-route-lookup.js ───────────────────────────────────────────
+
+    // ============ ROUTE API LOOKUP (adsbdb + hexdb fallback) ============
+    // When the static routes.csv / tar1090-db doesn't know a callsign,
+    // fall back to adsbdb.com then hexdb.io, which together cover ~400k routes.
+    // Both are CORS-enabled and rate-limit tolerant for on-demand calls.
+    const routeApiLookup = {
+        cache: new Map(),      // callsign -> { from, to, ts } | null
+        negativeTtl: 900000,   // 15 min for misses
+        positiveTtl: 14400000, // 4 h for hits
+        inflight: new Map(),   // callsign -> Promise
+
+        _key(callsign) {
+            return (callsign || '').toString().trim().toUpperCase();
+        },
+
+        async get(callsign) {
+            const key = this._key(callsign);
+            if (!key || !/^[A-Z0-9]{3,8}$/.test(key)) return null;
+            const hit = this.cache.get(key);
+            if (hit !== undefined) {
+                const ttl = hit ? this.positiveTtl : this.negativeTtl;
+                if (Date.now() - (hit?.ts || 0) < ttl) return hit || null;
+            }
+            if (this.inflight.has(key)) return this.inflight.get(key);
+            const p = this._fetch(key);
+            this.inflight.set(key, p);
+            try {
+                return await p;
+            } finally {
+                this.inflight.delete(key);
+            }
+        },
+
+        async _fetch(key) {
+            // Try adsbdb first — returns full origin/midpoint/destination.
+            try {
+                const resp = await fetch('https://api.adsbdb.com/v2/callsign/' + encodeURIComponent(key), {
+                    signal: AbortSignal.timeout(6000)
+                });
+                if (resp.ok) {
+                    const json = await resp.json();
+                    const fr = json?.response?.flightroute;
+                    if (fr?.origin?.icao_code && fr?.destination?.icao_code) {
+                        const rec = { from: fr.origin.icao_code, to: fr.destination.icao_code, ts: Date.now(), source: 'adsbdb' };
+                        this.cache.set(key, rec);
+                        return rec;
+                    }
+                }
+            } catch (_) { /* fall through */ }
+            // hexdb fallback.
+            try {
+                const resp = await fetch('https://hexdb.io/api/v1/route/icao/' + encodeURIComponent(key), {
+                    signal: AbortSignal.timeout(6000)
+                });
+                if (resp.ok) {
+                    const text = (await resp.text()).trim();
+                    // hexdb returns "KORD-KLAX" or "unknown"; guard against both.
+                    if (text && text !== 'unknown' && text.includes('-')) {
+                        const [from, to] = text.split('-').map(s => s.trim().toUpperCase());
+                        if (/^[A-Z0-9]{3,4}$/.test(from) && /^[A-Z0-9]{3,4}$/.test(to)) {
+                            const rec = { from, to, ts: Date.now(), source: 'hexdb' };
+                            this.cache.set(key, rec);
+                            return rec;
+                        }
+                    }
+                }
+            } catch (_) { /* fall through */ }
+            // Cache miss so we don't hammer the APIs on every redraw.
+            this.cache.set(key, { ts: Date.now(), from: null, to: null, miss: true });
+            return null;
+        }
+    };
+    // ─── module: modules/90-range-rings.js ───────────────────────────────────────────
+
+    // ============ RANGE RINGS (v0.19.0) ============
+    // Concentric dashed circles centered on the user's geolocation at
+    // 50 / 100 / 150 / 200 nm. Standard ADS-B frontend convention (tar1090
+    // SiteCirclesDistances). Self-contained: listens for skytrack:map-ready,
+    // reads persistence from localStorage, exposes `rangeRings` at script
+    // scope for the UI handler to toggle.
+    const rangeRings = {
+        map: null,
+        layer: null,
+        enabled: false,
+        center: null,                     // { lat, lon }
+        distancesNm: [50, 100, 150, 200], // standard ring distances in nautical miles
+        color: '#58a6ff',
+
+        init(map) {
+            this.map = map;
+            try {
+                const saved = localStorage.getItem('skytrack_range_rings');
+                if (saved) {
+                    const obj = JSON.parse(saved);
+                    if (obj && typeof obj === 'object') {
+                        if (Array.isArray(obj.distancesNm)) {
+                            this.distancesNm = obj.distancesNm.filter(d => Number.isFinite(d) && d > 0 && d <= 500).slice(0, 8);
+                        }
+                        if (obj.center && Number.isFinite(obj.center.lat) && Number.isFinite(obj.center.lon)) {
+                            this.center = obj.center;
+                        }
+                        if (obj.enabled === true) this.enable();
+                    }
+                }
+            } catch (_) { /* corrupt localStorage — ignore */ }
+        },
+
+        save() {
+            try {
+                localStorage.setItem('skytrack_range_rings', JSON.stringify({
+                    enabled: this.enabled,
+                    distancesNm: this.distancesNm,
+                    center: this.center
+                }));
+            } catch (_) { /* quota — ignore */ }
+        },
+
+        async resolveCenter() {
+            if (this.center) return this.center;
+            if (!navigator.geolocation) return null;
+            // Require prior permission — don't prompt on every ring toggle.
+            try {
+                if (navigator.permissions?.query) {
+                    const res = await navigator.permissions.query({ name: 'geolocation' });
+                    if (res.state !== 'granted') return null;
+                }
+            } catch (_) { /* fall through */ }
+            return new Promise(resolve => {
+                navigator.geolocation.getCurrentPosition(
+                    pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+                    () => resolve(null),
+                    { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+                );
+            });
+        },
+
+        async enable() {
+            if (!this.map) return false;
+            if (!this.center) {
+                this.center = await this.resolveCenter();
+                if (!this.center) {
+                    this.enabled = false;
+                    this.save();
+                    return false;
+                }
+            }
+            this.enabled = true;
+            this._draw();
+            this.save();
+            return true;
+        },
+
+        disable() {
+            this.enabled = false;
+            if (this.layer) {
+                try { this.map?.removeLayer(this.layer); } catch (_) {}
+                this.layer = null;
+            }
+            this.save();
+        },
+
+        async toggle() {
+            if (this.enabled) { this.disable(); return false; }
+            return await this.enable();
+        },
+
+        setCenter(lat, lon) {
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+            this.center = { lat, lon };
+            if (this.enabled) this._draw();
+            this.save();
+        },
+
+        useMapCenter() {
+            if (!this.map) return;
+            const c = this.map.getCenter();
+            this.setCenter(c.lat, c.lng);
+        },
+
+        _draw() {
+            if (!this.map || !this.center) return;
+            if (this.layer) {
+                try { this.map.removeLayer(this.layer); } catch (_) {}
+            }
+            this.layer = L.layerGroup();
+            const NM_TO_M = 1852;
+            const { lat, lon } = this.center;
+            // Concentric rings, dashed, each labeled at the NE bearing.
+            for (const nm of this.distancesNm) {
+                const circle = L.circle([lat, lon], {
+                    radius: nm * NM_TO_M,
+                    color: this.color,
+                    weight: 1,
+                    opacity: 0.7,
+                    fillOpacity: 0,
+                    dashArray: '6 6',
+                    interactive: false
+                });
+                this.layer.addLayer(circle);
+                // Label at 45° bearing
+                const R = 6371000;
+                const brg = 45 * Math.PI / 180;
+                const d = nm * NM_TO_M / R;
+                const φ1 = lat * Math.PI / 180;
+                const λ1 = lon * Math.PI / 180;
+                const φ2 = Math.asin(Math.sin(φ1) * Math.cos(d) + Math.cos(φ1) * Math.sin(d) * Math.cos(brg));
+                const λ2 = λ1 + Math.atan2(
+                    Math.sin(brg) * Math.sin(d) * Math.cos(φ1),
+                    Math.cos(d) - Math.sin(φ1) * Math.sin(φ2)
+                );
+                const labelLat = φ2 * 180 / Math.PI;
+                const labelLon = ((λ2 * 180 / Math.PI) + 540) % 360 - 180;
+                const label = L.marker([labelLat, labelLon], {
+                    icon: L.divIcon({
+                        className: 'range-ring-label',
+                        html: '<span>' + nm + ' nm</span>',
+                        iconSize: [60, 16],
+                        iconAnchor: [30, 8]
+                    }),
+                    interactive: false,
+                    keyboard: false
+                });
+                this.layer.addLayer(label);
+            }
+            // Center pin
+            const pin = L.circleMarker([lat, lon], {
+                radius: 4,
+                color: this.color,
+                fillColor: this.color,
+                fillOpacity: 0.9,
+                weight: 1,
+                interactive: false
+            });
+            this.layer.addLayer(pin);
+            this.layer.addTo(this.map);
+        }
+    };
+
+    document.addEventListener('skytrack:map-ready', (e) => {
+        const map = e?.detail?.map;
+        if (map) rangeRings.init(map);
+    });
+    // ─── module: modules/91-phase-of-flight.js ───────────────────────────────────────────
+
+    // ============ PHASE-OF-FLIGHT CLASSIFIER (v0.19.0) ============
+    // Pure rule-based classifier. No ML, no network. Labels every aircraft
+    // with one of: ground | taxi | takeoff | climb | cruise | descent |
+    // approach | landing. Used to:
+    //   - render a colored chip next to the callsign in the info panel
+    //   - populate `ac.phase` so other modules (holding-pattern detector,
+    //     airport arrival-rush histogram) can key off it later.
+    //
+    // Thresholds follow FAA guidance loosely but are tuned for the noisy
+    // ADS-B-derived alt/gs/vs triplet rather than certified FDR data.
+    const phaseClassifier = {
+        // Public: returns a string label or null if insufficient signal.
+        // ac: { alt_baro, gs, baro_rate } (also accepts alt as alias)
+        classify(ac) {
+            if (!ac) return null;
+            const alt = (ac.alt_baro !== undefined) ? ac.alt_baro : ac.alt;
+            const gs = Number(ac.gs);
+            const vs = Number(ac.baro_rate); // fpm, positive = climb
+            if (alt === 'ground' || alt === 0) {
+                if (!Number.isFinite(gs) || gs < 5) return 'ground';
+                if (gs < 40) return 'taxi';
+                // Rolling on the ground at takeoff speed.
+                return 'takeoff';
+            }
+            if (!Number.isFinite(alt)) return null;
+            // Airborne branches.
+            if (Number.isFinite(vs) && Math.abs(vs) < 300) {
+                // Level flight band.
+                if (alt >= 18000) return 'cruise';
+                if (alt >= 10000) return 'cruise';
+                if (alt >= 3000) return 'cruise';
+                return 'approach'; // low + level = pattern / final
+            }
+            if (Number.isFinite(vs) && vs >= 300) {
+                // Climbing.
+                if (alt < 3000 && Number.isFinite(gs) && gs > 80) return 'takeoff';
+                if (alt < 18000) return 'climb';
+                return 'climb';
+            }
+            if (Number.isFinite(vs) && vs <= -300) {
+                // Descending.
+                if (alt < 3000) {
+                    if (Number.isFinite(gs) && gs < 180) return 'landing';
+                    return 'approach';
+                }
+                if (alt < 10000) return 'approach';
+                return 'descent';
+            }
+            // Fallback: gs + alt only.
+            if (alt > 25000) return 'cruise';
+            if (alt > 10000) return 'climb';
+            return 'approach';
+        },
+
+        // Annotate an aircraft record in-place with `ac.phase`.
+        annotate(ac) {
+            if (!ac) return;
+            const p = this.classify(ac);
+            if (p) ac.phase = p;
+        },
+
+        // Annotate every aircraft in an array / object-map.
+        annotateAll(acs) {
+            if (!acs) return;
+            if (Array.isArray(acs)) {
+                for (const ac of acs) this.annotate(ac);
+            } else {
+                for (const key in acs) this.annotate(acs[key]);
+            }
+        },
+
+        // Render a compact chip: <span class="phase-chip phase-cruise">CRUISE</span>
+        chipHtml(ac) {
+            const p = (ac && ac.phase) || this.classify(ac);
+            if (!p) return '';
+            return '<span class="phase-chip phase-' + p + '">' + p + '</span>';
+        },
+
+        label(ac) {
+            const p = (ac && ac.phase) || this.classify(ac);
+            return p ? p.charAt(0).toUpperCase() + p.slice(1) : '---';
+        }
+    };
+    // ─── module: modules/92-country-flag.js ───────────────────────────────────────────
+
+    // ============ COUNTRY FLAG BADGE (v0.19.0) ============
+    // Resolves an ICAO 24-bit hex code to a country name + ISO-2 code +
+    // flag emoji (regional-indicator pair). Port of the standard tar1090 /
+    // dump1090 ICAO allocation table. Ranges are stored as inclusive
+    // [start, end] hex bounds; the lookup is a linear scan over ~250 rows,
+    // which is fast enough even when called per-row.
+    //
+    // Usage:
+    //   countryFlag.badgeHtml('A835AF')  // → '<span class="country-flag-badge"><span class="flag-emoji">🇺🇸</span><span class="flag-code">US</span></span>'
+    //   countryFlag.get('A835AF')        // → { iso2: 'US', name: 'United States', flag: '🇺🇸' }
+    //
+    // Notes:
+    //   - Military and test aircraft inside a country's allocation still
+    //     resolve to that country. That's fine — combine with the military-
+    //     hex-range DB for mil detection.
+    //   - Only ICAO-allocated ranges are covered. Private reserved ranges
+    //     (e.g. F000000-FFFFFF) return null.
+    const countryFlag = {
+        // Compact table: [start, end, iso2, name]. Sorted by start for
+        // potential binary search if this ever becomes hot.
+        _ranges: [
+            [0x004000, 0x0043FF, 'ZW', 'Zimbabwe'],
+            [0x006000, 0x006FFF, 'MZ', 'Mozambique'],
+            [0x008000, 0x00FFFF, 'ZA', 'South Africa'],
+            [0x010000, 0x017FFF, 'EG', 'Egypt'],
+            [0x018000, 0x01FFFF, 'LY', 'Libya'],
+            [0x020000, 0x027FFF, 'MA', 'Morocco'],
+            [0x028000, 0x02FFFF, 'TN', 'Tunisia'],
+            [0x030000, 0x0303FF, 'BW', 'Botswana'],
+            [0x032000, 0x032FFF, 'BI', 'Burundi'],
+            [0x034000, 0x034FFF, 'CM', 'Cameroon'],
+            [0x035000, 0x0353FF, 'KM', 'Comoros'],
+            [0x036000, 0x036FFF, 'CG', 'Congo'],
+            [0x038000, 0x038FFF, 'CI', 'Ivory Coast'],
+            [0x03E000, 0x03EFFF, 'GA', 'Gabon'],
+            [0x040000, 0x040FFF, 'ET', 'Ethiopia'],
+            [0x042000, 0x042FFF, 'GQ', 'Equatorial Guinea'],
+            [0x044000, 0x044FFF, 'GH', 'Ghana'],
+            [0x046000, 0x046FFF, 'GN', 'Guinea'],
+            [0x048000, 0x0483FF, 'GW', 'Guinea-Bissau'],
+            [0x04A000, 0x04A3FF, 'LS', 'Lesotho'],
+            [0x04C000, 0x04CFFF, 'KE', 'Kenya'],
+            [0x050000, 0x050FFF, 'LR', 'Liberia'],
+            [0x054000, 0x054FFF, 'MG', 'Madagascar'],
+            [0x058000, 0x058FFF, 'MW', 'Malawi'],
+            [0x05A000, 0x05A3FF, 'MV', 'Maldives'],
+            [0x05C000, 0x05CFFF, 'ML', 'Mali'],
+            [0x05E000, 0x05E3FF, 'MR', 'Mauritania'],
+            [0x060000, 0x0603FF, 'MU', 'Mauritius'],
+            [0x062000, 0x062FFF, 'NE', 'Niger'],
+            [0x064000, 0x064FFF, 'NG', 'Nigeria'],
+            [0x068000, 0x068FFF, 'UG', 'Uganda'],
+            [0x06A000, 0x06A3FF, 'QA', 'Qatar'],
+            [0x06C000, 0x06CFFF, 'CF', 'Central African Republic'],
+            [0x06E000, 0x06EFFF, 'RW', 'Rwanda'],
+            [0x070000, 0x070FFF, 'SN', 'Senegal'],
+            [0x074000, 0x0743FF, 'SC', 'Seychelles'],
+            [0x076000, 0x0763FF, 'SL', 'Sierra Leone'],
+            [0x078000, 0x078FFF, 'SO', 'Somalia'],
+            [0x07A000, 0x07A3FF, 'SZ', 'Eswatini'],
+            [0x07C000, 0x07CFFF, 'SD', 'Sudan'],
+            [0x080000, 0x080FFF, 'TZ', 'Tanzania'],
+            [0x084000, 0x084FFF, 'TD', 'Chad'],
+            [0x088000, 0x088FFF, 'TG', 'Togo'],
+            [0x08A000, 0x08AFFF, 'ZM', 'Zambia'],
+            [0x08C000, 0x08CFFF, 'CD', 'DR Congo'],
+            [0x090000, 0x0903FF, 'AO', 'Angola'],
+            [0x094000, 0x0943FF, 'BJ', 'Benin'],
+            [0x096000, 0x0963FF, 'CV', 'Cape Verde'],
+            [0x098000, 0x0983FF, 'DJ', 'Djibouti'],
+            [0x09A000, 0x09AFFF, 'GM', 'Gambia'],
+            [0x09C000, 0x09CFFF, 'BF', 'Burkina Faso'],
+            [0x09E000, 0x09E3FF, 'ST', 'São Tomé and Príncipe'],
+            [0x0A0000, 0x0A7FFF, 'DZ', 'Algeria'],
+            [0x0A8000, 0x0A8FFF, 'BS', 'Bahamas'],
+            [0x0AA000, 0x0AA3FF, 'BB', 'Barbados'],
+            [0x0AB000, 0x0AB3FF, 'BZ', 'Belize'],
+            [0x0AC000, 0x0ACFFF, 'CO', 'Colombia'],
+            [0x0AE000, 0x0AEFFF, 'CR', 'Costa Rica'],
+            [0x0B0000, 0x0B0FFF, 'CU', 'Cuba'],
+            [0x0B2000, 0x0B2FFF, 'SV', 'El Salvador'],
+            [0x0B4000, 0x0B4FFF, 'GT', 'Guatemala'],
+            [0x0B6000, 0x0B6FFF, 'GY', 'Guyana'],
+            [0x0B8000, 0x0B8FFF, 'HT', 'Haiti'],
+            [0x0BA000, 0x0BAFFF, 'HN', 'Honduras'],
+            [0x0BC000, 0x0BC3FF, 'VC', 'Saint Vincent'],
+            [0x0BE000, 0x0BEFFF, 'JM', 'Jamaica'],
+            [0x0C0000, 0x0C0FFF, 'NI', 'Nicaragua'],
+            [0x0C2000, 0x0C2FFF, 'PA', 'Panama'],
+            [0x0C4000, 0x0C4FFF, 'DO', 'Dominican Republic'],
+            [0x0C6000, 0x0C6FFF, 'TT', 'Trinidad and Tobago'],
+            [0x0C8000, 0x0C8FFF, 'SR', 'Suriname'],
+            [0x0CA000, 0x0CA3FF, 'AG', 'Antigua and Barbuda'],
+            [0x0CC000, 0x0CC3FF, 'GD', 'Grenada'],
+            [0x0D0000, 0x0D7FFF, 'MX', 'Mexico'],
+            [0x0D8000, 0x0DFFFF, 'VE', 'Venezuela'],
+            [0x100000, 0x1FFFFF, 'RU', 'Russia'],
+            [0x201000, 0x2013FF, 'NA', 'Namibia'],
+            [0x202000, 0x2023FF, 'ER', 'Eritrea'],
+            [0x300000, 0x33FFFF, 'IT', 'Italy'],
+            [0x340000, 0x37FFFF, 'ES', 'Spain'],
+            [0x380000, 0x3BFFFF, 'FR', 'France'],
+            [0x3C0000, 0x3FFFFF, 'DE', 'Germany'],
+            [0x400000, 0x43FFFF, 'GB', 'United Kingdom'],
+            [0x440000, 0x447FFF, 'AT', 'Austria'],
+            [0x448000, 0x44FFFF, 'BE', 'Belgium'],
+            [0x450000, 0x457FFF, 'BG', 'Bulgaria'],
+            [0x458000, 0x45FFFF, 'DK', 'Denmark'],
+            [0x460000, 0x467FFF, 'FI', 'Finland'],
+            [0x468000, 0x46FFFF, 'GR', 'Greece'],
+            [0x470000, 0x477FFF, 'HU', 'Hungary'],
+            [0x478000, 0x47FFFF, 'NO', 'Norway'],
+            [0x480000, 0x487FFF, 'NL', 'Netherlands'],
+            [0x488000, 0x48FFFF, 'PL', 'Poland'],
+            [0x490000, 0x497FFF, 'PT', 'Portugal'],
+            [0x498000, 0x49FFFF, 'CZ', 'Czech Republic'],
+            [0x4A0000, 0x4A7FFF, 'RO', 'Romania'],
+            [0x4A8000, 0x4AFFFF, 'SE', 'Sweden'],
+            [0x4B0000, 0x4B7FFF, 'CH', 'Switzerland'],
+            [0x4B8000, 0x4BFFFF, 'TR', 'Turkey'],
+            [0x4C0000, 0x4C7FFF, 'RS', 'Serbia'],
+            [0x4C8000, 0x4C83FF, 'CY', 'Cyprus'],
+            [0x4CA000, 0x4CAFFF, 'IE', 'Ireland'],
+            [0x4CC000, 0x4CCFFF, 'IS', 'Iceland'],
+            [0x4D0000, 0x4D03FF, 'LU', 'Luxembourg'],
+            [0x4D2000, 0x4D2FFF, 'MT', 'Malta'],
+            [0x4D4000, 0x4D43FF, 'MC', 'Monaco'],
+            [0x500000, 0x5003FF, 'SM', 'San Marino'],
+            [0x501000, 0x5013FF, 'AL', 'Albania'],
+            [0x501C00, 0x501FFF, 'HR', 'Croatia'],
+            [0x502C00, 0x502FFF, 'LV', 'Latvia'],
+            [0x503C00, 0x503FFF, 'LT', 'Lithuania'],
+            [0x504C00, 0x504FFF, 'MD', 'Moldova'],
+            [0x505C00, 0x505FFF, 'SK', 'Slovakia'],
+            [0x506C00, 0x506FFF, 'SI', 'Slovenia'],
+            [0x507C00, 0x507FFF, 'UZ', 'Uzbekistan'],
+            [0x508000, 0x50FFFF, 'UA', 'Ukraine'],
+            [0x510000, 0x5103FF, 'BY', 'Belarus'],
+            [0x511000, 0x5113FF, 'EE', 'Estonia'],
+            [0x512000, 0x5123FF, 'MK', 'North Macedonia'],
+            [0x513000, 0x5133FF, 'BA', 'Bosnia and Herzegovina'],
+            [0x514000, 0x5143FF, 'GE', 'Georgia'],
+            [0x515000, 0x5153FF, 'TJ', 'Tajikistan'],
+            [0x600000, 0x6003FF, 'AM', 'Armenia'],
+            [0x600800, 0x600BFF, 'AZ', 'Azerbaijan'],
+            [0x601000, 0x6013FF, 'KG', 'Kyrgyzstan'],
+            [0x601800, 0x601BFF, 'TM', 'Turkmenistan'],
+            [0x680000, 0x6803FF, 'BT', 'Bhutan'],
+            [0x681000, 0x6813FF, 'FM', 'Micronesia'],
+            [0x682000, 0x6823FF, 'MN', 'Mongolia'],
+            [0x683000, 0x6833FF, 'KZ', 'Kazakhstan'],
+            [0x684000, 0x6843FF, 'PW', 'Palau'],
+            [0x700000, 0x700FFF, 'AF', 'Afghanistan'],
+            [0x702000, 0x702FFF, 'BD', 'Bangladesh'],
+            [0x704000, 0x704FFF, 'MM', 'Myanmar'],
+            [0x706000, 0x706FFF, 'KW', 'Kuwait'],
+            [0x708000, 0x708FFF, 'LA', 'Laos'],
+            [0x70A000, 0x70AFFF, 'NP', 'Nepal'],
+            [0x70C000, 0x70C3FF, 'OM', 'Oman'],
+            [0x70E000, 0x70EFFF, 'KH', 'Cambodia'],
+            [0x710000, 0x717FFF, 'SA', 'Saudi Arabia'],
+            [0x718000, 0x71FFFF, 'KR', 'South Korea'],
+            [0x720000, 0x727FFF, 'KP', 'North Korea'],
+            [0x728000, 0x72FFFF, 'IQ', 'Iraq'],
+            [0x730000, 0x737FFF, 'IR', 'Iran'],
+            [0x738000, 0x73FFFF, 'IL', 'Israel'],
+            [0x740000, 0x747FFF, 'JO', 'Jordan'],
+            [0x748000, 0x74FFFF, 'LB', 'Lebanon'],
+            [0x750000, 0x757FFF, 'MY', 'Malaysia'],
+            [0x758000, 0x75FFFF, 'PH', 'Philippines'],
+            [0x760000, 0x767FFF, 'PK', 'Pakistan'],
+            [0x768000, 0x76FFFF, 'SG', 'Singapore'],
+            [0x770000, 0x777FFF, 'LK', 'Sri Lanka'],
+            [0x778000, 0x77FFFF, 'SY', 'Syria'],
+            [0x780000, 0x7BFFFF, 'CN', 'China'],
+            [0x7C0000, 0x7FFFFF, 'AU', 'Australia'],
+            [0x800000, 0x83FFFF, 'IN', 'India'],
+            [0x840000, 0x87FFFF, 'JP', 'Japan'],
+            [0x880000, 0x887FFF, 'TH', 'Thailand'],
+            [0x888000, 0x88FFFF, 'VN', 'Viet Nam'],
+            [0x890000, 0x890FFF, 'YE', 'Yemen'],
+            [0x894000, 0x894FFF, 'BH', 'Bahrain'],
+            [0x895000, 0x8953FF, 'BN', 'Brunei'],
+            [0x896000, 0x896FFF, 'AE', 'United Arab Emirates'],
+            [0x897000, 0x8973FF, 'SB', 'Solomon Islands'],
+            [0x898000, 0x898FFF, 'TW', 'Taiwan'],
+            [0x8A0000, 0x8A7FFF, 'ID', 'Indonesia'],
+            [0x900000, 0x9003FF, 'MH', 'Marshall Islands'],
+            [0x901000, 0x9013FF, 'CK', 'Cook Islands'],
+            [0x902000, 0x9023FF, 'WS', 'Samoa'],
+            [0xA00000, 0xAFFFFF, 'US', 'United States'],
+            [0xC00000, 0xC3FFFF, 'CA', 'Canada'],
+            [0xC80000, 0xC87FFF, 'NZ', 'New Zealand'],
+            [0xC88000, 0xC88FFF, 'FJ', 'Fiji'],
+            [0xC8A000, 0xC8A3FF, 'NR', 'Nauru'],
+            [0xC8C000, 0xC8C3FF, 'LC', 'Saint Lucia'],
+            [0xC8D000, 0xC8D3FF, 'TO', 'Tonga'],
+            [0xC8E000, 0xC8E3FF, 'KI', 'Kiribati'],
+            [0xC90000, 0xC903FF, 'VU', 'Vanuatu'],
+            [0xE00000, 0xE3FFFF, 'AR', 'Argentina'],
+            [0xE40000, 0xE7FFFF, 'BR', 'Brazil'],
+            [0xE80000, 0xE80FFF, 'CL', 'Chile'],
+            [0xE84000, 0xE84FFF, 'EC', 'Ecuador'],
+            [0xE88000, 0xE88FFF, 'PY', 'Paraguay'],
+            [0xE8C000, 0xE8CFFF, 'PE', 'Peru'],
+            [0xE90000, 0xE90FFF, 'UY', 'Uruguay'],
+            [0xE94000, 0xE94FFF, 'BO', 'Bolivia']
+        ],
+        _cache: new Map(),
+
+        // ISO-2 alpha → regional-indicator-pair emoji. Returns '' if not A-Z.
+        _flagEmoji(iso2) {
+            if (!iso2 || iso2.length !== 2) return '';
+            const c0 = iso2.charCodeAt(0);
+            const c1 = iso2.charCodeAt(1);
+            if (c0 < 65 || c0 > 90 || c1 < 65 || c1 > 90) return '';
+            return String.fromCodePoint(0x1F1E6 + (c0 - 65)) + String.fromCodePoint(0x1F1E6 + (c1 - 65));
+        },
+
+        get(hex) {
+            if (!hex) return null;
+            const key = String(hex).toUpperCase();
+            const cached = this._cache.get(key);
+            if (cached !== undefined) return cached;
+            const n = parseInt(key, 16);
+            if (!Number.isFinite(n)) {
+                this._cache.set(key, null);
+                return null;
+            }
+            let result = null;
+            for (const r of this._ranges) {
+                if (n < r[0]) break; // ranges are sorted ascending
+                if (n <= r[1]) {
+                    result = { iso2: r[2], name: r[3], flag: this._flagEmoji(r[2]) };
+                    break;
+                }
+            }
+            this._cache.set(key, result);
+            return result;
+        },
+
+        badgeHtml(hex) {
+            const c = this.get(hex);
+            if (!c) return '';
+            return '<span class="country-flag-badge" title="' + c.name + '">' +
+                '<span class="flag-emoji">' + c.flag + '</span>' +
+                '<span class="flag-code">' + c.iso2 + '</span>' +
+                '</span>';
+        }
+    };
+    // ─── module: modules/93-emergency-pulse.js ───────────────────────────────────────────
+
+    // ============ EMERGENCY SQUAWK PULSE (v0.20.0) ============
+    // Triple expanding ring pulse under every aircraft broadcasting an
+    // emergency squawk (7500/7600/7700). Sits on its own Leaflet layer so
+    // it doesn't perturb the main marker renderer.
+    //
+    //   7500 — unlawful interference (hijack)  → red
+    //   7600 — radio failure                    → amber
+    //   7700 — general emergency                → orange
+    //
+    // Pulse is a CSS animation defined in styles.css. Three <span> rings
+    // with staggered delays give the expanding-sonar effect at 1 Hz.
+    const emergencyPulse = {
+        map: null,
+        layer: null,
+        markers: new Map(), // hex → { marker, squawk }
+        refreshMs: 2500,
+
+        SQUAWK_COLORS: {
+            '7500': '#ef4444', // hijack
+            '7600': '#f59e0b', // radio failure
+            '7700': '#fb923c'  // emergency
+        },
+
+        init(map) {
+            this.map = map;
+            this.layer = L.layerGroup().addTo(map);
+            // Re-use an existing pausable interval slot if the scaffolding is
+            // loaded (module 10-utils.js provides _setPausableInterval). Falls
+            // back to a plain setInterval for safety.
+            const start = () => {
+                if (typeof _setPausableInterval === 'function') {
+                    _setPausableInterval(() => this.refresh(), this.refreshMs, 'emergencyPulse');
+                } else {
+                    setInterval(() => this.refresh(), this.refreshMs);
+                }
+            };
+            start();
+            // One immediate refresh once aircraftCache is populated.
+            setTimeout(() => this.refresh(), 1500);
+        },
+
+        refresh() {
+            if (!this.map || !this.layer) return;
+            if (typeof aircraftCache !== 'object' || !aircraftCache) return;
+            const seen = new Set();
+            for (const hex in aircraftCache) {
+                const ac = aircraftCache[hex];
+                if (!ac) continue;
+                const sq = ac.squawk;
+                if (sq !== '7500' && sq !== '7600' && sq !== '7700') continue;
+                if (!Number.isFinite(ac.lat) || !Number.isFinite(ac.lon)) continue;
+                seen.add(hex);
+                const existing = this.markers.get(hex);
+                if (existing) {
+                    // Reposition in place (don't tear down — animation would restart)
+                    try { existing.marker.setLatLng([ac.lat, ac.lon]); } catch (_) {}
+                    if (existing.squawk !== sq) {
+                        existing.squawk = sq;
+                        this._swapIcon(existing.marker, sq);
+                    }
+                } else {
+                    const marker = L.marker([ac.lat, ac.lon], {
+                        icon: this._icon(sq),
+                        interactive: false,
+                        keyboard: false,
+                        zIndexOffset: -1000
+                    }).addTo(this.layer);
+                    this.markers.set(hex, { marker, squawk: sq });
+                }
+            }
+            // Prune aircraft that are no longer squawking emergency.
+            for (const [hex, entry] of this.markers) {
+                if (seen.has(hex)) continue;
+                try { this.layer.removeLayer(entry.marker); } catch (_) {}
+                this.markers.delete(hex);
+            }
+        },
+
+        _icon(squawk) {
+            const color = this.SQUAWK_COLORS[squawk] || '#ef4444';
+            const html =
+                '<div class="sq-pulse sq-pulse-' + squawk + '" style="--sq-color:' + color + '">' +
+                '<span class="sq-ring"></span>' +
+                '<span class="sq-ring"></span>' +
+                '<span class="sq-ring"></span>' +
+                '</div>';
+            return L.divIcon({
+                className: 'sq-pulse-icon',
+                html,
+                iconSize: [80, 80],
+                iconAnchor: [40, 40]
+            });
+        },
+
+        _swapIcon(marker, squawk) {
+            try { marker.setIcon(this._icon(squawk)); } catch (_) {}
+        }
+    };
+
+    document.addEventListener('skytrack:map-ready', (e) => {
+        const map = e?.detail?.map;
+        if (map) emergencyPulse.init(map);
+    });
+    // ─── module: modules/94-surveillance-orbit.js ───────────────────────────────────────────
+
+    // ============ SURVEILLANCE-ORBIT DETECTOR (v0.20.0) ============
+    // Flags aircraft that have been holding a tight circular orbit at low
+    // altitude for an extended period — the ISR/LEO/photo-recon signature.
+    // Heuristic (tuned to be conservative so civilian pattern work doesn't
+    // trigger it):
+    //
+    //   * Trail covers ≥ 15 real minutes
+    //   * Trail points stay within a ≤ 3 nm bounding radius
+    //   * Min altitude < 12,000 ft MSL (so jetliners in holds don't trigger)
+    //   * Track heading has swept ≥ 720° cumulatively (two full turns)
+    //
+    // When all four fire, the aircraft gets `ac.surveillanceOrbit = true`
+    // and the info panel shows a purple "LOITER" chip. The detector runs
+    // lazily — only when `selectAircraft` is called, so there's no per-poll
+    // O(n·history) cost.
+    const surveillanceOrbit = {
+        minMinutes: 15,
+        maxRadiusNm: 3,
+        minSweepDeg: 720,
+        maxAltFt: 12000,
+
+        // ac.history is an array of [lat, lon, alt, tsMs] tuples.
+        // Returns true if the trail matches the ISR orbit signature.
+        check(ac) {
+            if (!ac) return false;
+            const history = ac.history;
+            if (!Array.isArray(history) || history.length < 30) return false;
+
+            // 1. Duration gate.
+            const first = history[0], last = history[history.length - 1];
+            const t0 = Number(first?.[3]);
+            const t1 = Number(last?.[3]);
+            if (!Number.isFinite(t0) || !Number.isFinite(t1)) return false;
+            const durationMin = (t1 - t0) / 60000;
+            if (durationMin < this.minMinutes) return false;
+
+            // 2. Bounding radius + altitude gate.
+            let sumLat = 0, sumLon = 0, n = 0;
+            let minAlt = Infinity;
+            for (const p of history) {
+                const lat = Number(p[0]), lon = Number(p[1]);
+                if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+                sumLat += lat;
+                sumLon += lon;
+                n++;
+                const a = p[2];
+                if (typeof a === 'number' && Number.isFinite(a)) {
+                    if (a < minAlt) minAlt = a;
+                }
+            }
+            if (n < 10) return false;
+            const cLat = sumLat / n, cLon = sumLon / n;
+            let maxR = 0;
+            for (const p of history) {
+                const lat = Number(p[0]), lon = Number(p[1]);
+                if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+                const d = this._distanceNm(cLat, cLon, lat, lon);
+                if (d > maxR) maxR = d;
+            }
+            if (maxR > this.maxRadiusNm) return false;
+            if (Number.isFinite(minAlt) && minAlt > this.maxAltFt) return false;
+
+            // 3. Cumulative heading sweep — track must rotate ≥ minSweepDeg.
+            let prevBearing = null, sweep = 0;
+            for (let i = 1; i < history.length; i++) {
+                const a = history[i - 1], b = history[i];
+                const bearing = this._bearing(a[0], a[1], b[0], b[1]);
+                if (!Number.isFinite(bearing)) continue;
+                if (prevBearing !== null) {
+                    let delta = bearing - prevBearing;
+                    if (delta > 180) delta -= 360;
+                    else if (delta < -180) delta += 360;
+                    sweep += Math.abs(delta);
+                }
+                prevBearing = bearing;
+            }
+            return sweep >= this.minSweepDeg;
+        },
+
+        // Annotate ac.surveillanceOrbit and return the boolean.
+        annotate(ac) {
+            const isOrbit = this.check(ac);
+            if (ac) ac.surveillanceOrbit = isOrbit;
+            return isOrbit;
+        },
+
+        chipHtml(ac) {
+            return (ac && ac.surveillanceOrbit)
+                ? '<span class="loiter-chip" title="Aircraft has been orbiting at low altitude for &gt;15 min">LOITER</span>'
+                : '';
+        },
+
+        _distanceNm(lat1, lon1, lat2, lon2) {
+            const R = 3440.065; // Earth radius in nautical miles
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(lat1 * Math.PI / 180) *
+                Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        },
+
+        _bearing(lat1, lon1, lat2, lon2) {
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+            const y = Math.sin(Δλ) * Math.cos(φ2);
+            const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+            return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        }
+    };
+    // ─── module: modules/95-fires-hurricanes.js ───────────────────────────────────────────
+
+    // ============ NIFC FIRES + NHC HURRICANES OVERLAY (v0.20.0) ============
+    // Two high-signal overlays that tell a story aircraft often care about:
+    //   * NIFC WFIGS active-fire incidents (firefighting tankers orbit these)
+    //   * NHC current-storm forecast cones (hurricane hunters fly through these)
+    //
+    // Both endpoints are CORS-enabled GeoJSON/JSON; both refresh on toggle,
+    // then once every 10 min while active. Single toggle button, both layers
+    // share the same on/off state since they're complementary storytelling.
+    const firesHurricanes = {
+        map: null,
+        fireLayer: null,
+        stormLayer: null,
+        enabled: false,
+        refreshTimer: null,
+        refreshMs: 600000, // 10 min
+        NIFC_URL:
+            'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/' +
+            'WFIGS_Incident_Locations_Current/FeatureServer/0/query?' +
+            'f=geojson&where=FireCause%20%3D%20FireCause&outFields=*',
+        NHC_URL: 'https://www.nhc.noaa.gov/CurrentStorms.json',
+
+        init(map) {
+            this.map = map;
+            try {
+                const saved = localStorage.getItem('skytrack_fires_hurricanes');
+                if (saved === 'on') this.enable();
+            } catch (_) {}
+        },
+
+        async toggle() {
+            if (this.enabled) { this.disable(); return false; }
+            await this.enable();
+            return true;
+        },
+
+        async enable() {
+            this.enabled = true;
+            try { localStorage.setItem('skytrack_fires_hurricanes', 'on'); } catch (_) {}
+            await this._load();
+            if (this.refreshTimer) clearInterval(this.refreshTimer);
+            this.refreshTimer = setInterval(() => this._load(), this.refreshMs);
+        },
+
+        disable() {
+            this.enabled = false;
+            try { localStorage.setItem('skytrack_fires_hurricanes', 'off'); } catch (_) {}
+            if (this.refreshTimer) { clearInterval(this.refreshTimer); this.refreshTimer = null; }
+            if (this.fireLayer)  { try { this.map.removeLayer(this.fireLayer); } catch (_) {} this.fireLayer = null; }
+            if (this.stormLayer) { try { this.map.removeLayer(this.stormLayer); } catch (_) {} this.stormLayer = null; }
+        },
+
+        async _load() {
+            await Promise.allSettled([this._loadFires(), this._loadStorms()]);
+        },
+
+        async _loadFires() {
+            if (!this.map) return;
+            try {
+                const resp = await fetch(this.NIFC_URL, { signal: AbortSignal.timeout(15000) });
+                if (!resp.ok) throw new Error('NIFC ' + resp.status);
+                const geo = await resp.json();
+                if (this.fireLayer) try { this.map.removeLayer(this.fireLayer); } catch (_) {}
+                this.fireLayer = L.layerGroup();
+                const features = Array.isArray(geo?.features) ? geo.features : [];
+                for (const f of features) {
+                    const c = f?.geometry?.coordinates;
+                    if (!Array.isArray(c) || c.length < 2) continue;
+                    const [lon, lat] = c;
+                    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+                    const p = f.properties || {};
+                    const acres = Number(p.DailyAcres || p.IncidentSize || p.CalculatedAcres);
+                    const radius = Number.isFinite(acres) && acres > 0
+                        ? Math.max(4, Math.min(18, 3 + Math.log10(acres) * 2))
+                        : 5;
+                    const marker = L.circleMarker([lat, lon], {
+                        radius,
+                        color: '#b91c1c',
+                        weight: 1,
+                        fillColor: '#f97316',
+                        fillOpacity: 0.75
+                    });
+                    const name = p.IncidentName || p.FireName || 'Active fire';
+                    const state = p.POOState || p.State || '';
+                    const acresTxt = Number.isFinite(acres) ? Math.round(acres).toLocaleString() + ' acres' : '';
+                    const containment = p.PercentContained != null ? (Math.round(p.PercentContained) + '% contained') : '';
+                    marker.bindPopup(
+                        '<div class="sigmet-popup"><strong>🔥 ' + _escHtml(name) + '</strong><br>' +
+                        (state ? _escHtml(state) + '<br>' : '') +
+                        (acresTxt ? _escHtml(acresTxt) + '<br>' : '') +
+                        (containment ? _escHtml(containment) : '') +
+                        '</div>'
+                    );
+                    this.fireLayer.addLayer(marker);
+                }
+                if (this.fireLayer.getLayers().length > 0) this.fireLayer.addTo(this.map);
+                _dbg?.('NIFC fires loaded:', this.fireLayer.getLayers().length);
+            } catch (e) {
+                errorHandler?.log('NIFC fires', e?.message || e);
+            }
+        },
+
+        async _loadStorms() {
+            if (!this.map) return;
+            try {
+                const resp = await fetch(this.NHC_URL, { signal: AbortSignal.timeout(15000) });
+                if (!resp.ok) throw new Error('NHC ' + resp.status);
+                const data = await resp.json();
+                if (this.stormLayer) try { this.map.removeLayer(this.stormLayer); } catch (_) {}
+                this.stormLayer = L.layerGroup();
+                const storms = Array.isArray(data?.activeStorms) ? data.activeStorms : [];
+                for (const s of storms) {
+                    const lat = Number(s?.latitudeNumeric);
+                    const lon = Number(s?.longitudeNumeric);
+                    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+                    const name = s.name || s.binNumber || 'Storm';
+                    const cls = (s.classification || '').toUpperCase();
+                    const intensity = Number(s.intensity) || 0;
+                    const color = cls === 'HU' || intensity >= 74 ? '#dc2626' :
+                                  cls === 'TS' || intensity >= 39 ? '#f59e0b' :
+                                  '#22d3ee';
+                    const center = L.circleMarker([lat, lon], {
+                        radius: 10,
+                        color: color,
+                        weight: 2,
+                        fillColor: color,
+                        fillOpacity: 0.6
+                    });
+                    center.bindPopup(
+                        '<div class="sigmet-popup"><strong>🌀 ' + _escHtml(name) + '</strong><br>' +
+                        _escHtml(cls || 'Tropical system') +
+                        (Number.isFinite(intensity) && intensity > 0 ? ' · ' + intensity + ' kt' : '') +
+                        (s.pressure ? '<br>Pressure ' + _escHtml(s.pressure) + ' mb' : '') +
+                        (s.movement ? '<br>Moving ' + _escHtml(s.movement) : '') +
+                        '</div>'
+                    );
+                    this.stormLayer.addLayer(center);
+                    // Forecast cone if NHC provides a GIS track cone URL.
+                    if (s.forecastTrack?.kmzFile) {
+                        // Many cones are only in KMZ — we can't parse KMZ in browser cheaply.
+                        // Draw a simple outbound cone approximation from the 5-day forecast
+                        // if NHC's simple JSON has `forecast` points.
+                    }
+                    if (Array.isArray(s.forecast) && s.forecast.length >= 2) {
+                        const pts = s.forecast
+                            .filter(f => Number.isFinite(Number(f.lat)) && Number.isFinite(Number(f.lon)))
+                            .map(f => [Number(f.lat), Number(f.lon)]);
+                        if (pts.length >= 2) {
+                            const path = L.polyline([[lat, lon]].concat(pts), {
+                                color: color,
+                                weight: 2,
+                                opacity: 0.85,
+                                dashArray: '8 4'
+                            });
+                            this.stormLayer.addLayer(path);
+                        }
+                    }
+                }
+                if (this.stormLayer.getLayers().length > 0) this.stormLayer.addTo(this.map);
+                _dbg?.('NHC storms loaded:', this.stormLayer.getLayers().length);
+            } catch (e) {
+                errorHandler?.log('NHC storms', e?.message || e);
+            }
+        }
+    };
+
+    document.addEventListener('skytrack:map-ready', (e) => {
+        const map = e?.detail?.map;
+        if (map) firesHurricanes.init(map);
+    });
+    // ─── module: modules/96-plane-over-my-house.js ───────────────────────────────────────────
+
+    // ============ PLANE OVER MY HOUSE (v0.20.0) ============
+    // Signature feature: persistent floating ticker of aircraft passing
+    // within N nautical miles of a user-configured "home" coordinate.
+    // Ship as a bottom-right sticky widget that survives panel churn.
+    //
+    // First-time UX: button in Tools menu opens the widget; the widget's
+    // "Set home" button captures the current map center as home, persists
+    // to localStorage. No unsolicited geolocation prompt.
+    //
+    // The widget polls `aircraftCache` (already the canonical live store)
+    // every refresh cycle; no extra network traffic.
+    const planeOverHome = {
+        enabled: false,
+        home: null,            // { lat, lon, label }
+        radiusNm: 5,
+        maxRows: 6,
+        containerEl: null,
+        tickTimer: null,
+        tickMs: 4000,
+        recent: new Map(),     // hex → { firstSeen, lastSeen, closestNm, callsign }
+        lastClosestHex: null,
+        map: null,
+
+        init(map) {
+            this.map = map;
+            try {
+                const saved = JSON.parse(localStorage.getItem('skytrack_home_widget') || 'null');
+                if (saved && Number.isFinite(saved?.home?.lat) && Number.isFinite(saved?.home?.lon)) {
+                    this.home = { lat: saved.home.lat, lon: saved.home.lon, label: saved.home.label || '' };
+                    if (Number.isFinite(saved.radiusNm) && saved.radiusNm > 0 && saved.radiusNm <= 200) {
+                        this.radiusNm = saved.radiusNm;
+                    }
+                    if (saved.enabled === true) this.show();
+                }
+            } catch (_) {}
+        },
+
+        save() {
+            try {
+                localStorage.setItem('skytrack_home_widget', JSON.stringify({
+                    enabled: this.enabled,
+                    home: this.home,
+                    radiusNm: this.radiusNm
+                }));
+            } catch (_) {}
+        },
+
+        toggle() {
+            if (this.enabled) { this.hide(); return false; }
+            this.show();
+            return true;
+        },
+
+        show() {
+            this.enabled = true;
+            this._ensureContainer();
+            this._render();
+            if (this.tickTimer) clearInterval(this.tickTimer);
+            this.tickTimer = setInterval(() => this._render(), this.tickMs);
+            this.save();
+        },
+
+        hide() {
+            this.enabled = false;
+            if (this.tickTimer) { clearInterval(this.tickTimer); this.tickTimer = null; }
+            if (this.containerEl) {
+                try { this.containerEl.remove(); } catch (_) {}
+                this.containerEl = null;
+            }
+            this.save();
+        },
+
+        setHome(lat, lon, label) {
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+            this.home = { lat, lon, label: label || '' };
+            this.recent.clear();
+            this.save();
+            if (this.enabled) this._render();
+        },
+
+        useMapCenter() {
+            if (!this.map) return;
+            const c = this.map.getCenter();
+            this.setHome(c.lat, c.lng, 'Map center');
+        },
+
+        _ensureContainer() {
+            if (this.containerEl && this.containerEl.isConnected) return;
+            const el = document.createElement('div');
+            el.id = 'planeOverHomeWidget';
+            el.className = 'home-widget';
+            document.body.appendChild(el);
+            this.containerEl = el;
+            // Delegate clicks for "Set home / map center" and "Hide".
+            el.addEventListener('click', (e) => {
+                const btn = e.target?.closest?.('[data-action]');
+                if (!btn) {
+                    const row = e.target?.closest?.('[data-hex]');
+                    if (row && typeof selectAircraft === 'function') {
+                        const hex = row.getAttribute('data-hex');
+                        if (hex) selectAircraft(hex);
+                    }
+                    return;
+                }
+                const action = btn.getAttribute('data-action');
+                if (action === 'set-here')    this.useMapCenter();
+                else if (action === 'hide')   this.hide();
+                else if (action === 'radius') this._cycleRadius();
+                else if (action === 'clear')  { this.home = null; this.recent.clear(); this.save(); this._render(); }
+            });
+        },
+
+        _cycleRadius() {
+            const options = [2, 5, 10, 20, 50];
+            const idx = options.indexOf(this.radiusNm);
+            this.radiusNm = options[(idx + 1) % options.length];
+            this.save();
+            this._render();
+        },
+
+        _distanceNm(lat1, lon1, lat2, lon2) {
+            const R = 3440.065;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(lat1 * Math.PI / 180) *
+                Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        },
+
+        _render() {
+            if (!this.containerEl) return;
+            const h = this.home;
+            if (!h) {
+                this.containerEl.innerHTML =
+                    '<div class="home-widget-header">' +
+                        '<span class="home-widget-title">✈️ Over my house</span>' +
+                        '<button class="home-widget-x" data-action="hide" title="Hide widget">×</button>' +
+                    '</div>' +
+                    '<div class="home-widget-empty">' +
+                        '<p>Set your home location to see aircraft passing nearby.</p>' +
+                        '<button class="home-widget-btn primary" data-action="set-here">Use map center</button>' +
+                    '</div>';
+                return;
+            }
+            // Scan live cache.
+            const nearby = [];
+            if (typeof aircraftCache === 'object' && aircraftCache) {
+                for (const hex in aircraftCache) {
+                    const ac = aircraftCache[hex];
+                    if (!ac) continue;
+                    if (!Number.isFinite(ac.lat) || !Number.isFinite(ac.lon)) continue;
+                    const d = this._distanceNm(h.lat, h.lon, ac.lat, ac.lon);
+                    if (d <= this.radiusNm) nearby.push({ ac, d });
+                }
+            }
+            nearby.sort((a, b) => a.d - b.d);
+            const now = Date.now();
+            // Update recent history (for leave-toast + persistence).
+            for (const { ac, d } of nearby) {
+                const prev = this.recent.get(ac.hex);
+                const callsign = (ac.flight || '').trim() || ac.r || ac.hex;
+                if (prev) {
+                    prev.lastSeen = now;
+                    if (d < prev.closestNm) prev.closestNm = d;
+                    prev.callsign = callsign;
+                } else {
+                    this.recent.set(ac.hex, { firstSeen: now, lastSeen: now, closestNm: d, callsign });
+                }
+            }
+            // Ding on new closest aircraft (at most once per hex).
+            const closest = nearby[0];
+            if (closest && closest.ac.hex !== this.lastClosestHex) {
+                this.lastClosestHex = closest.ac.hex;
+                this._ding();
+            } else if (!closest) {
+                this.lastClosestHex = null;
+            }
+            // Evict old entries (> 10 min since last seen).
+            for (const [hex, rec] of this.recent) {
+                if (now - rec.lastSeen > 600000) this.recent.delete(hex);
+            }
+            // Build HTML.
+            let rows = '';
+            for (let i = 0; i < Math.min(this.maxRows, nearby.length); i++) {
+                const { ac, d } = nearby[i];
+                const callsign = (ac.flight || '').trim() || ac.r || ac.hex;
+                const alt = ac.alt_baro === 'ground' ? 'GND' :
+                    (typeof ac.alt_baro === 'number' ? ac.alt_baro.toLocaleString() + 'ft' : '—');
+                const type = ac.t || '';
+                rows += '<div class="home-widget-row" data-hex="' + _escHtml(ac.hex) + '">' +
+                    '<span class="hw-callsign">' + _escHtml(callsign) + '</span>' +
+                    (type ? '<span class="hw-type">' + _escHtml(type) + '</span>' : '') +
+                    '<span class="hw-alt">' + _escHtml(alt) + '</span>' +
+                    '<span class="hw-dist">' + d.toFixed(1) + ' nm</span>' +
+                    '</div>';
+            }
+            if (!rows) rows = '<div class="home-widget-empty-row">No aircraft within ' + this.radiusNm + ' nm.</div>';
+            const labelTxt = h.label ? h.label : h.lat.toFixed(3) + ', ' + h.lon.toFixed(3);
+            this.containerEl.innerHTML =
+                '<div class="home-widget-header">' +
+                    '<span class="home-widget-title">✈️ Over my house</span>' +
+                    '<button class="home-widget-btn ghost" data-action="radius" title="Cycle radius">' + this.radiusNm + ' nm</button>' +
+                    '<button class="home-widget-btn ghost" data-action="set-here" title="Reset home to map center">⌖</button>' +
+                    '<button class="home-widget-x" data-action="hide" title="Hide widget">×</button>' +
+                '</div>' +
+                '<div class="home-widget-sub">' + _escHtml(labelTxt) + ' · seen today: ' + this.recent.size + '</div>' +
+                '<div class="home-widget-rows">' + rows + '</div>';
+        },
+
+        _ding() {
+            // One short chime when a new closest aircraft enters the radius.
+            // Respects user-gesture requirement — silently fails on first page load.
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                gain.gain.setValueAtTime(0.06, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+                osc.connect(gain).connect(ctx.destination);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.15);
+            } catch (_) {}
+        }
+    };
+
+    document.addEventListener('skytrack:map-ready', (e) => {
+        const map = e?.detail?.map;
+        if (map) planeOverHome.init(map);
+    });
+    // ─── entry: app.js ───────────────────────────────────────────
+
+    // CONFIG and DATA_URLS now live in src/modules/00-config.js (loaded first
+    // by build.mjs). All downstream code references them at script scope.
+
+    // Debug logging, escape helper, errorHandler, perfUtils,
+    // and pausable-interval scaffolding now live in src/modules/10-utils.js.
+
+
+    // Connection monitor, offline mode, data-source manager, auto-retry,
+    // error recovery, and circuit breaker now live in src/modules/20-reliability.js.
+
+    // IndexedDB storage (skytrackDB) now lives in src/modules/30-storage.js.
+
 
     // ============ ALERT SYSTEM ============
     const alertSystem = {
@@ -4029,144 +5875,8 @@ if ('serviceWorker' in navigator) {
         }
     };
 
-    // ============ WEATHER SYSTEM ============
-    const weatherSystem = {
-        cache: new Map(),
-        cacheExpiry: 600000, // 10 minutes
-        
-        async getMETAR(icao) {
-            if (!icao || icao.length !== 4) return null;
-            
-            // Check cache
-            const cached = this.cache.get(icao);
-            if (cached && Date.now() - cached.timestamp < this.cacheExpiry) {
-                return cached.data;
-            }
-            
-            try {
-                const url = `https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`;
-                const resp = await errorHandler.fetchWithTimeout(url, {}, 8000);
-                
-                if (!resp.ok) {
-                    throw new Error(`HTTP ${resp.status}`);
-                }
-                
-                const data = await resp.json();
-                if (!data || data.length === 0) {
-                    // No data available, cache empty result to prevent repeated requests
-                    this.cache.set(icao, { data: null, timestamp: Date.now() });
-                    return null;
-                }
-                
-                const metar = this.parseMETAR(data[0]);
-                this.cache.set(icao, { data: metar, timestamp: Date.now() });
-                return metar;
-                
-            } catch (e) {
-                errorHandler.log('Weather', `METAR fetch failed for ${icao}: ${e.message}`);
-                // Return cached data if available (even if expired)
-                if (cached) {
-                    return cached.data;
-                }
-                return null;
-            }
-        },
-        
-        parseMETAR(raw) {
-            if (!raw) return null;
-            
-            return {
-                raw: raw.rawOb || raw.raw || '',
-                station: raw.icaoId || '',
-                time: raw.obsTime || raw.reportTime || '',
-                temp: raw.temp !== undefined ? raw.temp : null,
-                dewpoint: raw.dewp !== undefined ? raw.dewp : null,
-                humidity: this.calcHumidity(raw.temp, raw.dewp),
-                wind: {
-                    direction: raw.wdir || null,
-                    speed: raw.wspd || null,
-                    gust: raw.wgst || null,
-                    variable: raw.wdir === 'VRB'
-                },
-                visibility: raw.visib || null,
-                altimeter: raw.altim || null,
-                clouds: raw.clouds || [],
-                weather: raw.wxString || '',
-                flightCategory: raw.fltcat || this.getFlightCategory(raw),
-                ceiling: this.getCeiling(raw.clouds)
-            };
-        },
-        
-        calcHumidity(temp, dewpoint) {
-            if (temp === null || dewpoint === null) return null;
-            // Magnus formula approximation
-            const h = 100 * Math.pow((112 - (0.1 * temp) + dewpoint) / (112 + (0.9 * temp)), 8);
-            return Math.round(Math.min(100, Math.max(0, h)));
-        },
-        
-        getCeiling(clouds) {
-            if (!clouds || !Array.isArray(clouds)) return null;
-            for (const layer of clouds) {
-                if (['BKN', 'OVC', 'VV'].includes(layer.cover)) {
-                    return layer.base;
-                }
-            }
-            return null;
-        },
-        
-        getFlightCategory(data) {
-            const vis = data.visib;
-            const ceil = this.getCeiling(data.clouds);
-            
-            if (vis === null && ceil === null) return 'UNKN';
-            
-            // LIFR: Ceiling < 500ft or Visibility < 1mi
-            if ((ceil !== null && ceil < 500) || (vis !== null && vis < 1)) return 'LIFR';
-            // IFR: Ceiling 500-999ft or Visibility 1-3mi
-            if ((ceil !== null && ceil < 1000) || (vis !== null && vis < 3)) return 'IFR';
-            // MVFR: Ceiling 1000-3000ft or Visibility 3-5mi
-            if ((ceil !== null && ceil < 3000) || (vis !== null && vis <= 5)) return 'MVFR';
-            // VFR: Ceiling > 3000ft and Visibility > 5mi
-            return 'VFR';
-        },
-        
-        getFlightCategoryColor(cat) {
-            switch (cat) {
-                case 'VFR': return '#22c55e';
-                case 'MVFR': return '#3b82f6';
-                case 'IFR': return '#ef4444';
-                case 'LIFR': return '#a855f7';
-                default: return '#6b7280';
-            }
-        },
-        
-        formatWind(wind) {
-            if (!wind || (!wind.direction && !wind.speed)) return 'Calm';
-            
-            let str = '';
-            if (wind.variable) {
-                str = 'Variable';
-            } else if (wind.direction) {
-                str = wind.direction + ' deg';
-            }
-            
-            if (wind.speed) {
-                str += ' at ' + wind.speed + ' kt';
-                if (wind.gust) {
-                    str += ' (gusts ' + wind.gust + ')';
-                }
-            }
-            
-            return str || 'Unknown';
-        },
-        
-        formatClouds(clouds) {
-            if (!clouds || clouds.length === 0) return 'Clear';
-            
-            const coverMap = { 'SKC': 'Clear', 'CLR': 'Clear', 'FEW': 'Few', 'SCT': 'Scattered', 'BKN': 'Broken', 'OVC': 'Overcast', 'VV': 'Vert Vis' };
-            return clouds.map(c => (coverMap[c.cover] || c.cover) + ' at ' + (c.base ? c.base.toLocaleString() : '?') + ' ft').join(', ');
-        }
-    };
+    // Weather system (METAR/TAF per-airport) now lives in src/modules/35-weather.js.
+
 
     // ============ AIRCRAFT DATA ENRICHMENT ============
     const aircraftDataEnricher = {
@@ -5345,6 +7055,9 @@ if ('serviceWorker' in navigator) {
         }
     };
 
+    // Route API lookup (adsbdb + hexdb fallback) now lives in src/modules/50-route-lookup.js.
+
+
     // ============ FLIGHT ORIGIN DETECTION ============
     const flightTracker = {
         // Detect origin airport from trail data
@@ -5811,9 +7524,10 @@ if ('serviceWorker' in navigator) {
     const DATA_SOURCES = {
         airplaneslive: { name: 'Airplanes.live', buildUrl: (b, c, r) => 'https://api.airplanes.live/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null },
         adsbone: { name: 'ADSB One', buildUrl: (b, c, r) => 'https://api.adsb.one/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null },
-        adsblol: { name: 'ADSB.lol', buildUrl: (b, c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null }
+        adsblol: { name: 'ADSB.lol', buildUrl: (b, c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => d?.ac?.length ? d.ac : null },
+        adsbfi: { name: 'ADSB.fi', buildUrl: (b, c, r) => 'https://opendata.adsb.fi/api/v2/lat/' + c.lat.toFixed(4) + '/lon/' + c.lng.toFixed(4) + '/dist/' + r, parseResponse: d => d?.ac?.length ? d.ac : null }
     };
-    const SOURCE_ORDER = ['adsbone', 'adsblol', 'airplaneslive'];
+    const SOURCE_ORDER = ['adsbone', 'adsblol', 'adsbfi', 'airplaneslive'];
 
     // ============ STATE ============
     let apiCredentials = { clientId: '', clientSecret: '' };
@@ -6678,6 +8392,11 @@ if ('serviceWorker' in navigator) {
         map.on('zoomend', () => { if (settings.showAirports) updateAirportMarkers(); });
         map.on('click', () => { deselectAircraft(); _el('settingsPanel').classList.remove('show'); _el('airportPanel').classList.remove('show'); _el('statsPanel').classList.remove('show'); _el('statsBtn')?.classList.remove('active'); document.getElementById('comparisonPanel')?.classList.remove('show'); });
         if (settings.showAirports) updateAirportMarkers();
+        // Notify feature modules that the Leaflet map is live. Modules defined
+        // under src/modules/9x-*.js listen for this event to bootstrap.
+        try {
+            document.dispatchEvent(new CustomEvent('skytrack:map-ready', { detail: { map, baseMaps } }));
+        } catch (_) { /* very old browsers */ }
     }
 
     function updateAirportMarkers() {
@@ -7637,7 +9356,22 @@ if ('serviceWorker' in navigator) {
     function selectAircraft(hex) {
         if (trailLine) { if (trailLine._originMarker) map.removeLayer(trailLine._originMarker); if (trailLine._group) map.removeLayer(trailLine._group); else map.removeLayer(trailLine); trailLine = null; }
         selectedHex = hex; const ac = aircraftCache[hex]; if (!ac) return;
-        document.getElementById('infoCallsign').textContent = ac.flight || 'N/A'; document.getElementById('infoHex').textContent = ac.hex; document.getElementById('infoReg').textContent = ac.r || 'N/A';
+        // Callsign + phase-of-flight chip + surveillance-orbit chip
+        // (v0.19.0/v0.20.0 — modules 91-phase-of-flight.js, 94-surveillance-orbit.js)
+        phaseClassifier.annotate(ac);
+        surveillanceOrbit.annotate(ac);
+        const callsignEl = document.getElementById('infoCallsign');
+        if (callsignEl) {
+            callsignEl.innerHTML = _escHtml(ac.flight || 'N/A') +
+                phaseClassifier.chipHtml(ac) +
+                surveillanceOrbit.chipHtml(ac);
+        }
+        // Hex + country flag badge (v0.19.0 — module 92-country-flag.js)
+        const hexEl = document.getElementById('infoHex');
+        if (hexEl) {
+            hexEl.innerHTML = _escHtml(ac.hex) + countryFlag.badgeHtml(ac.hex);
+        }
+        document.getElementById('infoReg').textContent = ac.r || 'N/A';
         const typeDesc = aircraftTypeDB.getDescription(ac.t); document.getElementById('infoType').textContent = typeDesc || ac.t || 'N/A';
         const descRow = document.getElementById('infoDescRow'); if (ac.desc) { document.getElementById('infoDesc').textContent = ac.desc; descRow.style.display = 'flex'; } else descRow.style.display = 'none';
         const opRow = document.getElementById('infoOperatorRow'); if (ac.ownOp) { document.getElementById('infoOperator').textContent = ac.ownOp; opRow.style.display = 'flex'; } else opRow.style.display = 'none';
@@ -7739,6 +9473,24 @@ if ('serviceWorker' in navigator) {
                 }
                 updateRouteDisplay(ac);
             }
+        }
+        // External API route fallback — adsbdb/hexdb cover ~400k callsigns beyond
+        // the static routes DB. Only query when we still have no from/to and
+        // we haven't already looked up this callsign for the current aircraft.
+        if ((!ac.from || !ac.to) && ac.flight && !ac.routeApiTried) {
+            const cs = ac.flight.trim();
+            ac.routeApiTried = true;
+            routeApiLookup.get(cs).then(rec => {
+                if (!rec || selectedHex !== ac.hex) return;
+                let changed = false;
+                if (!ac.from && rec.from) { ac.from = rec.from; changed = true; }
+                if (!ac.to && rec.to)     { ac.to = rec.to;     changed = true; }
+                if (changed) {
+                    ac.destinationInferred = false; // this is a definitive route
+                    ac.routeApiSource = rec.source;
+                    updateRouteDisplay(ac);
+                }
+            }).catch(() => { /* silent — fallback only */ });
         }
         const catMap = { commercial: 'Commercial', military: 'Military', government: 'Government', police: 'Police', medical: 'Medical', cargo: 'Cargo', private: 'Private', helicopter: 'Helicopter', ground: 'Ground', pia: 'PIA' }; document.getElementById('infoCat').textContent = catMap[ac.category_type] || 'Unknown';
         const alt = ac.alt_baro === 'ground' ? 'Ground' : (ac.alt_baro ? ac.alt_baro.toLocaleString() + ' ft' : '---'); document.getElementById('infoAlt').textContent = alt;
@@ -8079,6 +9831,50 @@ if ('serviceWorker' in navigator) {
         
         // Phase 5: New button handlers
         document.getElementById('measureBtn')?.addEventListener('click', () => measureTool.toggle());
+        // Range rings (v0.19.0 — module 90-range-rings.js)
+        const rangeRingsBtn = document.getElementById('rangeRingsBtn');
+        if (rangeRingsBtn) {
+            rangeRingsBtn.classList.toggle('active', rangeRings.enabled);
+            rangeRingsBtn.addEventListener('click', async () => {
+                const on = await rangeRings.toggle();
+                rangeRingsBtn.classList.toggle('active', on);
+                if (!on && !rangeRings.center) {
+                    // Permission not granted — offer to use the current map center as fallback.
+                    toast('Geolocation unavailable — using map center');
+                    rangeRings.useMapCenter();
+                    await rangeRings.enable();
+                    rangeRingsBtn.classList.add('active');
+                } else {
+                    toast(on ? 'Range rings on' : 'Range rings off');
+                }
+            });
+        }
+        // Fires + hurricanes overlay (v0.20.0 — module 95-fires-hurricanes.js)
+        const firesBtn = document.getElementById('firesBtn');
+        if (firesBtn) {
+            firesBtn.classList.toggle('active', firesHurricanes.enabled);
+            firesBtn.addEventListener('click', async () => {
+                toast('Loading fires & storms…');
+                const on = await firesHurricanes.toggle();
+                firesBtn.classList.toggle('active', on);
+                if (on) {
+                    const fc = firesHurricanes.fireLayer?.getLayers()?.length || 0;
+                    const sc = firesHurricanes.stormLayer?.getLayers()?.length || 0;
+                    toast('Fires: ' + fc + ' · Storms: ' + sc);
+                } else {
+                    toast('Overlay off');
+                }
+            });
+        }
+        // Plane Over My House widget (v0.20.0 — module 96-plane-over-my-house.js)
+        const homeWidgetBtn = document.getElementById('homeWidgetBtn');
+        if (homeWidgetBtn) {
+            homeWidgetBtn.classList.toggle('active', planeOverHome.enabled);
+            homeWidgetBtn.addEventListener('click', () => {
+                const on = planeOverHome.toggle();
+                homeWidgetBtn.classList.toggle('active', on);
+            });
+        }
         document.getElementById('exportKMLBtn')?.addEventListener('click', () => { if (selectedHex) exportTrail(selectedHex, 'kml'); });
         document.getElementById('shareFlightBtn')?.addEventListener('click', () => { if (selectedHex) shareManager.share(selectedHex); });
         document.getElementById('playbackBtn')?.addEventListener('click', () => { if (selectedHex) playbackController.start(selectedHex); });
@@ -8108,7 +9904,111 @@ if ('serviceWorker' in navigator) {
         });
     }
     function changeBasemap(style) { Object.values(baseMaps).forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); }); baseMaps[style].addTo(map); currentBaseMap = style; settings.mapStyle = style; document.getElementById('mapStyleSelect').value = style; saveSettings(); updateMarkers(); if (typeof miniMap !== 'undefined' && miniMap.updateMapStyle) miniMap.updateMapStyle(style); }
-    async function toggleRadar() { settings.showRadar = !settings.showRadar; document.getElementById('radarBtn').classList.toggle('active', settings.showRadar); document.getElementById('toggleRadar').classList.toggle('on', settings.showRadar); saveSettings(); if (settings.showRadar) { try { const resp = await fetch('https://api.rainviewer.com/public/weather-maps.json'); const data = await resp.json(); const frame = data.radar?.past?.slice(-1)[0]; if (!frame) return; if (radarLayer) map.removeLayer(radarLayer); radarLayer = L.tileLayer(data.host + frame.path + '/256/{z}/{x}/{y}/4/1_1.png', { opacity: 0.4, maxNativeZoom: 12 }).addTo(map); radarLayer.setZIndex(50); toast('Radar loaded'); } catch(e) { toast('Radar unavailable'); } } else if (radarLayer) { map.removeLayer(radarLayer); radarLayer = null; } }
+    // Animated RainViewer radar: cycles past frames + short-term nowcast.
+    // Replaces the single-frame implementation so the radar visibly moves.
+    const radarAnimator = {
+        frames: [],       // [{ path, time }, ...] past → present → nowcast
+        layers: [],       // parallel Leaflet tileLayers, only one visible at a time
+        host: '',
+        idx: 0,
+        timer: null,
+        active: false,
+
+        async load() {
+            const resp = await fetch('https://api.rainviewer.com/public/weather-maps.json', {
+                cache: 'no-cache'
+            });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const data = await resp.json();
+            this.host = data.host;
+            const past = Array.isArray(data?.radar?.past) ? data.radar.past : [];
+            const now  = Array.isArray(data?.radar?.nowcast) ? data.radar.nowcast : [];
+            // Keep the most recent 10 past frames + all nowcast frames so the
+            // loop feels responsive but stays well under ~15 tile layers.
+            this.frames = past.slice(-10).concat(now);
+            if (this.frames.length === 0) throw new Error('No radar frames');
+            this._buildLayers();
+        },
+
+        _buildLayers() {
+            this._tearDownLayers();
+            for (const f of this.frames) {
+                const layer = L.tileLayer(
+                    this.host + f.path + '/256/{z}/{x}/{y}/4/1_1.png',
+                    { opacity: 0, maxNativeZoom: 12, updateWhenIdle: true }
+                );
+                layer.setZIndex(50);
+                layer.addTo(map);
+                this.layers.push(layer);
+            }
+            // Start with the most recent past frame visible (last "real" frame).
+            const lastPastIdx = Math.min(9, this.frames.length - 1);
+            this.idx = lastPastIdx;
+            if (this.layers[this.idx]) this.layers[this.idx].setOpacity(0.45);
+        },
+
+        _tearDownLayers() {
+            for (const l of this.layers) {
+                try { map.removeLayer(l); } catch (_) {}
+            }
+            this.layers = [];
+        },
+
+        start() {
+            if (!this.active || this.frames.length < 2) return;
+            this.stop();
+            this.timer = setInterval(() => this._advance(), 700);
+        },
+
+        stop() {
+            if (this.timer) {
+                clearInterval(this.timer);
+                this.timer = null;
+            }
+        },
+
+        _advance() {
+            if (this.layers.length < 2) return;
+            const prev = this.idx;
+            this.idx = (this.idx + 1) % this.layers.length;
+            if (this.layers[prev]) this.layers[prev].setOpacity(0);
+            // Nowcast frames (indices 10+, since we keep the last 10 past frames)
+            // render at lower opacity so forecasts read as "less certain".
+            const opacity = (this.idx > 9) ? 0.35 : 0.45;
+            if (this.layers[this.idx]) this.layers[this.idx].setOpacity(opacity);
+        },
+
+        async enable() {
+            this.active = true;
+            await this.load();
+            this.start();
+        },
+
+        disable() {
+            this.active = false;
+            this.stop();
+            this._tearDownLayers();
+            this.frames = [];
+        }
+    };
+
+    async function toggleRadar() {
+        settings.showRadar = !settings.showRadar;
+        document.getElementById('radarBtn')?.classList.toggle('active', settings.showRadar);
+        document.getElementById('toggleRadar')?.classList.toggle('on', settings.showRadar);
+        saveSettings();
+        if (radarLayer) { map.removeLayer(radarLayer); radarLayer = null; } // legacy cleanup
+        if (settings.showRadar) {
+            try {
+                await radarAnimator.enable();
+                toast('Radar: ' + radarAnimator.frames.length + ' frames loaded');
+            } catch (e) {
+                toast('Radar unavailable');
+            }
+        } else {
+            radarAnimator.disable();
+        }
+    }
     function geolocate() { if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(pos => { map.setView([pos.coords.latitude, pos.coords.longitude], CONFIG.localZoom); toast('Location updated'); }, () => toast('Location denied')); } }
     function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 3000); }
 
@@ -11427,179 +13327,9 @@ ${trailData.map(p => {
         }
     }
 
-    // ============ PHASE 11: WEATHER OVERLAY ============
-    const weatherOverlay = {
-        windLayer: null,
-        sigmetLayer: null,
-        enabled: false,
-        windData: null,
-        
-        async toggle() {
-            this.enabled = !this.enabled;
-            document.getElementById('weatherOverlayBtn')?.classList.toggle('active', this.enabled);
-            
-            if (this.enabled) {
-                await this.load();
-            } else {
-                this.clear();
-            }
-        },
-        
-        async load() {
-            toast('Loading weather data...');
-            
-            try {
-                // Load wind data from Open-Meteo
-                await this.loadWindData();
-                this.drawWindBarbs();
-                
-                // Load SIGMETs
-                await this.loadSigmets();
-                
-                toast('Weather overlay loaded');
-            } catch (e) {
-                errorHandler.log('Weather Overlay', e.message);
-                toast('Weather data unavailable');
-            }
-        },
-        
-        async loadWindData() {
-            const bounds = map.getBounds();
-            const center = map.getCenter();
-            
-            // Open-Meteo API for wind data
-            const url = `https://api.open-meteo.com/v1/forecast?` +
-                `latitude=${center.lat}&longitude=${center.lng}` +
-                `&current=wind_speed_10m,wind_direction_10m` +
-                `&hourly=wind_speed_180hPa,wind_direction_180hPa` +
-                `&forecast_days=1`;
-            
-            try {
-                const resp = await fetch(url);
-                const data = await resp.json();
-                
-                this.windData = {
-                    surface: {
-                        speed: data.current?.wind_speed_10m || 0,
-                        direction: data.current?.wind_direction_10m || 0
-                    },
-                    upper: {
-                        speed: data.hourly?.wind_speed_180hPa?.[0] || 0,
-                        direction: data.hourly?.wind_direction_180hPa?.[0] || 0
-                    }
-                };
-            } catch (e) {
-                console.warn('Wind data fetch failed:', e);
-            }
-        },
-        
-        drawWindBarbs() {
-            if (this.windLayer) {
-                map.removeLayer(this.windLayer);
-            }
-            
-            if (!this.windData) return;
-            
-            const center = map.getCenter();
-            const wind = map.getZoom() > 8 ? this.windData.surface : this.windData.upper;
-            const altLabel = map.getZoom() > 8 ? 'Surface' : 'FL400';
-            
-            // Convert m/s to knots
-            const speedKt = Math.round(wind.speed * 1.944);
-            const direction = Math.round(wind.direction);
-            
-            const barbHtml = this.createWindBarbSVG(speedKt, direction);
-            
-            this.windLayer = L.marker(center, {
-                icon: L.divIcon({
-                    className: 'wind-barb',
-                    html: barbHtml,
-                    iconSize: [60, 60],
-                    iconAnchor: [30, 30]
-                })
-            }).addTo(map);
-            
-            this.windLayer.bindTooltip(
-                `${altLabel} Wind: ${speedKt} kt from ${direction}deg`,
-                { direction: 'top' }
-            );
-        },
-        
-        createWindBarbSVG(speedKt, direction) {
-            const speed = speedKt;
-            
-            return `
-                <svg viewBox="0 0 60 60" style="transform: rotate(${direction}deg)">
-                    <line x1="30" y1="50" x2="30" y2="10" stroke="#fff" stroke-width="2"/>
-                    ${speed >= 50 ? '<polygon points="30,10 25,20 30,15" fill="#fff"/>' : ''}
-                    ${speed >= 10 ? '<line x1="30" y1="15" x2="40" y2="10" stroke="#fff" stroke-width="2"/>' : ''}
-                    ${speed >= 20 ? '<line x1="30" y1="20" x2="40" y2="15" stroke="#fff" stroke-width="2"/>' : ''}
-                    ${speed >= 30 ? '<line x1="30" y1="25" x2="40" y2="20" stroke="#fff" stroke-width="2"/>' : ''}
-                    ${speed >= 40 ? '<line x1="30" y1="30" x2="40" y2="25" stroke="#fff" stroke-width="2"/>' : ''}
-                    ${speed >= 5 && speed < 10 ? '<line x1="30" y1="15" x2="35" y2="12" stroke="#fff" stroke-width="2"/>' : ''}
-                    <circle cx="30" cy="50" r="3" fill="#fff"/>
-                </svg>
-            `;
-        },
-        
-        async loadSigmets() {
-            try {
-                // AWC SIGMET API
-                const resp = await fetch('https://aviationweather.gov/api/data/isigmet?format=json');
-                if (!resp.ok) return;
-                
-                const data = await resp.json();
-                
-                if (this.sigmetLayer) {
-                    map.removeLayer(this.sigmetLayer);
-                }
-                
-                this.sigmetLayer = L.layerGroup();
-                
-                data.forEach(sigmet => {
-                    if (sigmet.coords && sigmet.coords.length > 2) {
-                        const coords = sigmet.coords.map(c => [c.lat, c.lon]);
-                        
-                        const color = sigmet.hazard === 'TURB' ? '#f97316' :
-                                     sigmet.hazard === 'ICE' ? '#3b82f6' :
-                                     sigmet.hazard === 'CONVECTIVE' ? '#ef4444' : '#888';
-                        
-                        const polygon = L.polygon(coords, {
-                            color: color,
-                            fillColor: color,
-                            fillOpacity: 0.2,
-                            weight: 2
-                        });
-                        
-                        polygon.bindPopup(`
-                            <div class="sigmet-popup">
-                                <strong>${sigmet.hazard || 'SIGMET'}</strong><br>
-                                ${sigmet.qualifier || ''}<br>
-                                FL${sigmet.altLo || '000'} - FL${sigmet.altHi || '999'}
-                            </div>
-                        `);
-                        
-                        this.sigmetLayer.addLayer(polygon);
-                    }
-                });
-                
-                this.sigmetLayer.addTo(map);
-            } catch (e) {
-                console.warn('SIGMET load failed:', e);
-            }
-        },
-        
-        clear() {
-            if (this.windLayer) {
-                map.removeLayer(this.windLayer);
-                this.windLayer = null;
-            }
-            if (this.sigmetLayer) {
-                map.removeLayer(this.sigmetLayer);
-                this.sigmetLayer = null;
-            }
-        }
-    };
+    // Weather overlay (SIGMET/G-AIRMET/CWA/PIREP/wind/radar anim)
+    // now lives in src/modules/36-weather-overlay.js.
+
 
     // ============ PHASE 11: RUNWAY VISUALIZATION ============
     const runwayDisplay = {

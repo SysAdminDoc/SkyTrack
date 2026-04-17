@@ -10,7 +10,7 @@
 
 # SkyTrack
 
-![Version](https://img.shields.io/badge/version-0.17.0-blue)
+![Version](https://img.shields.io/badge/version-0.20.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-Web-4285F4)
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES2020+-F7DF1E?logo=javascript&logoColor=black)
@@ -224,9 +224,18 @@ SkyTrack fetches live ADS-B data from multiple free APIs with automatic failover
 
 | Source | CORS | Priority | Coverage |
 |--------|------|----------|----------|
-| [Airplanes.live](https://airplanes.live) | Yes | Primary | Global |
-| [ADSB One](https://adsb.one) | Yes | Secondary | Global |
-| [ADSB.lol](https://adsb.lol) | No (proxied) | Tertiary | Global |
+| [ADSB One](https://adsb.one) | Yes | Primary | Global |
+| [ADSB.lol](https://adsb.lol) | No (proxied) | Secondary | Global |
+| [ADSB.fi](https://adsb.fi) | Yes | Tertiary | Europe-strong |
+| [Airplanes.live](https://airplanes.live) | Yes | Quaternary | Global |
+
+Additional on-demand enrichment APIs (called only for the selected aircraft):
+
+| API | Purpose |
+|-----|---------|
+| [adsbdb.com v2](https://www.adsbdb.com) | Callsign → origin/destination airport lookup (400k+ routes) |
+| [hexdb.io](https://hexdb.io) | Fallback callsign→route and aircraft/airport metadata |
+| [aviationweather.gov /api/data](https://aviationweather.gov/data/api/) | SIGMET, G-AIRMET, CWA, PIREP, METAR, TAF, NOTAM |
 
 The grid fetch system tiles the visible map area with overlapping 250nm radius API queries, distributing requests across sources at 1 req/sec per API. At global zoom, this covers the entire planet in ~16 seconds with progressive loading.
 

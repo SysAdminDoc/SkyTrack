@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 // SkyTrack build script
 //
-// The project is authored as a small set of files under src/:
-//   src/index.html  — HTML shell (references styles.css + app.js)
-//   src/styles.css  — all stylesheet rules
-//   src/app.js      — the main application script
+// Authoring layout (all under src/):
+//   src/index.html     — HTML shell (references styles.css + app.js)
+//   src/styles.css     — all stylesheet rules
+//   src/modules/*.js   — feature modules, loaded in lexicographic order
+//                        (numeric prefixes like 00-config.js, 10-utils.js
+//                        control ordering).
+//   src/app.js         — orchestrator / entry point, inlined LAST
 //
-// GitHub Pages deploys the root index.html as a single, self-contained file
-// with no build step or server runtime. This script produces that root
-// index.html by inlining styles.css and app.js back into the src shell.
+// The deployable is a single self-contained index.html at the repo root:
+// modules + app.js are concatenated back into the single inline <script>
+// block so the build runs identically from file:// and from GitHub Pages.
 //
 // Usage:
 //   node build.mjs                # build to ./index.html
@@ -23,9 +26,10 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SRC_DIR = path.join(__dirname, 'src');
+const MODULES_DIR = path.join(SRC_DIR, 'modules');
 const SHELL = path.join(SRC_DIR, 'index.html');
 const CSS = path.join(SRC_DIR, 'styles.css');
-const JS = path.join(SRC_DIR, 'app.js');
+const APP = path.join(SRC_DIR, 'app.js');
 
 function read(p) {
     if (!fs.existsSync(p)) {
@@ -35,10 +39,33 @@ function read(p) {
     return fs.readFileSync(p, 'utf8');
 }
 
+function listModules() {
+    if (!fs.existsSync(MODULES_DIR)) return [];
+    return fs.readdirSync(MODULES_DIR)
+        .filter(name => name.endsWith('.js'))
+        .sort()
+        .map(name => path.join(MODULES_DIR, name));
+}
+
+function buildJs() {
+    // Concatenate modules in lexicographic order, then app.js last.
+    // Modules are separated by a banner comment so stack traces and
+    // view-source-in-browser stay readable.
+    const chunks = [];
+    for (const modPath of listModules()) {
+        const rel = 'modules/' + path.basename(modPath);
+        chunks.push(`    // ─── module: ${rel} ───────────────────────────────────────────`);
+        chunks.push(read(modPath).replace(/\s+$/, ''));
+    }
+    chunks.push('    // ─── entry: app.js ───────────────────────────────────────────');
+    chunks.push(read(APP).replace(/\s+$/, ''));
+    return chunks.join('\n');
+}
+
 function build() {
     const shell = read(SHELL);
     const css = read(CSS).replace(/\s+$/, '');
-    const js = read(JS).replace(/\s+$/, '');
+    const js = buildJs();
 
     const linkRe = /<link\s+rel="stylesheet"\s+href="styles\.css"\s*\/?\s*>\s*/i;
     const scriptRe = /<script\s+src="app\.js"\s*>\s*<\/script>\s*/i;
@@ -54,10 +81,7 @@ function build() {
 
     // NOTE: use function replacers, not string replacers. String replacers
     // treat sequences like $&, $', $`, $n as replacement references, so any
-    // such sequence in the CSS or JS payload would corrupt the output. Our
-    // app.js contains literal "$'" inside string replace calls, which
-    // previously caused the build output to splice HTML body markup into the
-    // middle of the script. Function replacers return the string verbatim.
+    // such sequence in the CSS or JS payload would corrupt the output.
     let out = shell.replace(linkRe, () => `<style>\n${css}\n    </style>\n    `);
     out = out.replace(scriptRe, () => `<script>\n${js}\n    </script>\n`);
     return out;
@@ -99,4 +123,5 @@ if (checkMode) {
 }
 
 fs.writeFileSync(outPath, built, 'utf8');
-console.log(`[build] wrote ${path.relative(__dirname, outPath)} (${built.length} bytes, ${built.split(/\r?\n/).length} lines)`);
+const moduleCount = listModules().length;
+console.log(`[build] wrote ${path.relative(__dirname, outPath)} (${built.length} bytes, ${built.split(/\r?\n/).length} lines, ${moduleCount} modules + app.js)`);
