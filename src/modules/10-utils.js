@@ -117,6 +117,73 @@
         }
     };
 
+    // ============ MULTI-TAB COORDINATION ============
+    // Two SkyTrack tabs open in the same browser would each hit every
+    // ADS-B endpoint on their own 6-second cadence — doubling traffic
+    // and wasting quota against the free aggregators. This helper
+    // elects a leader tab based on `performance.timeOrigin` (oldest
+    // wins, stable across reloads within the session). Non-leader
+    // tabs get `tabLeader.isLeader === false` and can throttle, skip
+    // the network loop, or read from IDB-mirrored state instead.
+    //
+    // BroadcastChannel is widely supported (Chrome, FF, Safari 15.4+).
+    // When it's missing we just declare ourselves the leader and move
+    // on — single-tab behaviour is unchanged.
+    const tabLeader = {
+        channelName: 'skytrack-tab-coord',
+        myId: (typeof performance === 'object' && performance.timeOrigin)
+            ? performance.timeOrigin + '-' + Math.random().toString(36).slice(2, 8)
+            : Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+        isLeader: true,
+        _chan: null,
+        _peers: new Map(),   // peerId → timeOrigin
+        _onChange: null,
+
+        init(onChange) {
+            this._onChange = onChange || null;
+            if (typeof BroadcastChannel !== 'function') return;
+            try {
+                this._chan = new BroadcastChannel(this.channelName);
+            } catch (_) { return; }
+            this._chan.onmessage = (evt) => {
+                const m = evt?.data;
+                if (!m || typeof m !== 'object') return;
+                if (m.type === 'hello' && m.id && m.id !== this.myId) {
+                    this._peers.set(m.id, m.timeOrigin || 0);
+                    this._chan.postMessage({ type: 'present', id: this.myId, timeOrigin: performance.timeOrigin || 0 });
+                    this._recompute();
+                } else if (m.type === 'present' && m.id && m.id !== this.myId) {
+                    this._peers.set(m.id, m.timeOrigin || 0);
+                    this._recompute();
+                } else if (m.type === 'bye' && m.id) {
+                    this._peers.delete(m.id);
+                    this._recompute();
+                }
+            };
+            this._chan.postMessage({ type: 'hello', id: this.myId, timeOrigin: performance.timeOrigin || 0 });
+            window.addEventListener('pagehide', () => {
+                try { this._chan?.postMessage({ type: 'bye', id: this.myId }); } catch (_) {}
+                try { this._chan?.close(); } catch (_) {}
+            });
+        },
+
+        _recompute() {
+            // Leader = smallest timeOrigin across self + peers.
+            const myOrigin = (typeof performance === 'object' && performance.timeOrigin) || 0;
+            let minOrigin = myOrigin;
+            for (const origin of this._peers.values()) {
+                if (origin && origin < minOrigin) minOrigin = origin;
+            }
+            const newLeader = myOrigin <= minOrigin;
+            if (newLeader !== this.isLeader) {
+                this.isLeader = newLeader;
+                if (typeof this._onChange === 'function') {
+                    try { this._onChange(this.isLeader); } catch (_) {}
+                }
+            }
+        }
+    };
+
     // ============ SHARED AUDIO CONTEXT ============
     // Browsers cap the number of concurrent AudioContexts (Chromium ≈ 6 —
     // after that, new `new AudioContext()` calls silently fail and all

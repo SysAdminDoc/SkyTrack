@@ -1729,6 +1729,22 @@
         }
         .home-widget-empty p { margin: 6px 0; color: rgba(226, 232, 240, 0.75); }
 
+        /* Flight analytics chips (module AA-flight-analytics.js) */
+        .analytics-chip {
+            display: inline-block;
+            padding: 1px 6px;
+            margin-left: 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: #fff;
+            cursor: help;
+        }
+        .analytics-chip.go-around     { background: #f97316; }
+        .analytics-chip.speed-anomaly { background: #fbbf24; color: #1f2937; }
+
         /* Loiter / surveillance-orbit chip (module 94-surveillance-orbit.js) */
         .loiter-chip {
             display: inline-block;

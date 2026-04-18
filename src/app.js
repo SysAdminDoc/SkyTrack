@@ -1705,343 +1705,9 @@
     function haversineDistance(lat1, lon1, lat2, lon2) { const R = 6371, dLat = (lat2 - lat1) * Math.PI / 180, dLon = (lon2 - lon1) * Math.PI / 180; const a = Math.sin(dLat/2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) ** 2; return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); }
     function getAltitudeColor(alt) { if (alt === 'ground' || !alt || alt <= 0) return '#00ff00'; if (alt < 1000) return '#00ff00'; if (alt < 5000) return '#7fff00'; if (alt < 10000) return '#ffff00'; if (alt < 20000) return '#ffa500'; if (alt < 30000) return '#ff4500'; if (alt < 40000) return '#ff0000'; return '#9400d3'; }
     
-    // ============ PHASE 10: ROUTE PREDICTION SYSTEM ============
-    const routePredictor = {
-        predictionLine: null,
-        etaMarkers: null,
-        greatCircleLine: null,
-        predictionActive: false,
-        routeActive: false,
-        
-        // Predict future position based on current heading and speed
-        predictPath(ac, minutes = 30) {
-            if (!ac || ac.lat === undefined || !ac.gs || !ac.track) return null;
-            
-            const points = [];
-            const speedKmPerMin = ac.gs * 1.852 / 60; // knots to km/min
-            const heading = ac.track * Math.PI / 180;
-            
-            let lat = ac.lat;
-            let lon = ac.lon;
-            
-            // Generate prediction points every minute
-            for (let i = 1; i <= minutes; i++) {
-                const distance = speedKmPerMin * i;
-                const newPos = this.destinationPoint(lat, lon, heading, distance);
-                points.push({
-                    lat: newPos.lat,
-                    lon: newPos.lon,
-                    minutesAhead: i,
-                    estimatedAlt: this.predictAltitude(ac, i)
-                });
-            }
-            
-            return points;
-        },
-        
-        // Calculate destination point given start, bearing, and distance
-        destinationPoint(lat, lon, bearing, distanceKm) {
-            const R = 6371; // Earth radius in km
-            const d = distanceKm / R;
-            
-            const lat1 = lat * Math.PI / 180;
-            const lon1 = lon * Math.PI / 180;
-            
-            const lat2 = Math.asin(
-                Math.sin(lat1) * Math.cos(d) +
-                Math.cos(lat1) * Math.sin(d) * Math.cos(bearing)
-            );
-            
-            const lon2 = lon1 + Math.atan2(
-                Math.sin(bearing) * Math.sin(d) * Math.cos(lat1),
-                Math.cos(d) - Math.sin(lat1) * Math.sin(lat2)
-            );
-            
-            return {
-                lat: lat2 * 180 / Math.PI,
-                lon: lon2 * 180 / Math.PI
-            };
-        },
-        
-        // Predict altitude based on vertical speed
-        predictAltitude(ac, minutesAhead) {
-            if (!ac.baro_rate) return ac.alt_baro;
-            const altChange = ac.baro_rate * minutesAhead;
-            return Math.max(0, (ac.alt_baro || 0) + altChange);
-        },
-        
-        // Calculate ETA to destination airport
-        calculateETA(ac) {
-            if (!ac || !ac.to || ac.lat === undefined || !ac.gs) return null;
-            
-            const destAirport = airportDB.getByCode(ac.to);
-            if (!destAirport) return null;
-            
-            const distance = haversineDistance(ac.lat, ac.lon, destAirport.lat, destAirport.lon);
-            const speedKmPerHour = ac.gs * 1.852;
-            
-            if (speedKmPerHour < 50) return null; // Too slow, probably not in flight
-            
-            const hoursRemaining = distance / speedKmPerHour;
-            const eta = new Date(Date.now() + hoursRemaining * 3600000);
-            
-            return {
-                distance: distance,
-                hoursRemaining: hoursRemaining,
-                eta: eta,
-                airport: destAirport
-            };
-        },
-        
-        // Draw prediction line on map
-        showPrediction(ac) {
-            this.clearPrediction();
-            
-            const points = this.predictPath(ac, 30);
-            if (!points || points.length < 2) {
-                toast('Unable to predict - no speed/heading data');
-                return;
-            }
-            
-            // Create gradient line
-            const latlngs = [[ac.lat, ac.lon], ...points.map(p => [p.lat, p.lon])];
-            
-            this.predictionLine = L.polyline(latlngs, {
-                color: '#ffffff',
-                weight: 2,
-                opacity: 0.5,
-                dashArray: '8, 8',
-                className: 'prediction-line'
-            }).addTo(map);
-            
-            this.etaMarkers = [];
-            
-            // Add time markers every 10 minutes
-            [10, 20, 30].forEach(min => {
-                const point = points[min - 1];
-                if (point) {
-                    const marker = L.circleMarker([point.lat, point.lon], {
-                        radius: 4,
-                        fillColor: '#fff',
-                        fillOpacity: 0.7,
-                        color: '#fff',
-                        weight: 1
-                    }).addTo(map);
-                    
-                    marker.bindTooltip(`+${min} min`, {
-                        permanent: true,
-                        direction: 'top',
-                        className: 'prediction-tooltip'
-                    });
-                    
-                    this.etaMarkers.push(marker);
-                }
-            });
-            
-            this.predictionActive = true;
-            document.getElementById('showPredictionBtn')?.classList.add('active');
-        },
-        
-        // Draw great circle route to destination
-        showGreatCircle(ac) {
-            this.clearGreatCircle();
-            
-            if (!ac || !ac.to) {
-                toast('No destination known');
-                return;
-            }
-            
-            const destAirport = airportDB.getByCode(ac.to);
-            if (!destAirport) {
-                toast('Destination airport not found');
-                return;
-            }
-            
-            // Calculate great circle path points
-            const points = this.greatCirclePoints(
-                ac.lat, ac.lon,
-                destAirport.lat, destAirport.lon,
-                50 // number of intermediate points
-            );
-            
-            this.greatCircleLine = L.polyline(points, {
-                color: '#4ade80',
-                weight: 2,
-                opacity: 0.6,
-                dashArray: '4, 8'
-            }).addTo(map);
-            
-            // Add destination marker
-            const destMarker = L.marker([destAirport.lat, destAirport.lon], {
-                icon: L.divIcon({
-                    className: 'destination-marker',
-                    html: '<div class="dest-icon">D</div>',
-                    iconSize: [24, 24],
-                    iconAnchor: [12, 12]
-                })
-            }).addTo(map);
-            
-            destMarker.bindTooltip(destAirport.name, { direction: 'top' });
-            
-            this.etaMarkers = this.etaMarkers || [];
-            this.etaMarkers.push(destMarker);
-            
-            this.routeActive = true;
-            document.getElementById('showRouteBtn')?.classList.add('active');
-        },
-        
-        // Generate great circle path points
-        greatCirclePoints(lat1, lon1, lat2, lon2, numPoints) {
-            const points = [];
-            
-            const phi1 = lat1 * Math.PI / 180;
-            const phi2 = lat2 * Math.PI / 180;
-            const lambda1 = lon1 * Math.PI / 180;
-            const lambda2 = lon2 * Math.PI / 180;
-            
-            const d = Math.acos(
-                Math.sin(phi1) * Math.sin(phi2) +
-                Math.cos(phi1) * Math.cos(phi2) * Math.cos(lambda2 - lambda1)
-            );
-            
-            // Handle very short distances
-            if (d < 0.0001) {
-                return [[lat1, lon1], [lat2, lon2]];
-            }
-            
-            for (let i = 0; i <= numPoints; i++) {
-                const f = i / numPoints;
-                
-                const A = Math.sin((1 - f) * d) / Math.sin(d);
-                const B = Math.sin(f * d) / Math.sin(d);
-                
-                const x = A * Math.cos(phi1) * Math.cos(lambda1) + B * Math.cos(phi2) * Math.cos(lambda2);
-                const y = A * Math.cos(phi1) * Math.sin(lambda1) + B * Math.cos(phi2) * Math.sin(lambda2);
-                const z = A * Math.sin(phi1) + B * Math.sin(phi2);
-                
-                const lat = Math.atan2(z, Math.sqrt(x * x + y * y)) * 180 / Math.PI;
-                const lon = Math.atan2(y, x) * 180 / Math.PI;
-                
-                points.push([lat, lon]);
-            }
-            
-            return points;
-        },
-        
-        clearPrediction() {
-            if (this.predictionLine) {
-                map.removeLayer(this.predictionLine);
-                this.predictionLine = null;
-            }
-            if (this.etaMarkers && !this.routeActive) {
-                this.etaMarkers.forEach(m => map.removeLayer(m));
-                this.etaMarkers = null;
-            }
-            this.predictionActive = false;
-            document.getElementById('showPredictionBtn')?.classList.remove('active');
-        },
-        
-        clearGreatCircle() {
-            if (this.greatCircleLine) {
-                map.removeLayer(this.greatCircleLine);
-                this.greatCircleLine = null;
-            }
-            if (this.etaMarkers && !this.predictionActive) {
-                this.etaMarkers.forEach(m => map.removeLayer(m));
-                this.etaMarkers = null;
-            }
-            this.routeActive = false;
-            document.getElementById('showRouteBtn')?.classList.remove('active');
-        },
-        
-        clearAll() {
-            if (this.predictionLine) {
-                map.removeLayer(this.predictionLine);
-                this.predictionLine = null;
-            }
-            if (this.greatCircleLine) {
-                map.removeLayer(this.greatCircleLine);
-                this.greatCircleLine = null;
-            }
-            if (this.etaMarkers) {
-                this.etaMarkers.forEach(m => map.removeLayer(m));
-                this.etaMarkers = null;
-            }
-            this.predictionActive = false;
-            this.routeActive = false;
-            document.getElementById('showPredictionBtn')?.classList.remove('active');
-            document.getElementById('showRouteBtn')?.classList.remove('active');
-        },
-        
-        togglePrediction(ac) {
-            if (this.predictionActive) {
-                this.clearPrediction();
-                toast('Prediction hidden');
-            } else {
-                this.showPrediction(ac);
-                toast('Showing 30-minute prediction');
-            }
-        },
-        
-        toggleRoute(ac) {
-            if (this.routeActive) {
-                this.clearGreatCircle();
-                toast('Route hidden');
-            } else {
-                this.showGreatCircle(ac);
-                if (this.routeActive) toast('Showing route to ' + ac.to);
-            }
-        },
-        
-        // Update ETA display in info panel
-        updateETADisplay(ac) {
-            const etaSection = document.getElementById('etaSection');
-            if (!etaSection) return;
-            
-            const eta = this.calculateETA(ac);
-            
-            if (eta) {
-                etaSection.style.display = 'block';
-                // The ETA panel renders differently between desktop and mobile
-                // layouts; child elements can legitimately be absent. Null-guard
-                // each write so a missing sub-element doesn't throw and bring
-                // the entire info-panel update with it.
-                const etaTimeEl = document.getElementById('etaTime');
-                if (etaTimeEl) etaTimeEl.textContent =
-                    eta.eta.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const etaDistEl = document.getElementById('etaDistance');
-                if (etaDistEl) etaDistEl.textContent = Math.round(eta.distance) + ' km';
+    // Route predictor (heading projection + great-circle arc + ETA markers)
+    // now lives in src/modules/55-route-predictor.js.
 
-                const hours = Math.floor(eta.hoursRemaining);
-                const mins = Math.round((eta.hoursRemaining - hours) * 60);
-                const etaRemainEl = document.getElementById('etaRemaining');
-                if (etaRemainEl) etaRemainEl.textContent =
-                    hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-
-                // Calculate progress
-                const progressBar = document.getElementById('etaProgressBar');
-                if (progressBar) {
-                    let progressPct = 0;
-                    if (ac.from) {
-                        const originAirport = ac.detectedOrigin || airportDB.getByCode(ac.from);
-                        if (originAirport && eta.airport) {
-                            const totalDist = haversineDistance(
-                                originAirport.lat, originAirport.lon,
-                                eta.airport.lat, eta.airport.lon
-                            );
-                            if (Number.isFinite(totalDist) && totalDist > 0) {
-                                progressPct = Math.min(100, Math.max(0, (totalDist - eta.distance) / totalDist * 100));
-                            }
-                        }
-                    }
-                    progressBar.style.width = progressPct.toFixed(0) + '%';
-                }
-            } else {
-                etaSection.style.display = 'none';
-            }
-        }
-    };
-    
     // ============ PHASE 10: ENHANCED ALTITUDE CHART ============
     const enhancedAltitudeChart = {
         canvas: null,
@@ -2606,6 +2272,11 @@
 
     // ============ INITIALIZATION ============
     document.addEventListener('DOMContentLoaded', async () => {
+        // Multi-tab coordination — elect a leader tab so two open windows
+        // don't each hit every ADS-B source. Non-leader tabs still render
+        // from their own cache; they just don't initiate a fresh network
+        // round. (v0.24.0 — module 10-utils.js `tabLeader`.)
+        try { tabLeader.init(); } catch (_) {}
         // Initialize IndexedDB first
         try {
             await skytrackDB.init();
@@ -2740,9 +2411,13 @@
         
         setLoadingProgress(95, 'Loading aircraft...');
         await loadAircraft();
-        
+
         setLoadingProgress(100, 'Ready!');
-        setTimeout(() => document.getElementById('loading').classList.add('hidden'), 300);
+        setTimeout(() => document.getElementById('loading')?.classList.add('hidden'), 300);
+        // Scene URL restore (v0.24.0 — module 9B-scene-url.js). Runs after
+        // the first aircraft fetch so that auto-selecting a hex from the
+        // token has a populated cache to work with.
+        try { sceneUrl.restore(); } catch (_) {}
         
         _startFetchInterval();
         _setPausableInterval(saveAircraftCache, 30000, 'saveCache');
@@ -3747,15 +3422,18 @@
     function selectAircraft(hex) {
         if (trailLine) { if (trailLine._originMarker) map.removeLayer(trailLine._originMarker); if (trailLine._group) map.removeLayer(trailLine._group); else map.removeLayer(trailLine); trailLine = null; }
         selectedHex = hex; const ac = aircraftCache[hex]; if (!ac) return;
-        // Callsign + phase-of-flight chip + surveillance-orbit chip
-        // (v0.19.0/v0.20.0 — modules 91-phase-of-flight.js, 94-surveillance-orbit.js)
+        // Callsign + phase-of-flight chip + surveillance-orbit chip +
+        // flight-analytics chips (go-around / speed anomaly).
+        // (v0.19.0/v0.20.0/v0.24.0 — modules 91, 94, AA).
         phaseClassifier.annotate(ac);
         surveillanceOrbit.annotate(ac);
+        try { flightAnalytics.annotate(ac); } catch (_) {}
         const callsignEl = document.getElementById('infoCallsign');
         if (callsignEl) {
             callsignEl.innerHTML = _escHtml(ac.flight || 'N/A') +
                 phaseClassifier.chipHtml(ac) +
-                surveillanceOrbit.chipHtml(ac);
+                surveillanceOrbit.chipHtml(ac) +
+                (flightAnalytics.chipHtml ? flightAnalytics.chipHtml(ac) : '');
         }
         // Hex + country flag badge (v0.19.0 — module 92-country-flag.js)
         const hexEl = document.getElementById('infoHex');
@@ -4349,7 +4027,15 @@
         document.getElementById('exportKMLBtn')?.addEventListener('click', () => { if (selectedHex) exportTrail(selectedHex, 'kml'); });
         document.getElementById('shareFlightBtn')?.addEventListener('click', () => { if (selectedHex) shareManager.share(selectedHex); });
         document.getElementById('playbackBtn')?.addEventListener('click', () => { if (selectedHex) playbackController.start(selectedHex); });
-        
+        // Flight card (v0.24.0 — module 9A-flight-card.js): copy PNG to clipboard.
+        document.getElementById('flightCardBtn')?.addEventListener('click', () => {
+            if (selectedHex) flightCard.copy(selectedHex);
+        });
+        // Scene URL (v0.24.0 — module 9B-scene-url.js): copy view-state link.
+        document.getElementById('sceneUrlBtn')?.addEventListener('click', () => sceneUrl.copy());
+        // Diagnostic copy-report (v0.24.0 — module 9C-diagnostics.js).
+        document.getElementById('diagnosticsBtn')?.addEventListener('click', () => diagnostics.copy());
+
         // Phase 10: Prediction and Route button handlers
         document.getElementById('showPredictionBtn')?.addEventListener('click', () => {
             if (selectedHex) {
@@ -5890,218 +5576,7 @@ ${trailData.map(p => {
         }
     };
 
-    // ============ PHASE 6: MINI-MAP ============
-    const miniMap = {
-        map: null,
-        viewRect: null,
-        enabled: false,
-        aircraftMarkers: [],
-        isDragging: false,
-        fixedZoom: 3, // Fixed zoom level for continent overview
-        
-        init() {
-            const container = document.createElement('div');
-            container.id = 'miniMap';
-            container.className = 'mini-map';
-            document.body.appendChild(container);
-            
-            this.map = L.map('miniMap', {
-                zoomControl: false,
-                attributionControl: false,
-                dragging: true, // Enable dragging
-                touchZoom: false,
-                scrollWheelZoom: false,
-                doubleClickZoom: false,
-                boxZoom: false
-            });
-            
-            // Initialize with current map style
-            const currentStyle = typeof currentBaseMap !== 'undefined' ? currentBaseMap : 'dark';
-            const styleUrls = {
-                'dark': 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-                'satellite': 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                'google-streets': 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
-                'google-satellite': 'https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-                'google-hybrid': 'https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
-                'google-terrain': 'https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}'
-            };
-            const tileUrl = styleUrls[currentStyle] || styleUrls['dark'];
-            const tileOptions = { maxZoom: 19 };
-            if (currentStyle.startsWith('google-')) {
-                tileOptions.subdomains = ['mt0', 'mt1', 'mt2', 'mt3'];
-            }
-            this.tileLayer = L.tileLayer(tileUrl, tileOptions).addTo(this.map);
-            
-            this.viewRect = L.rectangle([[0, 0], [0, 0]], {
-                color: '#ffd700',
-                weight: 2,
-                fillOpacity: 0.1,
-                interactive: true // Make rectangle interactive for dragging
-            }).addTo(this.map);
-            
-            // Double-click to navigate main map
-            this.map.on('dblclick', (e) => {
-                L.DomEvent.stopPropagation(e);
-                map.setView(e.latlng, map.getZoom());
-                toast('Navigated to location');
-            });
-            
-            // Drag the view rectangle to move main map
-            let dragStartLatLng = null;
-            
-            this.map.on('mousedown', (e) => {
-                if (this.viewRect.getBounds().contains(e.latlng)) {
-                    this.isDragging = true;
-                    dragStartLatLng = e.latlng;
-                    this.map.dragging.disable();
-                    L.DomUtil.addClass(this.map.getContainer(), 'leaflet-dragging');
-                }
-            });
-            
-            this.map.on('mousemove', (e) => {
-                if (this.isDragging && dragStartLatLng) {
-                    const newCenter = map.getCenter();
-                    const latDiff = e.latlng.lat - dragStartLatLng.lat;
-                    const lngDiff = e.latlng.lng - dragStartLatLng.lng;
-                    map.setView([newCenter.lat + latDiff, newCenter.lng + lngDiff], map.getZoom(), { animate: false });
-                    dragStartLatLng = e.latlng;
-                }
-            });
-            
-            this.map.on('mouseup', () => {
-                if (this.isDragging) {
-                    this.isDragging = false;
-                    this.map.dragging.enable();
-                    L.DomUtil.removeClass(this.map.getContainer(), 'leaflet-dragging');
-                }
-            });
-            
-            // When minimap is dragged (not the rectangle), update center
-            this.map.on('dragend', () => {
-                if (!this.isDragging) {
-                    // User dragged the minimap itself, update view rect position
-                    this.updateViewRect();
-                }
-            });
-            
-            // Sync view rect when main map moves (but don't change minimap zoom)
-            map.on('moveend', () => this.updateViewRect());
-            
-            // Initial sync
-            this.syncCenter();
-        },
-        
-        syncCenter() {
-            if (!this.map) return;
-            const center = map.getCenter();
-            this.map.setView(center, this.fixedZoom, { animate: false });
-            this.updateViewRect();
-        },
-        
-        updateViewRect() {
-            if (!this.map || !this.viewRect) return;
-            const bounds = map.getBounds();
-            this.viewRect.setBounds(bounds);
-        },
-        
-        toggle() {
-            this.enabled = !this.enabled;
-            const container = document.getElementById('miniMap');
-            if (container) container.classList.toggle('visible', this.enabled);
-            document.getElementById('miniMapBtn')?.classList.toggle('active', this.enabled);
-            if (this.enabled) {
-                this.syncCenter();
-                this.updateAircraft();
-            }
-        },
-        
-        // Update map style to match main map
-        updateMapStyle(styleName) {
-            if (!this.map || !this.tileLayer) return;
-            this.map.removeLayer(this.tileLayer);
-            
-            // Map style URLs matching the main map
-            const styleUrls = {
-                'dark': 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-                'satellite': 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                'google-streets': 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
-                'google-satellite': 'https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-                'google-hybrid': 'https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
-                'google-terrain': 'https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}'
-            };
-            
-            const tileUrl = styleUrls[styleName] || styleUrls['dark'];
-            const options = { maxZoom: 19 };
-            
-            // Google tiles need subdomains
-            if (styleName.startsWith('google-')) {
-                options.subdomains = ['mt0', 'mt1', 'mt2', 'mt3'];
-            }
-            
-            this.tileLayer = L.tileLayer(tileUrl, options).addTo(this.map);
-        },
-        
-        // Legacy method for theme system compatibility
-        updateTheme(isDark) {
-            this.updateMapStyle(isDark ? 'dark' : 'google-streets');
-        },
-        
-        updateAircraft: perfUtils.throttle(function() {
-            if (!this.enabled || !this.map) return;
-            
-            // Build a map of current positions
-            const currentPositions = new Map();
-            Object.values(aircraftCache).forEach(ac => {
-                if (ac.lat !== undefined) {
-                    currentPositions.set(ac.hex, {
-                        lat: ac.lat,
-                        lon: ac.lon,
-                        isSelected: ac.hex === selectedHex,
-                        isInteresting: ac.interesting || ac.militaryInfo || ac.isVIP
-                    });
-                }
-            });
-            
-            // Remove markers for aircraft no longer present
-            this.aircraftMarkers = this.aircraftMarkers.filter(m => {
-                if (!currentPositions.has(m._skytrackHex)) {
-                    this.map.removeLayer(m);
-                    return false;
-                }
-                return true;
-            });
-            
-            // Create a set of existing hexes
-            const existingHexes = new Set(this.aircraftMarkers.map(m => m._skytrackHex));
-            
-            // Update existing or add new markers
-            currentPositions.forEach((pos, hex) => {
-                const color = pos.isSelected ? '#00ffff' :
-                             pos.isInteresting ? '#ffd700' : '#666';
-                const radius = pos.isSelected ? 4 : 2;
-                
-                if (existingHexes.has(hex)) {
-                    // Update existing marker
-                    const marker = this.aircraftMarkers.find(m => m._skytrackHex === hex);
-                    if (marker) {
-                        marker.setLatLng([pos.lat, pos.lon]);
-                        marker.setStyle({ fillColor: color, radius: radius });
-                    }
-                } else {
-                    // Add new marker
-                    const marker = L.circleMarker([pos.lat, pos.lon], {
-                        radius: radius,
-                        fillColor: color,
-                        fillOpacity: 1,
-                        stroke: false
-                    });
-                    marker._skytrackHex = hex;
-                    marker.addTo(this.map);
-                    this.aircraftMarkers.push(marker);
-                }
-            });
-        }, 2000) // Throttle to every 2 seconds
-    };
+    // Mini-map now lives in src/modules/75-minimap.js.
 
     // ============ PHASE 6: TRAFFIC HEATMAP ============
     const heatmapLayer = {
