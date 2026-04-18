@@ -1498,6 +1498,83 @@
             font-weight: 600;
             letter-spacing: 0.5px;
         }
+        /* Callsign lore + Why-here insights (modules 97, 98) */
+        .info-insights {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 10px 0 6px;
+            padding: 0 10px;
+        }
+        .info-insights:empty { display: none; }
+        .lore-card {
+            background: rgba(88, 166, 255, 0.06);
+            border: 1px solid rgba(88, 166, 255, 0.28);
+            border-radius: 6px;
+            padding: 8px 10px;
+        }
+        .lore-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .lore-chip {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #fff;
+            text-transform: uppercase;
+        }
+        .lore-chip.inline {
+            font-size: 9px;
+            padding: 1px 5px;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+        .lore-title {
+            font-weight: 600;
+            font-size: 13px;
+            color: #e2e8f0;
+        }
+        .lore-body {
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.5;
+            color: rgba(226, 232, 240, 0.85);
+        }
+        .lore-link {
+            display: inline-block;
+            margin-top: 4px;
+            font-size: 11px;
+            color: #58a6ff;
+            text-decoration: none;
+        }
+        .lore-link:hover { text-decoration: underline; }
+        .why-here {
+            background: rgba(34, 197, 94, 0.05);
+            border: 1px solid rgba(34, 197, 94, 0.22);
+            border-radius: 6px;
+            padding: 8px 10px;
+        }
+        .why-here-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.7px;
+            text-transform: uppercase;
+            color: rgba(134, 239, 172, 0.85);
+            margin-bottom: 3px;
+        }
+        .why-here p {
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.55;
+            color: rgba(226, 232, 240, 0.9);
+        }
+
         /* Emergency squawk pulse (module 93-emergency-pulse.js) */
         .sq-pulse-icon {
             background: transparent !important;

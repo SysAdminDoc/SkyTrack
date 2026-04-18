@@ -2,6 +2,41 @@
 
 All notable changes to SkyTrack will be documented in this file.
 
+## [v0.22.0] - 2026-04-18
+
+### Project layout
+- `alertSystem` — its ~385-line implementation — moved into
+  `src/modules/40-alerts.js`. `src/app.js` drops to ~10,740 lines.
+- Two new feature modules:
+  - `97-callsign-lore.js`
+  - `98-why-here.js`
+
+### Added
+- **Callsign Lore pop-ups.** Curated in-memory table of notable aviation
+  callsigns (Air Force One / SAM / Nightwatch / Janet / Jolly / Pedro /
+  NOAA hurricane hunters / Thunderbirds / Snowbirds …). When a tracked
+  aircraft's callsign matches the table (exact / stem / prefix, longest
+  prefix wins), the info panel shows a short "lore card" with a
+  categorised chip, one-paragraph explanation, and optional Wikipedia
+  link. Zero network — the table ships inside the build.
+- **"Why is this plane here?" explainer.** Rule-based natural-language
+  summary paragraph that composes what we already know into prose: type
+  family (helicopter / business jet / narrowbody / etc.), phase of
+  flight, altitude, route or detected origin, operator, plus a
+  situation-specific second sentence for surveillance orbits, emergency
+  squawks, VIPs, military, and airliner cruise/approach/climb. No LLM,
+  no network calls — pure templating on cached aircraft data.
+
+### Improvements / hardening
+- `connectionMonitor.updateStatus` in 20-reliability.js now null-guards
+  its child queries so variant header layouts can't throw.
+
+### Notes
+- Rendering uses a single `<div id="infoInsights">` injected above the
+  info-body on first use; cleared on deselect. Missing panel / no
+  lore + no why-summary → zero-DOM-cost path.
+
+### Previous
 ## [v0.21.0] - 2026-04-17
 
 ### Production hardening pass

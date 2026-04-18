@@ -25,28 +25,25 @@
         updateStatus(status) {
             if (this.status === status) return;
             this.status = status;
-            
+
             const statusEl = document.getElementById('connectionStatus');
             if (!statusEl) return;
-            
+
             const dot = statusEl.querySelector('.status-dot');
             const text = statusEl.querySelector('.status-text');
-            
-            dot.className = 'status-dot ' + status;
-            
-            switch (status) {
-                case 'online':
-                    text.textContent = 'Live';
-                    statusEl.title = 'Receiving live data';
-                    break;
-                case 'stale':
-                    text.textContent = 'Delayed';
-                    statusEl.title = 'Data may be delayed';
-                    break;
-                case 'offline':
-                    text.textContent = 'Offline';
-                    statusEl.title = 'Unable to connect to data source';
-                    break;
+            // Guard the child queries — the header markup varies between
+            // desktop and compact layouts; either child can legitimately be
+            // missing and we must not throw.
+            if (dot) dot.className = 'status-dot ' + status;
+
+            const copy = {
+                online:  { label: 'Live',    title: 'Receiving live data' },
+                stale:   { label: 'Delayed', title: 'Data may be delayed' },
+                offline: { label: 'Offline', title: 'Unable to connect to data source' }
+            }[status];
+            if (copy) {
+                if (text) text.textContent = copy.label;
+                statusEl.title = copy.title;
             }
         }
     };
