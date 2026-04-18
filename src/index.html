@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SkyTrack - Live Flight Tracker</title>
     <script>if(location.protocol!=='file:')document.write('<link rel="manifest" href="manifest.json">');</script>
     <meta name="theme-color" content="#1a1a2e">
@@ -244,7 +244,7 @@ if ('serviceWorker' in navigator) {
             <span>SkyTrack<span class="version">v0.20.0</span></span>
         </div>
         <div class="spinner"></div>
-        <div class="loading-status" id="loadingStatus">Initializing...</div>
+        <div class="loading-status" id="loadingStatus" role="status" aria-live="polite">Initializing…</div>
         <div class="loading-progress"><div class="loading-progress-bar" id="loadingProgress"></div></div>
     </div>
     <div id="map"></div>
@@ -257,7 +257,7 @@ if ('serviceWorker' in navigator) {
     <div class="circuit-breaker-warning" id="circuitBreakerWarning"></div>
     <div class="sync-indicator" id="syncIndicator">
         <div class="sync-spinner"></div>
-        <span class="sync-text">Syncing...</span>
+        <span class="sync-text">Syncing…</span>
     </div>
     <div class="legend">
         <div class="legend-title">Altitude</div>
@@ -271,65 +271,65 @@ if ('serviceWorker' in navigator) {
             <div class="legend-item"><div class="legend-color" style="background:#00ff00"></div>Ground</div>
         </div>
     </div>
-    <header class="header">
+    <header class="header" aria-label="Map Controls">
         <!-- Primary Actions (always visible) -->
-        <button class="header-btn" id="locateBtn" title="My Location" aria-label="My Location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg></button>
-        <button class="header-btn" id="view3DBtn" title="3D Globe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></button>
-        <button class="header-btn" id="settingsBtn" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
-        <button class="header-btn" id="notifBtn" title="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-badge" id="notifBadge" style="display:none;">0</span></button>
+        <button class="header-btn" id="locateBtn" title="My Location" aria-label="Center on My Location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg></button>
+        <button class="header-btn" id="view3DBtn" title="3D Globe" aria-label="Toggle 3D Globe View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></button>
+        <button class="header-btn" id="settingsBtn" title="Settings" aria-label="Open Preferences"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+        <button class="header-btn" id="notifBtn" title="Notifications" aria-label="Open Notification Center" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-badge" id="notifBadge" style="display:none;">0</span></button>
         
         <div class="hv2-sep"></div>
         
         <!-- Map Dropdown -->
         <div class="hv2-dropdown">
-            <button class="hv2-dropdown-trigger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><span>Map</span><span class="hv2-dd-badge" style="display:none"></span></button>
+            <button class="hv2-dropdown-trigger" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><span>Map</span><span class="hv2-dd-badge" style="display:none"></span></button>
             <div class="hv2-panel">
                 <div class="hv2-panel-title">Map & Layers</div>
                 <div class="hv2-item" data-btn="dayNightBtn"><div class="hv2-item-icon"><button class="header-btn" id="dayNightBtn" title="Map Style" aria-label="Map Style"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></button></div><div class="hv2-item-label">Map Style</div></div>
                 <div class="hv2-item" data-btn="labelBtn"><div class="hv2-item-icon"><button class="header-btn" id="labelBtn" title="Labels" aria-label="Toggle Labels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></button></div><div class="hv2-item-label">Labels</div><div class="hv2-item-status">OFF</div></div>
                 <div class="hv2-item" data-btn="airportsBtn"><div class="hv2-item-icon"><button class="header-btn" id="airportsBtn" title="Airports" aria-label="Toggle Airports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></button></div><div class="hv2-item-label">Airports</div><div class="hv2-item-status">OFF</div></div>
                 <div class="hv2-item" data-btn="radarBtn"><div class="hv2-item-icon"><button class="header-btn active" id="radarBtn" title="Radar" aria-label="Toggle Weather Radar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></button></div><div class="hv2-item-label">Weather Radar</div><div class="hv2-item-status">ON</div></div>
-                <div class="hv2-item" data-btn="weatherOverlayBtn"><div class="hv2-item-icon"><button class="header-btn" id="weatherOverlayBtn" title="Weather"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 14.7L12 12m2.7 2.7a5 5 0 1 0-7-7.1M20 20l-7-7M8 12a4 4 0 0 0 4 4"/><path d="M3 15l2-2 2 2"/><path d="M17 9l2-2 2 2"/></svg></button></div><div class="hv2-item-label">SIGMETs / Wind</div></div>
-                <div class="hv2-item" data-btn="airspaceBtn"><div class="hv2-item-icon"><button class="header-btn" id="airspaceBtn" title="Airspace"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></button></div><div class="hv2-item-label">Airspace</div></div>
-                <div class="hv2-item" data-btn="heatmapBtn"><div class="hv2-item-icon"><button class="header-btn" id="heatmapBtn" title="Heatmap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6" opacity="0.5"/><circle cx="12" cy="12" r="9" opacity="0.3"/></svg></button></div><div class="hv2-item-label">Traffic Heatmap</div></div>
-                <div class="hv2-item" data-btn="miniMapBtn"><div class="hv2-item-icon"><button class="header-btn" id="miniMapBtn" title="Mini-map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="6" height="6" fill="currentColor"/></svg></button></div><div class="hv2-item-label">Mini-map</div></div>
+                <div class="hv2-item" data-btn="weatherOverlayBtn"><div class="hv2-item-icon"><button class="header-btn" id="weatherOverlayBtn" title="Weather" aria-label="Toggle SIGMET and Wind Overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 14.7L12 12m2.7 2.7a5 5 0 1 0-7-7.1M20 20l-7-7M8 12a4 4 0 0 0 4 4"/><path d="M3 15l2-2 2 2"/><path d="M17 9l2-2 2 2"/></svg></button></div><div class="hv2-item-label">SIGMETs / Wind</div></div>
+                <div class="hv2-item" data-btn="airspaceBtn"><div class="hv2-item-icon"><button class="header-btn" id="airspaceBtn" title="Airspace" aria-label="Toggle Airspace Overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></button></div><div class="hv2-item-label">Airspace</div></div>
+                <div class="hv2-item" data-btn="heatmapBtn"><div class="hv2-item-icon"><button class="header-btn" id="heatmapBtn" title="Heatmap" aria-label="Toggle Traffic Heatmap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6" opacity="0.5"/><circle cx="12" cy="12" r="9" opacity="0.3"/></svg></button></div><div class="hv2-item-label">Traffic Heatmap</div></div>
+                <div class="hv2-item" data-btn="miniMapBtn"><div class="hv2-item-icon"><button class="header-btn" id="miniMapBtn" title="Mini-map" aria-label="Toggle Mini-map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="6" height="6" fill="currentColor"/></svg></button></div><div class="hv2-item-label">Mini-map</div></div>
             </div>
         </div>
         
         <!-- Tools Dropdown -->
         <div class="hv2-dropdown">
-            <button class="hv2-dropdown-trigger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg><span>Tools</span><span class="hv2-dd-badge" style="display:none"></span></button>
+            <button class="hv2-dropdown-trigger" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg><span>Tools</span><span class="hv2-dd-badge" style="display:none"></span></button>
             <div class="hv2-panel">
                 <div class="hv2-panel-title">Tools</div>
-                <div class="hv2-item" data-btn="measureBtn"><div class="hv2-item-icon"><button class="header-btn" id="measureBtn" title="Measure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21L21 3M3 21h7v-7M21 3h-7v7"/></svg></button></div><div class="hv2-item-label">Measure Distance</div></div>
+                <div class="hv2-item" data-btn="measureBtn"><div class="hv2-item-icon"><button class="header-btn" id="measureBtn" title="Measure" aria-label="Measure Distance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21L21 3M3 21h7v-7M21 3h-7v7"/></svg></button></div><div class="hv2-item-label">Measure Distance</div></div>
                 <div class="hv2-item" data-btn="rangeRingsBtn"><div class="hv2-item-icon"><button class="header-btn" id="rangeRingsBtn" title="Range Rings" aria-label="Toggle Range Rings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="11" stroke-dasharray="3 3"/></svg></button></div><div class="hv2-item-label">Range Rings</div></div>
                 <div class="hv2-item" data-btn="firesBtn"><div class="hv2-item-icon"><button class="header-btn" id="firesBtn" title="Fires &amp; Hurricanes" aria-label="Toggle Fires and Hurricanes Overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c1 4 4 5 4 9a4 4 0 01-8 0c0-2 1-3 2-4.5C11 4 12 3 12 2z"/><circle cx="12" cy="17" r="2"/></svg></button></div><div class="hv2-item-label">Fires &amp; Hurricanes</div></div>
                 <div class="hv2-item" data-btn="homeWidgetBtn"><div class="hv2-item-icon"><button class="header-btn" id="homeWidgetBtn" title="Plane Over My House" aria-label="Toggle Plane Over My House Widget"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></button></div><div class="hv2-item-label">Over My House</div></div>
                 <div class="hv2-item" data-btn="followBtn"><div class="hv2-item-icon"><button class="header-btn" id="followBtn" title="Follow" aria-label="Follow Aircraft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><path d="M12 8v8M8 12h8" stroke-dasharray="2 2"/></svg></button></div><div class="hv2-item-label">Follow Aircraft</div></div>
                 <div class="hv2-item" data-btn="multiSelectBtn"><div class="hv2-item-icon"><button class="header-btn" id="multiSelectBtn" title="Multi-Select" aria-label="Multi-Select Mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button></div><div class="hv2-item-label">Multi-Select</div></div>
-                <div class="hv2-item" data-btn="geofenceBtn"><div class="hv2-item-icon"><button class="header-btn" id="geofenceBtn" title="Geofence"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><circle cx="12" cy="12" r="3"/></svg></button></div><div class="hv2-item-label">Geofencing</div></div>
-                <div class="hv2-item" data-btn="captureBtn"><div class="hv2-item-icon"><button class="header-btn" id="captureBtn" title="Screenshot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M5 7h.01"/></svg></button></div><div class="hv2-item-label">Screenshot</div></div>
+            <div class="hv2-item" data-btn="geofenceBtn"><div class="hv2-item-icon"><button class="header-btn" id="geofenceBtn" title="Geofence" aria-label="Open Geofencing Tools" aria-expanded="false" aria-controls="geofenceList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><circle cx="12" cy="12" r="3"/></svg></button></div><div class="hv2-item-label">Geofencing</div></div>
+            <div class="hv2-item" data-btn="captureBtn"><div class="hv2-item-icon"><button class="header-btn" id="captureBtn" title="Screenshot" aria-label="Open Capture Tools" aria-expanded="false" aria-controls="captureMenu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M5 7h.01"/></svg></button></div><div class="hv2-item-label">Screenshot</div></div>
                 <div class="hv2-item" data-btn="statsBtn"><div class="hv2-item-icon"><button class="header-btn" id="statsBtn" title="Stats" aria-label="Statistics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></button></div><div class="hv2-item-label">Statistics</div></div>
             </div>
         </div>
         
         <!-- View Dropdown -->
         <div class="hv2-dropdown">
-            <button class="hv2-dropdown-trigger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>View</span><span class="hv2-dd-badge" style="display:none"></span></button>
+            <button class="hv2-dropdown-trigger" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>View</span><span class="hv2-dd-badge" style="display:none"></span></button>
             <div class="hv2-panel">
                 <div class="hv2-panel-title">View Options</div>
-                <div class="hv2-item" data-btn="clusterBtn"><div class="hv2-item-icon"><button class="header-btn" id="clusterBtn" title="Cluster"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.3"/></svg></button></div><div class="hv2-item-label">Clustering</div></div>
-                <div class="hv2-item" data-btn="timeMachineBtn"><div class="hv2-item-icon"><button class="header-btn" id="timeMachineBtn" title="Time Machine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><path d="M4 4l2 2M20 4l-2 2"/></svg></button></div><div class="hv2-item-label">Time Machine</div></div>
+                <div class="hv2-item" data-btn="clusterBtn"><div class="hv2-item-icon"><button class="header-btn" id="clusterBtn" title="Cluster" aria-label="Toggle Clustering"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.3"/></svg></button></div><div class="hv2-item-label">Clustering</div></div>
+                <div class="hv2-item" data-btn="timeMachineBtn"><div class="hv2-item-icon"><button class="header-btn" id="timeMachineBtn" title="Time Machine" aria-label="Open Time Machine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><path d="M4 4l2 2M20 4l-2 2"/></svg></button></div><div class="hv2-item-label">Time Machine</div></div>
             </div>
         </div>
     </header>
     <!-- Status Dock -->
-    <div class="status-dock" id="statusDock">
-        <div class="status-dock-item"><span class="status-dock-dot grey" id="dockDot"></span><span class="status-dock-value" id="dockSource">Connecting</span></div>
+    <div class="status-dock" id="statusDock" role="status" aria-live="polite">
+        <div class="status-dock-item"><span class="status-dock-label">Feed</span><span class="status-dock-dot grey" id="dockDot"></span><span class="status-dock-value" id="dockSource">Connecting</span></div>
         <div class="status-dock-sep"></div>
-        <div class="status-dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 110-14h8.5M21 12l-4-4m4 4l-4 4"/></svg><span class="status-dock-value" id="dockCount">0</span><span class="status-dock-label"> aircraft</span></div>
+        <div class="status-dock-item"><span class="status-dock-label">Visible</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 110-14h8.5M21 12l-4-4m4 4l-4 4"/></svg><span class="status-dock-value" id="dockCount">0</span><span class="status-dock-label">aircraft</span></div>
         <div class="status-dock-sep"></div>
-        <div class="status-dock-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="status-dock-value" id="dockTime">---</span></div>
+        <div class="status-dock-item"><span class="status-dock-label">Updated</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="status-dock-value" id="dockTime">---</span></div>
     </div>
     
     <!-- Filter Chips Bar -->
@@ -357,23 +357,23 @@ if ('serviceWorker' in navigator) {
         <div class="onboard-card">
             <div class="onboard-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 110-14h8.5"/><polyline points="21 12 17 8 21 12 17 16"/></svg></div>
             <div class="onboard-title">Welcome to SkyTrack</div>
-            <div class="onboard-desc">Real-time global aircraft tracking with military detection and aviation intelligence.</div>
+            <div class="onboard-desc">Live global airspace with route intelligence, airport context, and high-interest aircraft in one focused workspace.</div>
             <div class="onboard-tips">
-                <div class="onboard-tip"><span class="onboard-tip-num">1</span><span>Tap any aircraft on the map to see its details, route, and specs</span></div>
-                <div class="onboard-tip"><span class="onboard-tip-num">2</span><span>Use the search bar to find flights by callsign, registration, or airport</span></div>
-                <div class="onboard-tip"><span class="onboard-tip-num">3</span><span>Use the filter button to show only military, cargo, or interesting aircraft</span></div>
-                <div class="onboard-tip"><span class="onboard-tip-num">4</span><span>Swipe down on the aircraft panel to dismiss it</span></div>
+                <div class="onboard-tip"><span class="onboard-tip-num">1</span><span>Select any aircraft to open its route, performance, and enrichment details.</span></div>
+                <div class="onboard-tip"><span class="onboard-tip-num">2</span><span>Search by flight, registration, hex, airline, airport, or route code.</span></div>
+                <div class="onboard-tip"><span class="onboard-tip-num">3</span><span>Use Quick Filters and the advanced search panel to focus on the traffic that matters.</span></div>
+                <div class="onboard-tip"><span class="onboard-tip-num">4</span><span>Switch to the 3D globe or tailor the layout, theme, and alerts from Preferences.</span></div>
             </div>
-            <button class="onboard-btn" id="onboardDismiss">Start Tracking</button>
+            <button class="onboard-btn" id="onboardDismiss">Open Live Map</button>
         </div>
     </div>
     
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-pulse"></div>
-        <div class="loading-text" id="loadingText">Scanning for aircraft...</div>
+        <div class="loading-text" id="loadingText" role="status" aria-live="polite">Scanning Live Airspace…</div>
     </div>
-    <div class="filter-bar" id="filterBar">
+    <div class="filter-bar" id="filterBar" role="search" aria-label="Flight Search and Filters">
         <div class="logo"><img src="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-32x32.png" alt="SkyTrack"><span>SkyTrack</span></div>
         <div class="connectivity-indicator" id="connectivityIndicator" title="Online"><div class="connectivity-dot online"></div></div>
         <div class="search-container" id="searchContainer">
@@ -381,9 +381,9 @@ if ('serviceWorker' in navigator) {
                 <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                 </svg>
-                <input type="text" class="search-box" id="searchInput" aria-label="Search aircraft" placeholder="Search flights, airports, airlines..." autocomplete="off">
-                <button class="search-clear-btn" id="searchClearBtn" style="display:none;">x</button>
-                <button class="search-filter-btn" id="searchFilterBtn" title="Advanced Filters">
+                <input type="text" class="search-box" id="searchInput" aria-label="Search Aircraft, Airports, or Airlines" placeholder="Search flights, airports, airlines…" autocomplete="off">
+                <button class="search-clear-btn" id="searchClearBtn" style="display:none;" aria-label="Clear Search">×</button>
+                <button class="search-filter-btn" id="searchFilterBtn" title="Advanced Filters" aria-label="Open Advanced Filters" aria-expanded="false">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
                     </svg>
@@ -399,7 +399,7 @@ if ('serviceWorker' in navigator) {
                 <div class="search-content">
                     <div class="search-tab-panel active" id="tabResults">
                         <div class="search-results" id="searchResults">
-                            <div class="search-placeholder">Start typing to search...</div>
+                            <div class="search-placeholder">Type to search flights, aircraft, and airports…</div>
                         </div>
                     </div>
                     <div class="search-tab-panel" id="tabFilters">
@@ -417,26 +417,26 @@ if ('serviceWorker' in navigator) {
                         <div class="filter-section">
                             <div class="filter-label">Altitude</div>
                             <div class="filter-range">
-                                <input type="number" id="altMin" placeholder="Min ft" class="filter-input">
+                                <input type="number" id="altMin" placeholder="Min ft…" class="filter-input" aria-label="Minimum Altitude">
                                 <span class="filter-range-sep">-</span>
-                                <input type="number" id="altMax" placeholder="Max ft" class="filter-input">
+                                <input type="number" id="altMax" placeholder="Max ft…" class="filter-input" aria-label="Maximum Altitude">
                             </div>
                         </div>
                         <div class="filter-section">
                             <div class="filter-label">Speed</div>
                             <div class="filter-range">
-                                <input type="number" id="speedMin" placeholder="Min kt" class="filter-input">
+                                <input type="number" id="speedMin" placeholder="Min kt…" class="filter-input" aria-label="Minimum Speed">
                                 <span class="filter-range-sep">-</span>
-                                <input type="number" id="speedMax" placeholder="Max kt" class="filter-input">
+                                <input type="number" id="speedMax" placeholder="Max kt…" class="filter-input" aria-label="Maximum Speed">
                             </div>
                         </div>
                         <div class="filter-section">
-                            <div class="filter-label">Airport (Origin/Destination)</div>
-                            <input type="text" id="filterAirport" placeholder="ICAO or IATA code" class="filter-input-full">
+                            <div class="filter-label">Origin or Destination</div>
+                            <input type="text" id="filterAirport" placeholder="ICAO or IATA code…" class="filter-input-full" aria-label="Airport Filter">
                         </div>
                         <div class="filter-section">
                             <div class="filter-label">Airline</div>
-                            <input type="text" id="filterAirline" placeholder="Name or ICAO code" class="filter-input-full">
+                            <input type="text" id="filterAirline" placeholder="Name or ICAO code…" class="filter-input-full" aria-label="Airline Filter">
                         </div>
                         <div class="filter-section">
                             <div class="filter-label">Special</div>
@@ -457,7 +457,7 @@ if ('serviceWorker' in navigator) {
                         </div>
                         <div class="filter-section">
                             <div class="filter-label">Regex Pattern (Advanced)</div>
-                            <input type="text" id="filterRegex" placeholder="e.g., ^UAL\d+ or N\d{3}[A-Z]{2}" class="filter-input-full">
+                            <input type="text" id="filterRegex" placeholder="e.g. ^UAL\d+ or N\d{3}[A-Z]{2}" class="filter-input-full" aria-label="Advanced Regex Filter">
                             <div class="filter-hint">Matches against callsign and registration</div>
                         </div>
                         <div class="filter-actions">
@@ -467,7 +467,7 @@ if ('serviceWorker' in navigator) {
                     </div>
                     <div class="search-tab-panel" id="tabHistory">
                         <div class="search-history" id="searchHistory">
-                            <div class="search-placeholder">No recent searches</div>
+                            <div class="search-placeholder">Recent searches appear here.</div>
                         </div>
                         <button class="adv-filter-btn secondary full-width" id="clearHistoryBtn">Clear History</button>
                     </div>
@@ -477,15 +477,15 @@ if ('serviceWorker' in navigator) {
         <div class="filter-divider"></div>
         <div role="radiogroup" aria-label="Aircraft category filter" style="display:contents">
         <button class="filter-btn active" data-filter="all">All <span class="count" id="countAll">0</span></button>
-        <button class="filter-btn" data-filter="commercial">Comm <span class="count" id="countComm">0</span></button>
-        <button class="filter-btn" data-filter="military">Mil <span class="count" id="countMil">0</span></button>
-        <button class="filter-btn" data-filter="government">Gov <span class="count" id="countGov">0</span></button>
+        <button class="filter-btn" data-filter="commercial">Airline <span class="count" id="countComm">0</span></button>
+        <button class="filter-btn" data-filter="military">Military <span class="count" id="countMil">0</span></button>
+        <button class="filter-btn" data-filter="government">Government <span class="count" id="countGov">0</span></button>
         <button class="filter-btn" data-filter="cargo">Cargo <span class="count" id="countCargo">0</span></button>
         <button class="filter-btn" data-filter="private">Private <span class="count" id="countPrivate">0</span></button>
-        <button class="filter-btn" data-filter="helicopter">Heli <span class="count" id="countHeli">0</span></button>
-        <button class="filter-btn flagged" data-filter="interesting">Flagged <span class="count" id="countInteresting">0</span></button>
+        <button class="filter-btn" data-filter="helicopter">Helicopter <span class="count" id="countHeli">0</span></button>
+        <button class="filter-btn flagged" data-filter="interesting">Interesting <span class="count" id="countInteresting">0</span></button>
         <button class="filter-btn pia-btn" data-filter="pia">PIA <span class="count" id="countPIA">0</span></button>
-        <button class="filter-btn vip-btn" data-filter="vip" title="Badger's Best - Must-See Aircraft">VIP <span class="count" id="countVIP">0</span></button>
+        <button class="filter-btn vip-btn" data-filter="vip" title="Highlighted VIP and Must-See Aircraft">VIP <span class="count" id="countVIP">0</span></button>
         <button class="filter-share-btn" id="filterShareBtn" title="Share this filter view" aria-label="Share filter link" style="display:none;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v13"/></svg></button>
     </div>
     <div class="info-panel" id="infoPanel" role="dialog" aria-label="Aircraft Details">
@@ -495,7 +495,7 @@ if ('serviceWorker' in navigator) {
             <div class="info-qg-item"><div class="info-qg-val" id="qgCallsign">---</div><div class="info-qg-label">Flight</div></div>
             <div class="info-qg-item"><div class="info-qg-val" id="qgAlt">---</div><div class="info-qg-label">Altitude</div></div>
             <div class="info-qg-item"><div class="info-qg-val" id="qgSpeed">---</div><div class="info-qg-label">Speed</div></div>
-            <div class="info-qg-item"><div class="info-qg-val" id="qgDest">---</div><div class="info-qg-label">Dest</div></div>
+            <div class="info-qg-item"><div class="info-qg-val" id="qgDest">---</div><div class="info-qg-label">Destination</div></div>
         </div>
         <div class="info-header">
             <div class="info-header-left">
@@ -506,8 +506,8 @@ if ('serviceWorker' in navigator) {
                 <div class="info-hex" id="infoHex">---</div>
             </div>
             <div class="info-header-actions">
-                <button class="watch-btn" id="watchBtn" title="Add to Watchlist">
-                    <span class="star">*</span>
+                <button class="watch-btn" id="watchBtn" title="Add to Watchlist" aria-label="Add Aircraft to Watchlist">
+                    <span class="star">☆</span>
                     <span class="watch-text">Watch</span>
                 </button>
                 <button class="info-close" id="infoClose" aria-label="Close aircraft details">&times;</button>
@@ -722,8 +722,9 @@ if ('serviceWorker' in navigator) {
             <button class="airport-action-btn" id="btnZoomAirport">Zoom To</button>
         </div>
     </div>
-    <div class="settings-panel" id="settingsPanel" role="dialog" aria-label="Settings">
-        <div class="settings-title">Settings</div>
+    <div class="settings-panel" id="settingsPanel" role="dialog" aria-label="Preferences">
+        <div class="settings-title">Preferences</div>
+        <div class="settings-subtitle">Tune the live map, visual density, and alerts for the way you track.</div>
         <div class="settings-section">
             <div class="settings-section-title">Layout</div>
             <div class="layout-presets">
@@ -747,13 +748,13 @@ if ('serviceWorker' in navigator) {
         </div>
         <div class="settings-section">
             <div class="settings-section-title">Display Options</div>
-            <div class="setting-row"><span class="setting-label">Show Labels</span><div class="toggle" id="toggleLabels"></div></div>
-            <div class="setting-row"><span class="setting-label">Show Airports</span><div class="toggle" id="toggleAirports"></div></div>
-            <div class="setting-row"><span class="setting-label">Weather Radar</span><div class="toggle on" id="toggleRadar"></div></div>
-            <div class="setting-row"><span class="setting-label">Altitude-Colored Trails</span><div class="toggle on" id="toggleAltColors"></div></div>
-            <div class="setting-row"><span class="setting-label">Wikipedia Info</span><div class="toggle on" id="toggleWiki"></div></div>
-            <div class="setting-row"><span class="setting-label">Interesting Badges</span><div class="toggle" id="toggleInterestingBadges"></div></div>
-            <div class="setting-row"><span class="setting-label">Weather Overlay (SIGMETs)</span><div class="toggle" id="toggleWeatherOverlay"></div></div>
+            <div class="setting-row"><span class="setting-label">Show Labels</span><button type="button" class="toggle" id="toggleLabels" role="switch" aria-label="Show Labels" aria-checked="false"></button></div>
+            <div class="setting-row"><span class="setting-label">Show Airports</span><button type="button" class="toggle" id="toggleAirports" role="switch" aria-label="Show Airports" aria-checked="false"></button></div>
+            <div class="setting-row"><span class="setting-label">Weather Radar</span><button type="button" class="toggle on" id="toggleRadar" role="switch" aria-label="Weather Radar" aria-checked="true"></button></div>
+            <div class="setting-row"><span class="setting-label">Altitude-Colored Trails</span><button type="button" class="toggle on" id="toggleAltColors" role="switch" aria-label="Altitude-Colored Trails" aria-checked="true"></button></div>
+            <div class="setting-row"><span class="setting-label">Wikipedia Info</span><button type="button" class="toggle on" id="toggleWiki" role="switch" aria-label="Wikipedia Info" aria-checked="true"></button></div>
+            <div class="setting-row"><span class="setting-label">Interesting Badges</span><button type="button" class="toggle" id="toggleInterestingBadges" role="switch" aria-label="Interesting Badges" aria-checked="false"></button></div>
+            <div class="setting-row"><span class="setting-label">Weather Overlay (SIGMETs)</span><button type="button" class="toggle" id="toggleWeatherOverlay" role="switch" aria-label="Weather Overlay" aria-checked="false"></button></div>
         </div>
         <div class="settings-section">
             <div class="settings-section-title">Trail Display</div>
@@ -766,14 +767,14 @@ if ('serviceWorker' in navigator) {
                     <option value="solid">Solid Color</option>
                 </select>
             </div>
-            <div class="setting-row"><span class="setting-label">Show Direction Arrows</span><div class="toggle on" id="toggleTrailArrows"></div></div>
+            <div class="setting-row"><span class="setting-label">Show Direction Arrows</span><button type="button" class="toggle on" id="toggleTrailArrows" role="switch" aria-label="Show Direction Arrows" aria-checked="true"></button></div>
         </div>
         <div class="settings-section">
             <div class="settings-section-title">OpenSky API Credentials</div>
             <label class="settings-input-label">Client ID / Username</label>
-            <input type="text" class="settings-input" id="apiClientId" placeholder="Enter Client ID...">
+            <input type="text" class="settings-input" id="apiClientId" placeholder="Enter Client ID…">
             <label class="settings-input-label">Client Secret / Password</label>
-            <input type="password" class="settings-input" id="apiClientSecret" placeholder="Enter Client Secret..." autocomplete="off">
+            <input type="password" class="settings-input" id="apiClientSecret" placeholder="Enter Client Secret…" autocomplete="off">
             <button class="settings-btn" id="saveApiBtn">Save Credentials</button>
             <button class="settings-btn secondary" id="clearApiBtn">Clear Credentials</button>
             <div class="api-status info" id="apiStatus">Credentials configured</div>
@@ -822,7 +823,7 @@ if ('serviceWorker' in navigator) {
                     <div class="theme-name">Color Blind</div>
                 </div>
             </div>
-            <div class="setting-row"><span class="setting-label">Auto Day/Night</span><div class="toggle" id="toggleAutoTheme"></div></div>
+            <div class="setting-row"><span class="setting-label">Auto Day/Night</span><button type="button" class="toggle" id="toggleAutoTheme" role="switch" aria-label="Auto Day and Night Theme" aria-checked="false"></button></div>
             <div class="theme-custom">
                 <div class="setting-row"><span class="setting-label">Accent Color</span><input type="color" id="accentColorPicker" value="#ffd700" class="color-picker"></div>
                 <div class="setting-row"><span class="setting-label">Selection Color</span><input type="color" id="selectionColorPicker" value="#00ffff" class="color-picker"></div>
@@ -831,9 +832,9 @@ if ('serviceWorker' in navigator) {
         </div>
         <div class="settings-section">
             <div class="settings-section-title">Alerts</div>
-            <div class="setting-row"><span class="setting-label">Enable Alerts</span><div class="toggle on" id="toggleAlerts"></div></div>
-            <div class="setting-row"><span class="setting-label">Sound Effects</span><div class="toggle on" id="toggleAlertSounds"></div></div>
-            <div class="setting-row"><span class="setting-label">Browser Notifications</span><div class="toggle" id="toggleNotifications"></div></div>
+            <div class="setting-row"><span class="setting-label">Enable Alerts</span><button type="button" class="toggle on" id="toggleAlerts" role="switch" aria-label="Enable Alerts" aria-checked="true"></button></div>
+            <div class="setting-row"><span class="setting-label">Sound Effects</span><button type="button" class="toggle on" id="toggleAlertSounds" role="switch" aria-label="Sound Effects" aria-checked="true"></button></div>
+            <div class="setting-row"><span class="setting-label">Browser Notifications</span><button type="button" class="toggle" id="toggleNotifications" role="switch" aria-label="Browser Notifications" aria-checked="false"></button></div>
             <div class="setting-row">
                 <span class="setting-label">Military Alert Radius</span>
                 <select id="militaryAlertRadius" class="setting-select">
@@ -846,7 +847,7 @@ if ('serviceWorker' in navigator) {
             </div>
         </div>
         <div class="settings-section">
-            <div class="settings-section-title">Data Sources (Phase 16)</div>
+            <div class="settings-section-title">Data Sources</div>
             <div id="dataSourceList" style="font-size: 11px; margin-bottom: 10px;"></div>
             <button class="btn-secondary" id="checkSourcesBtn" style="width: 100%; margin-bottom: 8px;">Check All Sources</button>
             <button class="btn-secondary" id="clearOfflineCacheBtn" style="width: 100%;">Clear Offline Cache</button>
@@ -855,7 +856,7 @@ if ('serviceWorker' in navigator) {
     <div class="stats-panel" id="statsPanel" role="dialog" aria-label="Statistics">
         <div class="stats-header">
             <span class="stats-title">Statistics</span>
-            <button class="stats-close" id="statsClose">x</button>
+            <button class="stats-close" id="statsClose" aria-label="Close Statistics">×</button>
         </div>
         <div class="stats-content">
             <div class="stats-summary">
@@ -957,85 +958,85 @@ if ('serviceWorker' in navigator) {
     <div class="comparison-panel" id="comparisonPanel">
         <div class="comparison-header">
             <span class="comparison-title">Aircraft Comparison</span>
-            <button class="comparison-close" id="comparisonClose">&times;</button>
+            <button class="comparison-close" id="comparisonClose" aria-label="Close Comparison">&times;</button>
         </div>
         <div class="comparison-content" id="comparisonContent">
             <!-- Generated by JS -->
         </div>
     </div>
     <!-- Phase 14: Time Machine Controls -->
-    <div class="time-machine-controls" id="timeMachineControls">
+    <div class="time-machine-controls" id="timeMachineControls" role="dialog" aria-label="Time Machine Controls" aria-hidden="true">
         <div class="tm-header">
             <span class="tm-title">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 Time Machine
             </span>
             <span class="tm-count"><span id="historicalCount">0</span> aircraft</span>
-            <button class="tm-exit" id="tmExit">Exit</button>
+            <button type="button" class="tm-exit" id="tmExit" aria-label="Exit Time Machine">Exit</button>
         </div>
-        <div class="tm-time" id="currentTimeLabel">---</div>
-        <input type="range" class="tm-slider" id="timeSlider" min="0" max="100" value="0">
+        <div class="tm-time" id="currentTimeLabel" role="status" aria-live="polite">---</div>
+        <input type="range" class="tm-slider" id="timeSlider" min="0" max="100" value="0" aria-label="Time Machine Timeline">
         <div class="tm-progress">
             <span id="tmStartTime">---</span>
             <span id="tmEndTime">---</span>
         </div>
         <div class="tm-playback">
-            <button class="tm-btn" id="tmRewind" title="Rewind">&#9664;&#9664;</button>
-            <button class="tm-btn" id="tmStepBack" title="Step Back">&#9664;</button>
-            <button class="tm-btn play" id="playPauseBtn" title="Play/Pause">&#9654;</button>
-            <button class="tm-btn" id="tmStepForward" title="Step Forward">&#9654;</button>
-            <button class="tm-btn" id="tmFastForward" title="Fast Forward">&#9654;&#9654;</button>
+            <button type="button" class="tm-btn" id="tmRewind" title="Rewind" aria-label="Jump to Start">&#9664;&#9664;</button>
+            <button type="button" class="tm-btn" id="tmStepBack" title="Step Back" aria-label="Step Back">&#9664;</button>
+            <button type="button" class="tm-btn play" id="playPauseBtn" title="Play/Pause" aria-label="Play or Pause Time Machine">&#9654;</button>
+            <button type="button" class="tm-btn" id="tmStepForward" title="Step Forward" aria-label="Step Forward">&#9654;</button>
+            <button type="button" class="tm-btn" id="tmFastForward" title="Fast Forward" aria-label="Jump to Latest Point">&#9654;&#9654;</button>
             <div style="width:1px;height:24px;background:var(--border);margin:0 4px;"></div>
-            <button class="tm-btn" id="speedDownBtn" title="Slower">-</button>
+            <button type="button" class="tm-btn" id="speedDownBtn" title="Slower" aria-label="Slow Down Playback">-</button>
             <span class="tm-speed" id="speedLabel">1x</span>
-            <button class="tm-btn" id="speedUpBtn" title="Faster">+</button>
+            <button type="button" class="tm-btn" id="speedUpBtn" title="Faster" aria-label="Speed Up Playback">+</button>
         </div>
     </div>
     <!-- Phase 14: History Mode Indicator -->
-    <div class="history-mode-indicator" id="historyIndicator">
+    <div class="history-mode-indicator" id="historyIndicator" role="status" aria-live="polite">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span>Historical Mode</span>
     </div>
     <!-- Phase 14: Geofencing Controls -->
-    <div class="geofence-controls" id="geofenceControls">
+    <div class="geofence-controls" id="geofenceControls" role="status" aria-live="polite">
         <span>Drawing zone - click to add points</span>
-        <button class="gf-btn" id="gfFinish">Finish</button>
-        <button class="gf-btn danger" id="gfCancel">Cancel</button>
+        <button type="button" class="gf-btn" id="gfFinish">Finish</button>
+        <button type="button" class="gf-btn danger" id="gfCancel">Cancel</button>
     </div>
     <!-- Phase 14: Geofence Zone List -->
-    <div class="geofence-list" id="geofenceList">
+    <div class="geofence-list" id="geofenceList" role="dialog" aria-label="Alert Zones" aria-hidden="true">
         <div class="gf-list-header">
             <span>Alert Zones</span>
-            <button class="gf-btn" id="gfAddNew" title="Draw new zone">+ Add</button>
+            <button type="button" class="gf-btn" id="gfAddNew" title="Draw new zone" aria-label="Create Alert Zone">+ Add</button>
         </div>
         <div class="gf-list-content" id="gfListContent">
             <div class="gf-list-empty">No zones defined<br>Click + Add to create one</div>
         </div>
     </div>
     <!-- Phase 14: Capture Menu -->
-    <div class="capture-menu" id="captureMenu">
+    <div class="capture-menu" id="captureMenu" role="menu" aria-label="Capture Tools" aria-hidden="true">
         <div class="capture-menu-header">Capture</div>
-        <div class="capture-menu-item" id="captureScreenshot">
+        <button type="button" class="capture-menu-item" id="captureScreenshot" role="menuitem" aria-label="Capture Screenshot as PNG">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M5 7h.01"/></svg>
             <span>Screenshot (PNG)</span>
-        </div>
+        </button>
         <div class="capture-menu-divider"></div>
-        <div class="capture-menu-item" id="captureRecord">
+        <button type="button" class="capture-menu-item" id="captureRecord" role="menuitem" aria-label="Start Screen Recording">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>
             <span>Start Recording</span>
-        </div>
-        <div class="capture-menu-item" id="captureTimelapse">
+        </button>
+        <button type="button" class="capture-menu-item" id="captureTimelapse" role="menuitem" aria-label="Prepare a Timelapse Capture">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/><line x1="11" y1="5" x2="11" y2="19"/></svg>
             <span>Create Timelapse</span>
-        </div>
+        </button>
     </div>
     <div class="notification-center" id="notificationCenter">
         <div class="notification-header">
             <span class="notification-title">Notifications</span>
             <div class="notification-actions">
-                <button class="notif-action-btn" id="markAllRead" title="Mark all read">&#10003;</button>
-                <button class="notif-action-btn" id="clearNotifs" title="Clear all">&#128465;</button>
-                <button class="notif-close-btn" id="notifClose">&times;</button>
+                <button class="notif-action-btn" id="markAllRead" title="Mark All Read" aria-label="Mark All Notifications Read">&#10003;</button>
+                <button class="notif-action-btn" id="clearNotifs" title="Clear All" aria-label="Clear All Notifications">&#128465;</button>
+                <button class="notif-close-btn" id="notifClose" aria-label="Close Notifications">&times;</button>
             </div>
         </div>
         <div class="notification-filters">
@@ -1050,8 +1051,8 @@ if ('serviceWorker' in navigator) {
     </div>
     <div class="bottom-panels">
         <div class="bookmarks-panel">
-            <div class="bookmarks-header"><span class="bookmarks-title">Saved Locations</span><button class="bookmark-add-btn" id="addBookmarkBtn" title="Save current view">+</button></div>
-            <div class="bookmarks-list" id="bookmarksList"><div class="bookmarks-empty">No saved locations</div></div>
+            <div class="bookmarks-header"><span class="bookmarks-title">Saved Views</span><button class="bookmark-add-btn" id="addBookmarkBtn" title="Save Current View" aria-label="Save Current Map View">+</button></div>
+            <div class="bookmarks-list" id="bookmarksList"><div class="bookmarks-empty">No saved views yet</div></div>
         </div>
         <div class="watchlist-panel">
             <div class="watchlist-header">
@@ -1059,26 +1060,47 @@ if ('serviceWorker' in navigator) {
                 <span class="watchlist-count" id="watchlistCount">0</span>
             </div>
             <div class="watchlist-items" id="watchlistItems">
-                <div class="watchlist-empty">No aircraft watched<br><span>Click star on any aircraft to add</span></div>
+                <div class="watchlist-empty">No watched aircraft yet<br><span>Select an aircraft and choose Watch to keep it close.</span></div>
             </div>
         </div>
     </div>
-    <div class="modal-overlay" id="bookmarkModal">
-        <div class="modal">
-            <div class="modal-title">Save Location</div>
-            <input type="text" class="modal-input" id="bookmarkNameInput" placeholder="Enter location name...">
+    <div class="modal-overlay" id="bookmarkModal" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bookmarkModalTitle">
+            <div class="modal-title" id="bookmarkModalTitle">Save View</div>
+            <input type="text" class="modal-input" id="bookmarkNameInput" placeholder="Enter a view name…" aria-label="Saved View Name">
             <div class="modal-btns"><button class="modal-btn secondary" id="bookmarkCancelBtn">Cancel</button><button class="modal-btn primary" id="bookmarkSaveBtn">Save</button></div>
+        </div>
+    </div>
+    <div class="modal-overlay system-modal" id="systemDialog" aria-hidden="true">
+        <div class="modal system-modal-card" role="dialog" aria-modal="true" aria-labelledby="systemDialogTitle" aria-describedby="systemDialogMessage">
+            <div class="system-modal-top">
+                <div class="system-modal-copy">
+                    <div class="system-modal-eyebrow" id="systemDialogEyebrow" hidden></div>
+                    <div class="modal-title" id="systemDialogTitle">Confirm Action</div>
+                    <div class="system-modal-message" id="systemDialogMessage"></div>
+                </div>
+                <button type="button" class="system-modal-close" id="systemDialogClose" aria-label="Close Dialog">×</button>
+            </div>
+            <label class="system-modal-field" id="systemDialogField" hidden>
+                <span class="system-modal-label" id="systemDialogLabel">Value</span>
+                <input type="text" class="modal-input" id="systemDialogInput" placeholder="Enter a value…">
+                <span class="system-modal-note" id="systemDialogNote" hidden></span>
+            </label>
+            <div class="modal-btns system-modal-actions">
+                <button type="button" class="modal-btn secondary" id="systemDialogCancel">Cancel</button>
+                <button type="button" class="modal-btn primary" id="systemDialogConfirm">Continue</button>
+            </div>
         </div>
     </div>
     <div class="install-prompt" id="installPrompt">
         <div class="install-content">
             <span class="install-icon">+</span>
-            <span class="install-text">Install SkyTrack for offline access</span>
+            <span class="install-text">Install for quicker launch and offline access</span>
             <button class="install-btn" id="installBtn">Install</button>
-            <button class="install-dismiss" id="installDismiss">x</button>
+            <button class="install-dismiss" id="installDismiss" aria-label="Dismiss Install Prompt">×</button>
         </div>
     </div>
-    <div class="toast" id="toast"></div>
+    <div class="toast" id="toast" role="status" aria-live="polite" data-tone="info"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="app.js"></script>
