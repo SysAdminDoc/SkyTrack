@@ -2,7 +2,7 @@
     // ============ INDEXEDDB STORAGE ============
     const skytrackDB = {
         dbName: 'SkyTrackDB',
-        dbVersion: 1,
+        dbVersion: 2,
         db: null,
         
         async init() {
@@ -39,6 +39,13 @@
                         const trailStore = db.createObjectStore('trailHistory', { keyPath: 'id', autoIncrement: true });
                         trailStore.createIndex('hex', 'hex', { unique: false });
                         trailStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    }
+
+                    // v2: Personal aircraft logbook — one record per ICAO hex.
+                    // Added in schema version 2 (module 99-aircraft-logbook.js).
+                    if (!db.objectStoreNames.contains('logbook')) {
+                        const lb = db.createObjectStore('logbook', { keyPath: 'hex' });
+                        lb.createIndex('lastSeen', 'lastSeen', { unique: false });
                     }
                 };
             });
@@ -132,6 +139,46 @@
             });
         },
         
+        // Generic helpers used by modules that own a dedicated store
+        // (e.g. 99-aircraft-logbook.js). All three are defensively wrapped
+        // so the caller never has to know whether the store exists or the
+        // DB has opened yet.
+        async loadAllFromStore(storeName) {
+            if (!this.db) await this.init();
+            if (!this.db.objectStoreNames.contains(storeName)) return [];
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction([storeName], 'readonly');
+                const req = tx.objectStore(storeName).getAll();
+                req.onsuccess = () => resolve(Array.isArray(req.result) ? req.result : []);
+                req.onerror = () => reject(req.error);
+            });
+        },
+        async putMany(storeName, records) {
+            if (!this.db) await this.init();
+            if (!this.db.objectStoreNames.contains(storeName)) return false;
+            if (!Array.isArray(records) || records.length === 0) return true;
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction([storeName], 'readwrite');
+                const store = tx.objectStore(storeName);
+                for (const rec of records) {
+                    try { store.put(rec); } catch (_) { /* skip bad record */ }
+                }
+                tx.oncomplete = () => resolve(true);
+                tx.onerror = () => reject(tx.error);
+                tx.onabort = () => reject(tx.error || new Error('tx abort'));
+            });
+        },
+        async clearStore(storeName) {
+            if (!this.db) await this.init();
+            if (!this.db.objectStoreNames.contains(storeName)) return false;
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction([storeName], 'readwrite');
+                const req = tx.objectStore(storeName).clear();
+                req.onsuccess = () => resolve(true);
+                req.onerror = () => reject(req.error);
+            });
+        },
+
         async clearOldData(maxAgeDays = 7) {
             if (!this.db) await this.init();
             const cutoff = Date.now() - (maxAgeDays * 86400000);

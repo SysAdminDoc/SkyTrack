@@ -10,6 +10,19 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SkyTrack">
     <meta name="description" content="Real-time aircraft tracking with military, VIP, and interesting aircraft alerts">
+    <meta http-equiv="Permissions-Policy" content="usb=(), serial=(), bluetooth=(), midi=(), camera=(), microphone=(), payment=(), interest-cohort=()">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "SkyTrack",
+        "description": "Real-time global aircraft tracker with 3D globe view, military/VIP detection, weather overlay, surveillance-orbit detection, and 180+ countries flag ID.",
+        "url": "https://sysadmindoc.github.io/SkyTrack/",
+        "applicationCategory": "UtilityApplication",
+        "operatingSystem": "Any",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+    </script>
     <meta property="og:title" content="SkyTrack - Live Flight Tracker">
     <meta property="og:description" content="Track aircraft in real-time with military, VIP, and interesting aircraft alerts.">
     <meta property="og:image" content="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/banner.png">
@@ -79,7 +92,7 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
         try {
             const swCode = `
-                const CACHE_NAME = 'skytrack-v0.22.0';
+                const CACHE_NAME = 'skytrack-v0.23.0';
                 const STATIC_ASSETS = [
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
@@ -241,7 +254,7 @@ if ('serviceWorker' in navigator) {
     <div class="loading-overlay" id="loading">
         <div class="loading-logo">
             <img src="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-128x128.png" alt="SkyTrack">
-            <span>SkyTrack<span class="version">v0.22.0</span></span>
+            <span>SkyTrack<span class="version">v0.23.0</span></span>
         </div>
         <div class="spinner"></div>
         <div class="loading-status" id="loadingStatus" role="status" aria-live="polite">Initializing…</div>
@@ -305,6 +318,9 @@ if ('serviceWorker' in navigator) {
                 <div class="hv2-item" data-btn="rangeRingsBtn"><div class="hv2-item-icon"><button class="header-btn" id="rangeRingsBtn" title="Range Rings" aria-label="Toggle Range Rings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="11" stroke-dasharray="3 3"/></svg></button></div><div class="hv2-item-label">Range Rings</div></div>
                 <div class="hv2-item" data-btn="firesBtn"><div class="hv2-item-icon"><button class="header-btn" id="firesBtn" title="Fires &amp; Hurricanes" aria-label="Toggle Fires and Hurricanes Overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c1 4 4 5 4 9a4 4 0 01-8 0c0-2 1-3 2-4.5C11 4 12 3 12 2z"/><circle cx="12" cy="17" r="2"/></svg></button></div><div class="hv2-item-label">Fires &amp; Hurricanes</div></div>
                 <div class="hv2-item" data-btn="homeWidgetBtn"><div class="hv2-item-icon"><button class="header-btn" id="homeWidgetBtn" title="Plane Over My House" aria-label="Toggle Plane Over My House Widget"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></button></div><div class="hv2-item-label">Over My House</div></div>
+                <div class="hv2-item" data-btn="artccBtn"><div class="hv2-item-icon"><button class="header-btn" id="artccBtn" title="FAA ARTCC Boundaries" aria-label="Toggle FAA ARTCC Boundaries"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8 22 16 12 22 2 16 2 8"/><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="16"/><line x1="2" y1="16" x2="22" y2="8"/></svg></button></div><div class="hv2-item-label">FAA ARTCC</div></div>
+                <div class="hv2-item" data-btn="issBtn"><div class="hv2-item-icon"><button class="header-btn" id="issBtn" title="International Space Station" aria-label="Toggle ISS Live Position"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="4" rx="1"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="8" y1="6" x2="8" y2="10"/><line x1="16" y1="6" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="18"/><line x1="16" y1="14" x2="16" y2="18"/></svg></button></div><div class="hv2-item-label">ISS Tracker</div></div>
+                <div class="hv2-item" data-btn="logbookBtn"><div class="hv2-item-icon"><button class="header-btn" id="logbookBtn" title="My Logbook" aria-label="Show personal aircraft logbook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="17" y2="7"/><line x1="9" y1="11" x2="17" y2="11"/></svg></button></div><div class="hv2-item-label">Logbook</div></div>
                 <div class="hv2-item" data-btn="followBtn"><div class="hv2-item-icon"><button class="header-btn" id="followBtn" title="Follow" aria-label="Follow Aircraft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><path d="M12 8v8M8 12h8" stroke-dasharray="2 2"/></svg></button></div><div class="hv2-item-label">Follow Aircraft</div></div>
                 <div class="hv2-item" data-btn="multiSelectBtn"><div class="hv2-item-icon"><button class="header-btn" id="multiSelectBtn" title="Multi-Select" aria-label="Multi-Select Mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button></div><div class="hv2-item-label">Multi-Select</div></div>
             <div class="hv2-item" data-btn="geofenceBtn"><div class="hv2-item-icon"><button class="header-btn" id="geofenceBtn" title="Geofence" aria-label="Open Geofencing Tools" aria-expanded="false" aria-controls="geofenceList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><circle cx="12" cy="12" r="3"/></svg></button></div><div class="hv2-item-label">Geofencing</div></div>

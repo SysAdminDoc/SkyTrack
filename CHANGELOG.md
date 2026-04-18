@@ -2,6 +2,56 @@
 
 All notable changes to SkyTrack will be documented in this file.
 
+## [v0.23.0] - 2026-04-18
+
+A wide-net improvement pass: three more modules extracted, three new
+features added, and a sweep of small hardening fixes. `src/app.js`
+drops to ~10,000 lines. Total modules: 23 + app.js.
+
+### Project layout
+- `measureTool` (175 lines)           → `src/modules/60-measure.js`
+- `playbackController` (187 lines)    → `src/modules/65-playback.js`
+- `geofences` (423 lines)             → `src/modules/70-geofences.js`
+- `skytrackDB` gains `loadAllFromStore` / `putMany` / `clearStore`
+  generic helpers + a new `logbook` object store (schema v2 upgrade).
+
+### Added
+- **Personal aircraft logbook** (module 99). Silent-background IDB
+  log of every ICAO24 the user has ever seen: `{ firstSeen, lastSeen,
+  count, bestCallsign/Type/Reg, milEver, vipEver, emergencyEver }`.
+  "First time seen" toast fires for genuinely new hexes after a 15 s
+  grace at load. "Logbook" toolbar button shows totals (unique / mil
+  / VIP / emergency). Debounced 3 s flush to IDB; never blocks the
+  refresh loop. Falls back to in-memory only if IDB is unavailable.
+- **FAA ARTCC + airway overlay** (module A0). Toggleable GeoJSON
+  layer from the FAA open-data ArcGIS hub (CORS-enabled). Cached to
+  IDB with 7-day TTL so repeat loads don't re-pay the transfer.
+  Exposed via a single toolbar button for ARTCC; low/high airway
+  slots are wired and ready for additional buttons.
+- **ISS live-position tracker** (module A1). Uses
+  `api.wheretheiss.at/v1/satellites/25544` (CORS ✓, no key). Polls
+  every 10 s and interpolates between fixes via `requestAnimationFrame`
+  so the marker visibly drifts on-screen. Rolling 20-minute dashed
+  ground-track trail in a single layer group.
+
+### Improvements / hardening
+- JSON-LD `WebApplication` schema.org block + `Permissions-Policy`
+  meta disabling USB / serial / bluetooth / MIDI / camera / mic /
+  payment / interest-cohort.
+- `parseInt` radix explicitly provided at the remaining call sites
+  (year, category count, elevation, time-machine slider).
+- `mobileExperience.initTouchHandlers` now caches `.bind(this)` for
+  each of the three touch handlers, so future teardown paths won't
+  silently leak listeners (same class of bug as v0.17 measureTool).
+- `connectionMonitor.updateStatus` now null-guards its child
+  queries (already in v0.22, re-confirmed).
+
+### Notes
+- Total modules after this release: 23 + app.js. `src/app.js`:
+  ~10,000 lines. Built size: 1.02 MB / 19,309 lines.
+- `build.mjs --check` green; all modules pass `node --check`.
+
+### Previous
 ## [v0.22.0] - 2026-04-18
 
 ### Project layout
