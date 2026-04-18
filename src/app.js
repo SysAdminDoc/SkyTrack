@@ -31,23 +31,49 @@
         },
         
         async init() {
+            // Load watchlist from IndexedDB, with localStorage as a belt-and-suspenders
+            // fallback. Both parse paths have to tolerate corrupt/malformed payloads
+            // without throwing — a bad entry here previously wedged the entire alert
+            // subsystem and, transitively, squawk/military/watchlist notifications.
+            const loadFromLs = () => {
+                let parsed;
+                try {
+                    const ls = localStorage.getItem('skytrack_watchlist');
+                    if (!ls) return;
+                    parsed = JSON.parse(ls);
+                } catch (_) { return; }
+                if (!Array.isArray(parsed)) return;
+                for (const item of parsed) {
+                    const hex = item?.hex;
+                    if (typeof hex !== 'string' || hex.length === 0) continue;
+                    this.watchlist.set(hex.toUpperCase(), item);
+                }
+            };
             try {
                 const saved = await skytrackDB.loadUserData('watchlist');
-                if (saved) {
-                    saved.forEach(item => this.watchlist.set(item.hex.toUpperCase(), item));
+                if (Array.isArray(saved)) {
+                    for (const item of saved) {
+                        const hex = item?.hex;
+                        if (typeof hex !== 'string' || hex.length === 0) continue;
+                        this.watchlist.set(hex.toUpperCase(), item);
+                    }
+                } else {
+                    loadFromLs();
                 }
-            } catch (e) {
-                const ls = localStorage.getItem('skytrack_watchlist');
-                if (ls) {
-                    JSON.parse(ls).forEach(item => this.watchlist.set(item.hex.toUpperCase(), item));
-                }
+            } catch (_) {
+                loadFromLs();
             }
-            
-            const settings = JSON.parse(localStorage.getItem('skytrack_alert_settings') || '{}');
+
+            let settings = {};
+            try {
+                const raw = localStorage.getItem('skytrack_alert_settings');
+                if (raw) settings = JSON.parse(raw) || {};
+                if (typeof settings !== 'object' || settings === null) settings = {};
+            } catch (_) { settings = {}; }
             this.enabled = settings.enabled !== false;
             this.soundEnabled = settings.soundEnabled !== false;
-            this.militaryAlertRadius = settings.militaryAlertRadius || 50;
-            this.notificationsEnabled = settings.notificationsEnabled && Notification.permission === 'granted';
+            this.militaryAlertRadius = Number.isFinite(settings.militaryAlertRadius) && settings.militaryAlertRadius > 0 ? settings.militaryAlertRadius : 50;
+            this.notificationsEnabled = settings.notificationsEnabled && typeof Notification !== 'undefined' && Notification.permission === 'granted';
             
             this.startLocationTracking();
             _dbg('Alert system initialized:', this.watchlist.size, 'watched aircraft');
@@ -239,8 +265,13 @@
         },
         
         playSound(type) {
+            // Route through the shared AudioContext (10-utils.js). Previously we
+            // built a fresh context per alert, and Chromium caps concurrent
+            // contexts at ~6 — so after the first handful of alerts, audio went
+            // silently dead for the rest of the session.
+            const ctx = _sharedAudio();
+            if (!ctx) return;
             try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.connect(gain);
@@ -2353,31 +2384,39 @@
             
             if (eta) {
                 etaSection.style.display = 'block';
-                document.getElementById('etaTime').textContent = 
+                // The ETA panel renders differently between desktop and mobile
+                // layouts; child elements can legitimately be absent. Null-guard
+                // each write so a missing sub-element doesn't throw and bring
+                // the entire info-panel update with it.
+                const etaTimeEl = document.getElementById('etaTime');
+                if (etaTimeEl) etaTimeEl.textContent =
                     eta.eta.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                document.getElementById('etaDistance').textContent = 
-                    Math.round(eta.distance) + ' km';
-                
+                const etaDistEl = document.getElementById('etaDistance');
+                if (etaDistEl) etaDistEl.textContent = Math.round(eta.distance) + ' km';
+
                 const hours = Math.floor(eta.hoursRemaining);
                 const mins = Math.round((eta.hoursRemaining - hours) * 60);
-                document.getElementById('etaRemaining').textContent = 
+                const etaRemainEl = document.getElementById('etaRemaining');
+                if (etaRemainEl) etaRemainEl.textContent =
                     hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-                
+
                 // Calculate progress
-                if (ac.from) {
-                    const originAirport = ac.detectedOrigin || airportDB.getByCode(ac.from);
-                    if (originAirport) {
-                        const totalDist = haversineDistance(
-                            originAirport.lat, originAirport.lon,
-                            eta.airport.lat, eta.airport.lon
-                        );
-                        const progress = Math.min(100, Math.max(0, ((totalDist - eta.distance) / totalDist * 100)));
-                        document.getElementById('etaProgressBar').style.width = progress.toFixed(0) + '%';
-                    } else {
-                        document.getElementById('etaProgressBar').style.width = '0%';
+                const progressBar = document.getElementById('etaProgressBar');
+                if (progressBar) {
+                    let progressPct = 0;
+                    if (ac.from) {
+                        const originAirport = ac.detectedOrigin || airportDB.getByCode(ac.from);
+                        if (originAirport && eta.airport) {
+                            const totalDist = haversineDistance(
+                                originAirport.lat, originAirport.lon,
+                                eta.airport.lat, eta.airport.lon
+                            );
+                            if (Number.isFinite(totalDist) && totalDist > 0) {
+                                progressPct = Math.min(100, Math.max(0, (totalDist - eta.distance) / totalDist * 100));
+                            }
+                        }
                     }
-                } else {
-                    document.getElementById('etaProgressBar').style.width = '0%';
+                    progressBar.style.width = progressPct.toFixed(0) + '%';
                 }
             } else {
                 etaSection.style.display = 'none';
@@ -2777,9 +2816,13 @@
             if (!this.overlay) {
                 return Promise.resolve(kind === 'confirm' ? false : kind === 'info' ? undefined : null);
             }
+            // Capture the caller's focus BEFORE closing any prior dialog —
+            // otherwise finish() re-focuses the previous trigger and we'd
+            // record that element as "lastFocused" for the new dialog.
+            const caller = document.activeElement instanceof HTMLElement ? document.activeElement : null;
             if (this.active) this.finish(this.active.kind === 'confirm' ? false : this.active.kind === 'info' ? undefined : null);
             return new Promise(resolve => {
-                this.lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+                this.lastFocused = caller;
                 this.active = {
                     kind,
                     title: options.title || 'Confirm Action',
@@ -2908,8 +2951,8 @@
         if (!list) return;
         if (!bookmarks.length) { list.innerHTML = '<div class="bookmarks-empty">No saved views yet</div>'; return; }
         list.innerHTML = bookmarks.map(b => '<div class="bookmark-item" data-id="' + _escHtml(b.id) + '"><span class="bookmark-name">' + _escHtml(b.name) + '</span><button class="bookmark-delete" data-id="' + _escHtml(b.id) + '" aria-label="Delete saved view ' + _escHtml(b.name) + '">&times;</button></div>').join('');
-        list.querySelectorAll('.bookmark-item').forEach(item => item.addEventListener('click', e => { if (!e.target.classList.contains('bookmark-delete')) goToBookmark(parseInt(item.dataset.id)); }));
-        list.querySelectorAll('.bookmark-delete').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); deleteBookmark(parseInt(btn.dataset.id)); }));
+        list.querySelectorAll('.bookmark-item').forEach(item => item.addEventListener('click', e => { if (!e.target.classList.contains('bookmark-delete')) goToBookmark(parseInt(item.dataset.id, 10)); }));
+        list.querySelectorAll('.bookmark-delete').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); deleteBookmark(parseInt(btn.dataset.id, 10)); }));
     }
     function openBookmarkModal() {
         const overlay = document.getElementById('bookmarkModal');
@@ -5086,17 +5129,19 @@
             });
             if (activeTypes.length > 0) this.filters.types = activeTypes;
             
-            // Altitude
-            const altMin = parseInt(document.getElementById('altMin')?.value);
-            const altMax = parseInt(document.getElementById('altMax')?.value);
-            if (!isNaN(altMin)) this.filters.altMin = altMin;
-            if (!isNaN(altMax)) this.filters.altMax = altMax;
-            
+            // Altitude — explicit radix, and require a finite number so the
+            // filter state doesn't land as NaN and later compare-silently-false
+            // against every aircraft.
+            const altMin = parseInt(document.getElementById('altMin')?.value ?? '', 10);
+            const altMax = parseInt(document.getElementById('altMax')?.value ?? '', 10);
+            if (Number.isFinite(altMin)) this.filters.altMin = altMin;
+            if (Number.isFinite(altMax)) this.filters.altMax = altMax;
+
             // Speed
-            const speedMin = parseInt(document.getElementById('speedMin')?.value);
-            const speedMax = parseInt(document.getElementById('speedMax')?.value);
-            if (!isNaN(speedMin)) this.filters.speedMin = speedMin;
-            if (!isNaN(speedMax)) this.filters.speedMax = speedMax;
+            const speedMin = parseInt(document.getElementById('speedMin')?.value ?? '', 10);
+            const speedMax = parseInt(document.getElementById('speedMax')?.value ?? '', 10);
+            if (Number.isFinite(speedMin)) this.filters.speedMin = speedMin;
+            if (Number.isFinite(speedMax)) this.filters.speedMax = speedMax;
             
             // Airport
             const airport = document.getElementById('filterAirport')?.value?.trim().toUpperCase();
@@ -5276,10 +5321,10 @@
             container.querySelectorAll('.history-item').forEach(el => {
                 el.addEventListener('click', (e) => {
                     if (e.target.classList.contains('history-remove')) {
-                        this.removeFromHistory(parseInt(e.target.dataset.index));
+                        this.removeFromHistory(parseInt(e.target.dataset.index, 10));
                         e.stopPropagation();
                     } else {
-                        const h = this.history[parseInt(el.dataset.index)];
+                        const h = this.history[parseInt(el.dataset.index, 10)];
                         document.getElementById('searchInput').value = h.text;
                         this.executeSearch(h.text);
                     }
@@ -7986,7 +8031,7 @@ ${trailData.map(p => {
             
             container.querySelectorAll('.notif-item').forEach(el => {
                 el.addEventListener('click', () => {
-                    const id = parseInt(el.dataset.id);
+                    const id = parseInt(el.dataset.id, 10);
                     const hex = el.dataset.hex;
                     
                     this.markAsRead(id);
@@ -9256,12 +9301,21 @@ ${trailData.map(p => {
             
             document.getElementById('map').appendChild(menu);
             
+            // Hoisted close handler so both the outside-click path and the
+            // action-click path remove the same listener — otherwise each
+            // context-menu session leaked one global click listener.
+            const closeMenu = (e) => {
+                if (e && menu.contains(e.target)) return;
+                document.removeEventListener('click', closeMenu);
+                if (menu.isConnected) menu.remove();
+            };
             menu.addEventListener('click', async (e) => {
                 const item = e.target.closest('.zone-menu-item');
                 const action = item?.dataset.action;
                 if (!action) return;
+                document.removeEventListener('click', closeMenu);
                 menu.remove();
-                
+
                 if (action === 'rename') {
                     const newName = await uiDialogs.prompt({
                         eyebrow: 'Alert Zone',
@@ -9308,14 +9362,10 @@ ${trailData.map(p => {
                 }
             });
             
-            // Close on outside click
+            // Close on outside click. Deferred so the click that spawned the
+            // menu doesn't immediately dismiss it.
             setTimeout(() => {
-                document.addEventListener('click', function closeMenu(e) {
-                    if (!menu.contains(e.target)) {
-                        menu.remove();
-                        document.removeEventListener('click', closeMenu);
-                    }
-                });
+                if (menu.isConnected) document.addEventListener('click', closeMenu);
             }, 100);
         },
         
@@ -9355,7 +9405,7 @@ ${trailData.map(p => {
             
             content.querySelectorAll('.gf-list-item').forEach(item => {
                 item.addEventListener('click', () => {
-                    const zone = this.zones.find(z => z.id === parseInt(item.dataset.id));
+                    const zone = this.zones.find(z => z.id === parseInt(item.dataset.id, 10));
                     if (zone?._layer) {
                         map.fitBounds(zone._layer.getBounds().pad(0.2));
                     }
@@ -9363,7 +9413,7 @@ ${trailData.map(p => {
                 
                 item.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
-                    const zone = this.zones.find(z => z.id === parseInt(item.dataset.id));
+                    const zone = this.zones.find(z => z.id === parseInt(item.dataset.id, 10));
                     if (zone) {
                         const center = zone._layer?.getBounds().getCenter();
                         if (center) this.showZoneMenu(zone, center);

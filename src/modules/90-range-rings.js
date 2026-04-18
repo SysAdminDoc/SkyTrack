@@ -6,6 +6,8 @@
     // reads persistence from localStorage, exposes `rangeRings` at script
     // scope for the UI handler to toggle.
     const rangeRings = {
+        _inited: false,
+        _pendingEnable: null,             // in-flight enable() — blocks re-entry
         map: null,
         layer: null,
         enabled: false,
@@ -14,20 +16,24 @@
         color: '#58a6ff',
 
         init(map) {
+            if (this._inited) return;
+            this._inited = true;
             this.map = map;
             try {
-                const saved = localStorage.getItem('skytrack_range_rings');
-                if (saved) {
-                    const obj = JSON.parse(saved);
-                    if (obj && typeof obj === 'object') {
-                        if (Array.isArray(obj.distancesNm)) {
-                            this.distancesNm = obj.distancesNm.filter(d => Number.isFinite(d) && d > 0 && d <= 500).slice(0, 8);
-                        }
-                        if (obj.center && Number.isFinite(obj.center.lat) && Number.isFinite(obj.center.lon)) {
-                            this.center = obj.center;
-                        }
-                        if (obj.enabled === true) this.enable();
-                    }
+                const raw = localStorage.getItem('skytrack_range_rings');
+                if (!raw) return;
+                const obj = JSON.parse(raw);
+                if (!obj || typeof obj !== 'object') return;
+                if (Array.isArray(obj.distancesNm)) {
+                    this.distancesNm = obj.distancesNm
+                        .filter(d => Number.isFinite(d) && d > 0 && d <= 500)
+                        .slice(0, 8);
+                }
+                if (obj.center && Number.isFinite(obj.center.lat) && Number.isFinite(obj.center.lon)) {
+                    this.center = { lat: obj.center.lat, lon: obj.center.lon };
+                }
+                if (obj.enabled === true) {
+                    this.enable().catch(() => { /* surfaced inside enable() */ });
                 }
             } catch (_) { /* corrupt localStorage — ignore */ }
         },
@@ -62,19 +68,29 @@
         },
 
         async enable() {
-            if (!this.map) return false;
-            if (!this.center) {
-                this.center = await this.resolveCenter();
+            // Coalesce concurrent enable() calls (e.g. rapid button clicks,
+            // or init restore racing with a user click). Without this, each
+            // click would trigger its own geolocation prompt and _draw()
+            // race, resulting in stacked layers.
+            if (this._pendingEnable) return this._pendingEnable;
+            const op = (async () => {
+                if (!this.map) return false;
                 if (!this.center) {
-                    this.enabled = false;
-                    this.save();
-                    return false;
+                    this.center = await this.resolveCenter();
+                    if (!this.center) {
+                        this.enabled = false;
+                        this.save();
+                        return false;
+                    }
                 }
-            }
-            this.enabled = true;
-            this._draw();
-            this.save();
-            return true;
+                this.enabled = true;
+                this._draw();
+                this.save();
+                return true;
+            })();
+            this._pendingEnable = op;
+            try { return await op; }
+            finally { if (this._pendingEnable === op) this._pendingEnable = null; }
         },
 
         disable() {
@@ -87,6 +103,11 @@
         },
 
         async toggle() {
+            // Wait for any in-flight enable() so the user's second click
+            // observes the *final* state and flips it correctly.
+            if (this._pendingEnable) {
+                try { await this._pendingEnable; } catch (_) { /* already surfaced */ }
+            }
             if (this.enabled) { this.disable(); return false; }
             return await this.enable();
         },

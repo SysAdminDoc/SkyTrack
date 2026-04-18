@@ -117,6 +117,27 @@
         }
     };
 
+    // ============ SHARED AUDIO CONTEXT ============
+    // Browsers cap the number of concurrent AudioContexts (Chromium ≈ 6 —
+    // after that, new `new AudioContext()` calls silently fail and all
+    // subsequent alert chimes go quiet). Every module that wants to emit a
+    // short beep should route through this lazy singleton so we only ever
+    // hold one. Returns `null` when the platform doesn't support Web Audio
+    // or the user agent refused to create the context (Safari, iOS without
+    // prior gesture).
+    let _sharedAudioCtx = null;
+    function _sharedAudio() {
+        if (_sharedAudioCtx) return _sharedAudioCtx;
+        try {
+            const Ctor = window.AudioContext || window.webkitAudioContext;
+            if (!Ctor) return null;
+            _sharedAudioCtx = new Ctor();
+            return _sharedAudioCtx;
+        } catch (_) {
+            return null;
+        }
+    }
+
     // ============ PERFORMANCE UTILITIES ============
     const perfUtils = {
         // Throttle function - limits how often a function can be called

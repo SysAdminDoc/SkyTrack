@@ -1,5 +1,5 @@
 
-    // ============ EMERGENCY SQUAWK PULSE (v0.20.0) ============
+    // ============ EMERGENCY SQUAWK PULSE ============
     // Triple expanding ring pulse under every aircraft broadcasting an
     // emergency squawk (7500/7600/7700). Sits on its own Leaflet layer so
     // it doesn't perturb the main marker renderer.
@@ -11,6 +11,7 @@
     // Pulse is a CSS animation defined in styles.css. Three <span> rings
     // with staggered delays give the expanding-sonar effect at 1 Hz.
     const emergencyPulse = {
+        _inited: false,
         map: null,
         layer: null,
         markers: new Map(), // hex → { marker, squawk }
@@ -23,21 +24,28 @@
         },
 
         init(map) {
+            if (this._inited) return;
+            this._inited = true;
             this.map = map;
             this.layer = L.layerGroup().addTo(map);
-            // Re-use an existing pausable interval slot if the scaffolding is
-            // loaded (module 10-utils.js provides _setPausableInterval). Falls
-            // back to a plain setInterval for safety.
-            const start = () => {
-                if (typeof _setPausableInterval === 'function') {
-                    _setPausableInterval(() => this.refresh(), this.refreshMs, 'emergencyPulse');
-                } else {
-                    setInterval(() => this.refresh(), this.refreshMs);
-                }
-            };
-            start();
+            // Prefer the pausable-interval scaffolding from 10-utils.js so
+            // the pulse refresh naturally follows the tab-visibility state
+            // of the rest of the app. Fall back to setInterval for safety.
+            if (typeof _setPausableInterval === 'function') {
+                _setPausableInterval(() => this.refresh(), this.refreshMs, 'emergencyPulse');
+            } else {
+                setInterval(() => this.refresh(), this.refreshMs);
+            }
             // One immediate refresh once aircraftCache is populated.
             setTimeout(() => this.refresh(), 1500);
+        },
+
+        // Treat squawk as a string so numeric-encoded squawks from some
+        // feeds don't miss the equality check.
+        _isEmergency(sq) {
+            if (sq === null || sq === undefined) return false;
+            const s = String(sq);
+            return s === '7500' || s === '7600' || s === '7700';
         },
 
         refresh() {
@@ -48,25 +56,27 @@
                 const ac = aircraftCache[hex];
                 if (!ac) continue;
                 const sq = ac.squawk;
-                if (sq !== '7500' && sq !== '7600' && sq !== '7700') continue;
+                if (!this._isEmergency(sq)) continue;
                 if (!Number.isFinite(ac.lat) || !Number.isFinite(ac.lon)) continue;
+                const sqStr = String(sq);
                 seen.add(hex);
                 const existing = this.markers.get(hex);
                 if (existing) {
-                    // Reposition in place (don't tear down — animation would restart)
+                    // Reposition in place; don't tear down — otherwise the
+                    // CSS ring animation restarts every refresh tick.
                     try { existing.marker.setLatLng([ac.lat, ac.lon]); } catch (_) {}
-                    if (existing.squawk !== sq) {
-                        existing.squawk = sq;
-                        this._swapIcon(existing.marker, sq);
+                    if (existing.squawk !== sqStr) {
+                        existing.squawk = sqStr;
+                        this._swapIcon(existing.marker, sqStr);
                     }
                 } else {
                     const marker = L.marker([ac.lat, ac.lon], {
-                        icon: this._icon(sq),
+                        icon: this._icon(sqStr),
                         interactive: false,
                         keyboard: false,
                         zIndexOffset: -1000
                     }).addTo(this.layer);
-                    this.markers.set(hex, { marker, squawk: sq });
+                    this.markers.set(hex, { marker, squawk: sqStr });
                 }
             }
             // Prune aircraft that are no longer squawking emergency.

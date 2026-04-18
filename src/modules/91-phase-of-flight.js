@@ -1,5 +1,5 @@
 
-    // ============ PHASE-OF-FLIGHT CLASSIFIER (v0.19.0) ============
+    // ============ PHASE-OF-FLIGHT CLASSIFIER ============
     // Pure rule-based classifier. No ML, no network. Labels every aircraft
     // with one of: ground | taxi | takeoff | climb | cruise | descent |
     // approach | landing. Used to:
@@ -10,57 +10,74 @@
     // Thresholds follow FAA guidance loosely but are tuned for the noisy
     // ADS-B-derived alt/gs/vs triplet rather than certified FDR data.
     const phaseClassifier = {
-        // Public: returns a string label or null if insufficient signal.
-        // ac: { alt_baro, gs, baro_rate } (also accepts alt as alias)
+        // Vertical-speed threshold (fpm) that separates level flight from
+        // climbs/descents. ADS-B-reported VS is noisy at ±100 fpm even on
+        // steady level flight, so 300 is deliberately loose.
+        _VS_LEVEL_FPM: 300,
+
+        // Ground-speed (kt) thresholds while on the ground.
+        _GS_STOPPED: 5,
+        _GS_TAXI_MAX: 40,
+
+        // Returns a lowercase phase string, or `null` if there isn't enough
+        // signal to classify (e.g. no altitude reading).
         classify(ac) {
             if (!ac) return null;
-            const alt = (ac.alt_baro !== undefined) ? ac.alt_baro : ac.alt;
+            const altRaw = (ac.alt_baro !== undefined) ? ac.alt_baro : ac.alt;
             const gs = Number(ac.gs);
             const vs = Number(ac.baro_rate); // fpm, positive = climb
-            if (alt === 'ground' || alt === 0) {
-                if (!Number.isFinite(gs) || gs < 5) return 'ground';
-                if (gs < 40) return 'taxi';
-                // Rolling on the ground at takeoff speed.
+
+            // On-ground branch: the source feeds emit the string 'ground'
+            // for ground-bit-set records. `0` is NOT a reliable ground
+            // signal on its own — many feeds clamp small positive AGL
+            // values to 0 at low resolution — so we require the explicit
+            // string token here.
+            if (altRaw === 'ground') {
+                if (!Number.isFinite(gs) || gs < this._GS_STOPPED) return 'ground';
+                if (gs < this._GS_TAXI_MAX) return 'taxi';
                 return 'takeoff';
             }
+
+            const alt = Number(altRaw);
             if (!Number.isFinite(alt)) return null;
-            // Airborne branches.
-            if (Number.isFinite(vs) && Math.abs(vs) < 300) {
-                // Level flight band.
-                if (alt >= 18000) return 'cruise';
-                if (alt >= 10000) return 'cruise';
-                if (alt >= 3000) return 'cruise';
-                return 'approach'; // low + level = pattern / final
+
+            // Level flight — VS known and near zero.
+            if (Number.isFinite(vs) && Math.abs(vs) < this._VS_LEVEL_FPM) {
+                // Low + level typically means pattern / final approach.
+                return alt >= 3000 ? 'cruise' : 'approach';
             }
-            if (Number.isFinite(vs) && vs >= 300) {
-                // Climbing.
+
+            // Climbing — VS known and positive.
+            if (Number.isFinite(vs) && vs >= this._VS_LEVEL_FPM) {
+                // Low + fast climb = takeoff roll-out; everything else is a climb.
                 if (alt < 3000 && Number.isFinite(gs) && gs > 80) return 'takeoff';
-                if (alt < 18000) return 'climb';
                 return 'climb';
             }
-            if (Number.isFinite(vs) && vs <= -300) {
-                // Descending.
+
+            // Descending — VS known and negative.
+            if (Number.isFinite(vs) && vs <= -this._VS_LEVEL_FPM) {
                 if (alt < 3000) {
-                    if (Number.isFinite(gs) && gs < 180) return 'landing';
-                    return 'approach';
+                    return Number.isFinite(gs) && gs < 180 ? 'landing' : 'approach';
                 }
                 if (alt < 10000) return 'approach';
                 return 'descent';
             }
-            // Fallback: gs + alt only.
+
+            // Fallback: VS unknown or missing — classify by altitude only.
             if (alt > 25000) return 'cruise';
             if (alt > 10000) return 'climb';
             return 'approach';
         },
 
-        // Annotate an aircraft record in-place with `ac.phase`.
+        // Annotate an aircraft record in-place with `ac.phase`. Returns the phase.
         annotate(ac) {
-            if (!ac) return;
+            if (!ac) return null;
             const p = this.classify(ac);
             if (p) ac.phase = p;
+            return p;
         },
 
-        // Annotate every aircraft in an array / object-map.
+        // Annotate every aircraft in an array or object-map.
         annotateAll(acs) {
             if (!acs) return;
             if (Array.isArray(acs)) {
@@ -70,7 +87,6 @@
             }
         },
 
-        // Render a compact chip: <span class="phase-chip phase-cruise">CRUISE</span>
         chipHtml(ac) {
             const p = (ac && ac.phase) || this.classify(ac);
             if (!p) return '';
