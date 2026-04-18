@@ -2973,7 +2973,7 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
         try {
             const swCode = `
-                const CACHE_NAME = 'skytrack-v0.20.0';
+                const CACHE_NAME = 'skytrack-v0.21.0';
                 const STATIC_ASSETS = [
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
@@ -3135,7 +3135,7 @@ if ('serviceWorker' in navigator) {
     <div class="loading-overlay" id="loading">
         <div class="loading-logo">
             <img src="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-128x128.png" alt="SkyTrack">
-            <span>SkyTrack<span class="version">v0.20.0</span></span>
+            <span>SkyTrack<span class="version">v0.21.0</span></span>
         </div>
         <div class="spinner"></div>
         <div class="loading-status" id="loadingStatus" role="status" aria-live="polite">Initializing…</div>
@@ -4267,6 +4267,27 @@ if ('serviceWorker' in navigator) {
             }
         }
     };
+
+    // ============ SHARED AUDIO CONTEXT ============
+    // Browsers cap the number of concurrent AudioContexts (Chromium ≈ 6 —
+    // after that, new `new AudioContext()` calls silently fail and all
+    // subsequent alert chimes go quiet). Every module that wants to emit a
+    // short beep should route through this lazy singleton so we only ever
+    // hold one. Returns `null` when the platform doesn't support Web Audio
+    // or the user agent refused to create the context (Safari, iOS without
+    // prior gesture).
+    let _sharedAudioCtx = null;
+    function _sharedAudio() {
+        if (_sharedAudioCtx) return _sharedAudioCtx;
+        try {
+            const Ctor = window.AudioContext || window.webkitAudioContext;
+            if (!Ctor) return null;
+            _sharedAudioCtx = new Ctor();
+            return _sharedAudioCtx;
+        } catch (_) {
+            return null;
+        }
+    }
 
     // ============ PERFORMANCE UTILITIES ============
     const perfUtils = {
@@ -5653,6 +5674,8 @@ if ('serviceWorker' in navigator) {
     // reads persistence from localStorage, exposes `rangeRings` at script
     // scope for the UI handler to toggle.
     const rangeRings = {
+        _inited: false,
+        _pendingEnable: null,             // in-flight enable() — blocks re-entry
         map: null,
         layer: null,
         enabled: false,
@@ -5661,20 +5684,24 @@ if ('serviceWorker' in navigator) {
         color: '#58a6ff',
 
         init(map) {
+            if (this._inited) return;
+            this._inited = true;
             this.map = map;
             try {
-                const saved = localStorage.getItem('skytrack_range_rings');
-                if (saved) {
-                    const obj = JSON.parse(saved);
-                    if (obj && typeof obj === 'object') {
-                        if (Array.isArray(obj.distancesNm)) {
-                            this.distancesNm = obj.distancesNm.filter(d => Number.isFinite(d) && d > 0 && d <= 500).slice(0, 8);
-                        }
-                        if (obj.center && Number.isFinite(obj.center.lat) && Number.isFinite(obj.center.lon)) {
-                            this.center = obj.center;
-                        }
-                        if (obj.enabled === true) this.enable();
-                    }
+                const raw = localStorage.getItem('skytrack_range_rings');
+                if (!raw) return;
+                const obj = JSON.parse(raw);
+                if (!obj || typeof obj !== 'object') return;
+                if (Array.isArray(obj.distancesNm)) {
+                    this.distancesNm = obj.distancesNm
+                        .filter(d => Number.isFinite(d) && d > 0 && d <= 500)
+                        .slice(0, 8);
+                }
+                if (obj.center && Number.isFinite(obj.center.lat) && Number.isFinite(obj.center.lon)) {
+                    this.center = { lat: obj.center.lat, lon: obj.center.lon };
+                }
+                if (obj.enabled === true) {
+                    this.enable().catch(() => { /* surfaced inside enable() */ });
                 }
             } catch (_) { /* corrupt localStorage — ignore */ }
         },
@@ -5709,19 +5736,29 @@ if ('serviceWorker' in navigator) {
         },
 
         async enable() {
-            if (!this.map) return false;
-            if (!this.center) {
-                this.center = await this.resolveCenter();
+            // Coalesce concurrent enable() calls (e.g. rapid button clicks,
+            // or init restore racing with a user click). Without this, each
+            // click would trigger its own geolocation prompt and _draw()
+            // race, resulting in stacked layers.
+            if (this._pendingEnable) return this._pendingEnable;
+            const op = (async () => {
+                if (!this.map) return false;
                 if (!this.center) {
-                    this.enabled = false;
-                    this.save();
-                    return false;
+                    this.center = await this.resolveCenter();
+                    if (!this.center) {
+                        this.enabled = false;
+                        this.save();
+                        return false;
+                    }
                 }
-            }
-            this.enabled = true;
-            this._draw();
-            this.save();
-            return true;
+                this.enabled = true;
+                this._draw();
+                this.save();
+                return true;
+            })();
+            this._pendingEnable = op;
+            try { return await op; }
+            finally { if (this._pendingEnable === op) this._pendingEnable = null; }
         },
 
         disable() {
@@ -5734,6 +5771,11 @@ if ('serviceWorker' in navigator) {
         },
 
         async toggle() {
+            // Wait for any in-flight enable() so the user's second click
+            // observes the *final* state and flips it correctly.
+            if (this._pendingEnable) {
+                try { await this._pendingEnable; } catch (_) { /* already surfaced */ }
+            }
             if (this.enabled) { this.disable(); return false; }
             return await this.enable();
         },
@@ -5816,7 +5858,7 @@ if ('serviceWorker' in navigator) {
     });
     // ─── module: modules/91-phase-of-flight.js ───────────────────────────────────────────
 
-    // ============ PHASE-OF-FLIGHT CLASSIFIER (v0.19.0) ============
+    // ============ PHASE-OF-FLIGHT CLASSIFIER ============
     // Pure rule-based classifier. No ML, no network. Labels every aircraft
     // with one of: ground | taxi | takeoff | climb | cruise | descent |
     // approach | landing. Used to:
@@ -5827,57 +5869,74 @@ if ('serviceWorker' in navigator) {
     // Thresholds follow FAA guidance loosely but are tuned for the noisy
     // ADS-B-derived alt/gs/vs triplet rather than certified FDR data.
     const phaseClassifier = {
-        // Public: returns a string label or null if insufficient signal.
-        // ac: { alt_baro, gs, baro_rate } (also accepts alt as alias)
+        // Vertical-speed threshold (fpm) that separates level flight from
+        // climbs/descents. ADS-B-reported VS is noisy at ±100 fpm even on
+        // steady level flight, so 300 is deliberately loose.
+        _VS_LEVEL_FPM: 300,
+
+        // Ground-speed (kt) thresholds while on the ground.
+        _GS_STOPPED: 5,
+        _GS_TAXI_MAX: 40,
+
+        // Returns a lowercase phase string, or `null` if there isn't enough
+        // signal to classify (e.g. no altitude reading).
         classify(ac) {
             if (!ac) return null;
-            const alt = (ac.alt_baro !== undefined) ? ac.alt_baro : ac.alt;
+            const altRaw = (ac.alt_baro !== undefined) ? ac.alt_baro : ac.alt;
             const gs = Number(ac.gs);
             const vs = Number(ac.baro_rate); // fpm, positive = climb
-            if (alt === 'ground' || alt === 0) {
-                if (!Number.isFinite(gs) || gs < 5) return 'ground';
-                if (gs < 40) return 'taxi';
-                // Rolling on the ground at takeoff speed.
+
+            // On-ground branch: the source feeds emit the string 'ground'
+            // for ground-bit-set records. `0` is NOT a reliable ground
+            // signal on its own — many feeds clamp small positive AGL
+            // values to 0 at low resolution — so we require the explicit
+            // string token here.
+            if (altRaw === 'ground') {
+                if (!Number.isFinite(gs) || gs < this._GS_STOPPED) return 'ground';
+                if (gs < this._GS_TAXI_MAX) return 'taxi';
                 return 'takeoff';
             }
+
+            const alt = Number(altRaw);
             if (!Number.isFinite(alt)) return null;
-            // Airborne branches.
-            if (Number.isFinite(vs) && Math.abs(vs) < 300) {
-                // Level flight band.
-                if (alt >= 18000) return 'cruise';
-                if (alt >= 10000) return 'cruise';
-                if (alt >= 3000) return 'cruise';
-                return 'approach'; // low + level = pattern / final
+
+            // Level flight — VS known and near zero.
+            if (Number.isFinite(vs) && Math.abs(vs) < this._VS_LEVEL_FPM) {
+                // Low + level typically means pattern / final approach.
+                return alt >= 3000 ? 'cruise' : 'approach';
             }
-            if (Number.isFinite(vs) && vs >= 300) {
-                // Climbing.
+
+            // Climbing — VS known and positive.
+            if (Number.isFinite(vs) && vs >= this._VS_LEVEL_FPM) {
+                // Low + fast climb = takeoff roll-out; everything else is a climb.
                 if (alt < 3000 && Number.isFinite(gs) && gs > 80) return 'takeoff';
-                if (alt < 18000) return 'climb';
                 return 'climb';
             }
-            if (Number.isFinite(vs) && vs <= -300) {
-                // Descending.
+
+            // Descending — VS known and negative.
+            if (Number.isFinite(vs) && vs <= -this._VS_LEVEL_FPM) {
                 if (alt < 3000) {
-                    if (Number.isFinite(gs) && gs < 180) return 'landing';
-                    return 'approach';
+                    return Number.isFinite(gs) && gs < 180 ? 'landing' : 'approach';
                 }
                 if (alt < 10000) return 'approach';
                 return 'descent';
             }
-            // Fallback: gs + alt only.
+
+            // Fallback: VS unknown or missing — classify by altitude only.
             if (alt > 25000) return 'cruise';
             if (alt > 10000) return 'climb';
             return 'approach';
         },
 
-        // Annotate an aircraft record in-place with `ac.phase`.
+        // Annotate an aircraft record in-place with `ac.phase`. Returns the phase.
         annotate(ac) {
-            if (!ac) return;
+            if (!ac) return null;
             const p = this.classify(ac);
             if (p) ac.phase = p;
+            return p;
         },
 
-        // Annotate every aircraft in an array / object-map.
+        // Annotate every aircraft in an array or object-map.
         annotateAll(acs) {
             if (!acs) return;
             if (Array.isArray(acs)) {
@@ -5887,7 +5946,6 @@ if ('serviceWorker' in navigator) {
             }
         },
 
-        // Render a compact chip: <span class="phase-chip phase-cruise">CRUISE</span>
         chipHtml(ac) {
             const p = (ac && ac.phase) || this.classify(ac);
             if (!p) return '';
@@ -6153,7 +6211,7 @@ if ('serviceWorker' in navigator) {
     };
     // ─── module: modules/93-emergency-pulse.js ───────────────────────────────────────────
 
-    // ============ EMERGENCY SQUAWK PULSE (v0.20.0) ============
+    // ============ EMERGENCY SQUAWK PULSE ============
     // Triple expanding ring pulse under every aircraft broadcasting an
     // emergency squawk (7500/7600/7700). Sits on its own Leaflet layer so
     // it doesn't perturb the main marker renderer.
@@ -6165,6 +6223,7 @@ if ('serviceWorker' in navigator) {
     // Pulse is a CSS animation defined in styles.css. Three <span> rings
     // with staggered delays give the expanding-sonar effect at 1 Hz.
     const emergencyPulse = {
+        _inited: false,
         map: null,
         layer: null,
         markers: new Map(), // hex → { marker, squawk }
@@ -6177,21 +6236,28 @@ if ('serviceWorker' in navigator) {
         },
 
         init(map) {
+            if (this._inited) return;
+            this._inited = true;
             this.map = map;
             this.layer = L.layerGroup().addTo(map);
-            // Re-use an existing pausable interval slot if the scaffolding is
-            // loaded (module 10-utils.js provides _setPausableInterval). Falls
-            // back to a plain setInterval for safety.
-            const start = () => {
-                if (typeof _setPausableInterval === 'function') {
-                    _setPausableInterval(() => this.refresh(), this.refreshMs, 'emergencyPulse');
-                } else {
-                    setInterval(() => this.refresh(), this.refreshMs);
-                }
-            };
-            start();
+            // Prefer the pausable-interval scaffolding from 10-utils.js so
+            // the pulse refresh naturally follows the tab-visibility state
+            // of the rest of the app. Fall back to setInterval for safety.
+            if (typeof _setPausableInterval === 'function') {
+                _setPausableInterval(() => this.refresh(), this.refreshMs, 'emergencyPulse');
+            } else {
+                setInterval(() => this.refresh(), this.refreshMs);
+            }
             // One immediate refresh once aircraftCache is populated.
             setTimeout(() => this.refresh(), 1500);
+        },
+
+        // Treat squawk as a string so numeric-encoded squawks from some
+        // feeds don't miss the equality check.
+        _isEmergency(sq) {
+            if (sq === null || sq === undefined) return false;
+            const s = String(sq);
+            return s === '7500' || s === '7600' || s === '7700';
         },
 
         refresh() {
@@ -6202,25 +6268,27 @@ if ('serviceWorker' in navigator) {
                 const ac = aircraftCache[hex];
                 if (!ac) continue;
                 const sq = ac.squawk;
-                if (sq !== '7500' && sq !== '7600' && sq !== '7700') continue;
+                if (!this._isEmergency(sq)) continue;
                 if (!Number.isFinite(ac.lat) || !Number.isFinite(ac.lon)) continue;
+                const sqStr = String(sq);
                 seen.add(hex);
                 const existing = this.markers.get(hex);
                 if (existing) {
-                    // Reposition in place (don't tear down — animation would restart)
+                    // Reposition in place; don't tear down — otherwise the
+                    // CSS ring animation restarts every refresh tick.
                     try { existing.marker.setLatLng([ac.lat, ac.lon]); } catch (_) {}
-                    if (existing.squawk !== sq) {
-                        existing.squawk = sq;
-                        this._swapIcon(existing.marker, sq);
+                    if (existing.squawk !== sqStr) {
+                        existing.squawk = sqStr;
+                        this._swapIcon(existing.marker, sqStr);
                     }
                 } else {
                     const marker = L.marker([ac.lat, ac.lon], {
-                        icon: this._icon(sq),
+                        icon: this._icon(sqStr),
                         interactive: false,
                         keyboard: false,
                         zIndexOffset: -1000
                     }).addTo(this.layer);
-                    this.markers.set(hex, { marker, squawk: sq });
+                    this.markers.set(hex, { marker, squawk: sqStr });
                 }
             }
             // Prune aircraft that are no longer squawking emergency.
@@ -6258,7 +6326,7 @@ if ('serviceWorker' in navigator) {
     });
     // ─── module: modules/94-surveillance-orbit.js ───────────────────────────────────────────
 
-    // ============ SURVEILLANCE-ORBIT DETECTOR (v0.20.0) ============
+    // ============ SURVEILLANCE-ORBIT DETECTOR ============
     // Flags aircraft that have been holding a tight circular orbit at low
     // altitude for an extended period — the ISR/LEO/photo-recon signature.
     // Heuristic (tuned to be conservative so civilian pattern work doesn't
@@ -6266,7 +6334,9 @@ if ('serviceWorker' in navigator) {
     //
     //   * Trail covers ≥ 15 real minutes
     //   * Trail points stay within a ≤ 3 nm bounding radius
-    //   * Min altitude < 12,000 ft MSL (so jetliners in holds don't trigger)
+    //   * Min numeric altitude < 12,000 ft MSL (ground-tagged points do NOT
+    //     satisfy the gate — a trail that is 100 % on-the-ground should not
+    //     be flagged as "loiter")
     //   * Track heading has swept ≥ 720° cumulatively (two full turns)
     //
     // When all four fire, the aircraft gets `ac.surveillanceOrbit = true`
@@ -6278,53 +6348,73 @@ if ('serviceWorker' in navigator) {
         maxRadiusNm: 3,
         minSweepDeg: 720,
         maxAltFt: 12000,
+        minPoints: 30,
 
-        // ac.history is an array of [lat, lon, alt, tsMs] tuples.
-        // Returns true if the trail matches the ISR orbit signature.
+        // `ac.history` is an array of [lat, lon, alt, tsMs] tuples where `alt`
+        // may be a number or the string 'ground'. Returns true if the trail
+        // matches the ISR orbit signature.
         check(ac) {
             if (!ac) return false;
             const history = ac.history;
-            if (!Array.isArray(history) || history.length < 30) return false;
+            if (!Array.isArray(history) || history.length < this.minPoints) return false;
 
-            // 1. Duration gate.
-            const first = history[0], last = history[history.length - 1];
-            const t0 = Number(first?.[3]);
-            const t1 = Number(last?.[3]);
+            // 1. Duration gate. Require monotonic timestamps on both ends.
+            const t0 = Number(history[0]?.[3]);
+            const t1 = Number(history[history.length - 1]?.[3]);
             if (!Number.isFinite(t0) || !Number.isFinite(t1)) return false;
             const durationMin = (t1 - t0) / 60000;
             if (durationMin < this.minMinutes) return false;
 
             // 2. Bounding radius + altitude gate.
+            //    Track numeric altitudes *and* whether we saw any numeric
+            //    reading at all; a trail that is entirely ground-tagged has
+            //    no real altitude signal and must not clear the gate by
+            //    `Infinity` slipping past `>= maxAltFt`.
             let sumLat = 0, sumLon = 0, n = 0;
             let minAlt = Infinity;
+            let sawNumericAlt = false;
             for (const p of history) {
-                const lat = Number(p[0]), lon = Number(p[1]);
+                const lat = Number(p?.[0]);
+                const lon = Number(p?.[1]);
                 if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
                 sumLat += lat;
                 sumLon += lon;
                 n++;
                 const a = p[2];
                 if (typeof a === 'number' && Number.isFinite(a)) {
+                    sawNumericAlt = true;
                     if (a < minAlt) minAlt = a;
                 }
             }
             if (n < 10) return false;
-            const cLat = sumLat / n, cLon = sumLon / n;
+            if (!sawNumericAlt) return false; // trail was entirely ground-tagged
+            if (minAlt > this.maxAltFt) return false;
+
+            const cLat = sumLat / n;
+            const cLon = sumLon / n;
             let maxR = 0;
             for (const p of history) {
-                const lat = Number(p[0]), lon = Number(p[1]);
+                const lat = Number(p?.[0]);
+                const lon = Number(p?.[1]);
                 if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
                 const d = this._distanceNm(cLat, cLon, lat, lon);
                 if (d > maxR) maxR = d;
             }
             if (maxR > this.maxRadiusNm) return false;
-            if (Number.isFinite(minAlt) && minAlt > this.maxAltFt) return false;
 
             // 3. Cumulative heading sweep — track must rotate ≥ minSweepDeg.
-            let prevBearing = null, sweep = 0;
+            let prevBearing = null;
+            let sweep = 0;
             for (let i = 1; i < history.length; i++) {
-                const a = history[i - 1], b = history[i];
-                const bearing = this._bearing(a[0], a[1], b[0], b[1]);
+                const a = history[i - 1];
+                const b = history[i];
+                const aLat = Number(a?.[0]);
+                const aLon = Number(a?.[1]);
+                const bLat = Number(b?.[0]);
+                const bLon = Number(b?.[1]);
+                if (!Number.isFinite(aLat) || !Number.isFinite(aLon) ||
+                    !Number.isFinite(bLat) || !Number.isFinite(bLon)) continue;
+                const bearing = this._bearing(aLat, aLon, bLat, bLon);
                 if (!Number.isFinite(bearing)) continue;
                 if (prevBearing !== null) {
                     let delta = bearing - prevBearing;
@@ -6337,7 +6427,6 @@ if ('serviceWorker' in navigator) {
             return sweep >= this.minSweepDeg;
         },
 
-        // Annotate ac.surveillanceOrbit and return the boolean.
         annotate(ac) {
             const isOrbit = this.check(ac);
             if (ac) ac.surveillanceOrbit = isOrbit;
@@ -6372,15 +6461,17 @@ if ('serviceWorker' in navigator) {
     };
     // ─── module: modules/95-fires-hurricanes.js ───────────────────────────────────────────
 
-    // ============ NIFC FIRES + NHC HURRICANES OVERLAY (v0.20.0) ============
+    // ============ NIFC FIRES + NHC HURRICANES OVERLAY ============
     // Two high-signal overlays that tell a story aircraft often care about:
     //   * NIFC WFIGS active-fire incidents (firefighting tankers orbit these)
-    //   * NHC current-storm forecast cones (hurricane hunters fly through these)
+    //   * NHC current-storm forecast tracks (hurricane hunters fly through these)
     //
     // Both endpoints are CORS-enabled GeoJSON/JSON; both refresh on toggle,
     // then once every 10 min while active. Single toggle button, both layers
     // share the same on/off state since they're complementary storytelling.
     const firesHurricanes = {
+        _inited: false,
+        _pendingOp: null,   // in-flight enable()/disable() — blocks re-entry
         map: null,
         fireLayer: null,
         stormLayer: null,
@@ -6394,23 +6485,49 @@ if ('serviceWorker' in navigator) {
         NHC_URL: 'https://www.nhc.noaa.gov/CurrentStorms.json',
 
         init(map) {
+            if (this._inited) return;
+            this._inited = true;
             this.map = map;
+            let savedOn = false;
             try {
-                const saved = localStorage.getItem('skytrack_fires_hurricanes');
-                if (saved === 'on') this.enable();
-            } catch (_) {}
+                savedOn = localStorage.getItem('skytrack_fires_hurricanes') === 'on';
+            } catch (_) { /* storage blocked */ }
+            // Kick off restore without blocking init; any failure is swallowed
+            // by the same try/catch paths as a user-initiated toggle.
+            if (savedOn) {
+                this.enable().catch(() => { /* surfaced inside enable() */ });
+            }
         },
 
         async toggle() {
-            if (this.enabled) { this.disable(); return false; }
+            // Guard against rapid re-entry: if a previous toggle is still in
+            // flight we either wait for it (and invert) or cancel. Simpler:
+            // queue behind the pending op and then flip based on current
+            // state at the time the queue drains.
+            if (this._pendingOp) {
+                try { await this._pendingOp; } catch (_) { /* prior error already surfaced */ }
+            }
+            if (this.enabled) {
+                this.disable();
+                return false;
+            }
             await this.enable();
-            return true;
+            return this.enabled;
         },
 
         async enable() {
+            if (this.enabled) return;
             this.enabled = true;
             try { localStorage.setItem('skytrack_fires_hurricanes', 'on'); } catch (_) {}
-            await this._load();
+            const op = this._load();
+            this._pendingOp = op;
+            try {
+                await op;
+            } finally {
+                if (this._pendingOp === op) this._pendingOp = null;
+            }
+            // If the user raced a disable() in the window, respect that.
+            if (!this.enabled) return;
             if (this.refreshTimer) clearInterval(this.refreshTimer);
             this.refreshTimer = setInterval(() => this._load(), this.refreshMs);
         },
@@ -6419,8 +6536,14 @@ if ('serviceWorker' in navigator) {
             this.enabled = false;
             try { localStorage.setItem('skytrack_fires_hurricanes', 'off'); } catch (_) {}
             if (this.refreshTimer) { clearInterval(this.refreshTimer); this.refreshTimer = null; }
-            if (this.fireLayer)  { try { this.map.removeLayer(this.fireLayer); } catch (_) {} this.fireLayer = null; }
-            if (this.stormLayer) { try { this.map.removeLayer(this.stormLayer); } catch (_) {} this.stormLayer = null; }
+            if (this.fireLayer)  {
+                try { this.map?.removeLayer(this.fireLayer); } catch (_) {}
+                this.fireLayer = null;
+            }
+            if (this.stormLayer) {
+                try { this.map?.removeLayer(this.stormLayer); } catch (_) {}
+                this.stormLayer = null;
+            }
         },
 
         async _load() {
@@ -6428,23 +6551,29 @@ if ('serviceWorker' in navigator) {
         },
 
         async _loadFires() {
-            if (!this.map) return;
+            if (!this.map || !this.enabled) return;
             try {
                 const resp = await fetch(this.NIFC_URL, { signal: AbortSignal.timeout(15000) });
                 if (!resp.ok) throw new Error('NIFC ' + resp.status);
                 const geo = await resp.json();
-                if (this.fireLayer) try { this.map.removeLayer(this.fireLayer); } catch (_) {}
+                // If the user disabled the overlay mid-fetch, drop the result.
+                if (!this.enabled) return;
+                if (this.fireLayer) {
+                    try { this.map.removeLayer(this.fireLayer); } catch (_) {}
+                }
                 this.fireLayer = L.layerGroup();
                 const features = Array.isArray(geo?.features) ? geo.features : [];
                 for (const f of features) {
                     const c = f?.geometry?.coordinates;
                     if (!Array.isArray(c) || c.length < 2) continue;
-                    const [lon, lat] = c;
+                    const lon = Number(c[0]);
+                    const lat = Number(c[1]);
                     if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
                     const p = f.properties || {};
-                    const acres = Number(p.DailyAcres || p.IncidentSize || p.CalculatedAcres);
-                    const radius = Number.isFinite(acres) && acres > 0
-                        ? Math.max(4, Math.min(18, 3 + Math.log10(acres) * 2))
+                    const acresRaw = Number(p.DailyAcres ?? p.IncidentSize ?? p.CalculatedAcres);
+                    const hasAcres = Number.isFinite(acresRaw) && acresRaw > 0;
+                    const radius = hasAcres
+                        ? Math.max(4, Math.min(18, 3 + Math.log10(acresRaw) * 2))
                         : 5;
                     const marker = L.circleMarker([lat, lon], {
                         radius,
@@ -6455,8 +6584,11 @@ if ('serviceWorker' in navigator) {
                     });
                     const name = p.IncidentName || p.FireName || 'Active fire';
                     const state = p.POOState || p.State || '';
-                    const acresTxt = Number.isFinite(acres) ? Math.round(acres).toLocaleString() + ' acres' : '';
-                    const containment = p.PercentContained != null ? (Math.round(p.PercentContained) + '% contained') : '';
+                    const acresTxt = hasAcres ? Math.round(acresRaw).toLocaleString() + ' acres' : '';
+                    const containmentNum = Number(p.PercentContained);
+                    const containment = Number.isFinite(containmentNum)
+                        ? Math.round(containmentNum) + '% contained'
+                        : '';
                     marker.bindPopup(
                         '<div class="sigmet-popup"><strong>🔥 ' + _escHtml(name) + '</strong><br>' +
                         (state ? _escHtml(state) + '<br>' : '') +
@@ -6466,20 +6598,25 @@ if ('serviceWorker' in navigator) {
                     );
                     this.fireLayer.addLayer(marker);
                 }
-                if (this.fireLayer.getLayers().length > 0) this.fireLayer.addTo(this.map);
-                _dbg?.('NIFC fires loaded:', this.fireLayer.getLayers().length);
+                if (this.enabled && this.fireLayer.getLayers().length > 0) {
+                    this.fireLayer.addTo(this.map);
+                }
+                _dbg('NIFC fires loaded:', this.fireLayer.getLayers().length);
             } catch (e) {
-                errorHandler?.log('NIFC fires', e?.message || e);
+                try { errorHandler.log('NIFC fires', e?.message || e); } catch (_) {}
             }
         },
 
         async _loadStorms() {
-            if (!this.map) return;
+            if (!this.map || !this.enabled) return;
             try {
                 const resp = await fetch(this.NHC_URL, { signal: AbortSignal.timeout(15000) });
                 if (!resp.ok) throw new Error('NHC ' + resp.status);
                 const data = await resp.json();
-                if (this.stormLayer) try { this.map.removeLayer(this.stormLayer); } catch (_) {}
+                if (!this.enabled) return;
+                if (this.stormLayer) {
+                    try { this.map.removeLayer(this.stormLayer); } catch (_) {}
+                }
                 this.stormLayer = L.layerGroup();
                 const storms = Array.isArray(data?.activeStorms) ? data.activeStorms : [];
                 for (const s of storms) {
@@ -6488,9 +6625,10 @@ if ('serviceWorker' in navigator) {
                     if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
                     const name = s.name || s.binNumber || 'Storm';
                     const cls = (s.classification || '').toUpperCase();
-                    const intensity = Number(s.intensity) || 0;
-                    const color = cls === 'HU' || intensity >= 74 ? '#dc2626' :
-                                  cls === 'TS' || intensity >= 39 ? '#f59e0b' :
+                    const intensity = Number(s.intensity);
+                    const hasIntensity = Number.isFinite(intensity) && intensity > 0;
+                    const color = (cls === 'HU' || (hasIntensity && intensity >= 74)) ? '#dc2626' :
+                                  (cls === 'TS' || (hasIntensity && intensity >= 39)) ? '#f59e0b' :
                                   '#22d3ee';
                     const center = L.circleMarker([lat, lon], {
                         radius: 10,
@@ -6502,22 +6640,20 @@ if ('serviceWorker' in navigator) {
                     center.bindPopup(
                         '<div class="sigmet-popup"><strong>🌀 ' + _escHtml(name) + '</strong><br>' +
                         _escHtml(cls || 'Tropical system') +
-                        (Number.isFinite(intensity) && intensity > 0 ? ' · ' + intensity + ' kt' : '') +
+                        (hasIntensity ? ' · ' + intensity + ' kt' : '') +
                         (s.pressure ? '<br>Pressure ' + _escHtml(s.pressure) + ' mb' : '') +
                         (s.movement ? '<br>Moving ' + _escHtml(s.movement) : '') +
                         '</div>'
                     );
                     this.stormLayer.addLayer(center);
-                    // Forecast cone if NHC provides a GIS track cone URL.
-                    if (s.forecastTrack?.kmzFile) {
-                        // Many cones are only in KMZ — we can't parse KMZ in browser cheaply.
-                        // Draw a simple outbound cone approximation from the 5-day forecast
-                        // if NHC's simple JSON has `forecast` points.
-                    }
+                    // Forecast track, if the JSON exposes it. NHC also publishes
+                    // a cone-of-uncertainty as KMZ — that format needs an
+                    // unzip/XML pipeline this zero-dep app can't cheaply ship,
+                    // so we only render the simple polyline here.
                     if (Array.isArray(s.forecast) && s.forecast.length >= 2) {
                         const pts = s.forecast
-                            .filter(f => Number.isFinite(Number(f.lat)) && Number.isFinite(Number(f.lon)))
-                            .map(f => [Number(f.lat), Number(f.lon)]);
+                            .map(f => [Number(f?.lat), Number(f?.lon)])
+                            .filter(([lt, ln]) => Number.isFinite(lt) && Number.isFinite(ln));
                         if (pts.length >= 2) {
                             const path = L.polyline([[lat, lon]].concat(pts), {
                                 color: color,
@@ -6529,10 +6665,12 @@ if ('serviceWorker' in navigator) {
                         }
                     }
                 }
-                if (this.stormLayer.getLayers().length > 0) this.stormLayer.addTo(this.map);
-                _dbg?.('NHC storms loaded:', this.stormLayer.getLayers().length);
+                if (this.enabled && this.stormLayer.getLayers().length > 0) {
+                    this.stormLayer.addTo(this.map);
+                }
+                _dbg('NHC storms loaded:', this.stormLayer.getLayers().length);
             } catch (e) {
-                errorHandler?.log('NHC storms', e?.message || e);
+                try { errorHandler.log('NHC storms', e?.message || e); } catch (_) {}
             }
         }
     };
@@ -6543,41 +6681,66 @@ if ('serviceWorker' in navigator) {
     });
     // ─── module: modules/96-plane-over-my-house.js ───────────────────────────────────────────
 
-    // ============ PLANE OVER MY HOUSE (v0.20.0) ============
+    // ============ PLANE OVER MY HOUSE ============
     // Signature feature: persistent floating ticker of aircraft passing
     // within N nautical miles of a user-configured "home" coordinate.
-    // Ship as a bottom-right sticky widget that survives panel churn.
+    // Ships as a bottom-right sticky widget that survives panel churn.
     //
     // First-time UX: button in Tools menu opens the widget; the widget's
-    // "Set home" button captures the current map center as home, persists
-    // to localStorage. No unsolicited geolocation prompt.
+    // "Use map center" button captures the current map center as home and
+    // persists to localStorage. No unsolicited geolocation prompt.
     //
-    // The widget polls `aircraftCache` (already the canonical live store)
-    // every refresh cycle; no extra network traffic.
+    // The widget reads `aircraftCache` (the canonical live store) every
+    // refresh cycle; no extra network traffic. Ticks are registered via
+    // `_setPausableInterval` when available so it naturally pauses along
+    // with the rest of the app when the tab is backgrounded.
     const planeOverHome = {
+        _inited: false,
         enabled: false,
         home: null,            // { lat, lon, label }
         radiusNm: 5,
         maxRows: 6,
         containerEl: null,
+        // When `_setPausableInterval` is used we don't need to track the
+        // handle for cleanup — the scaffolding clears all tracked intervals
+        // on pause. For the fallback path we still track it so hide() can
+        // stop the ticker cleanly.
         tickTimer: null,
         tickMs: 4000,
         recent: new Map(),     // hex → { firstSeen, lastSeen, closestNm, callsign }
         lastClosestHex: null,
+        _suppressNextDing: false,
         map: null,
 
+        // Radius cycle, in nautical miles.
+        RADIUS_OPTIONS: [2, 5, 10, 20, 50],
+        RECENT_TTL_MS: 600000, // 10 min
+
         init(map) {
+            if (this._inited) return;
+            this._inited = true;
             this.map = map;
             try {
-                const saved = JSON.parse(localStorage.getItem('skytrack_home_widget') || 'null');
+                const raw = localStorage.getItem('skytrack_home_widget');
+                const saved = raw ? JSON.parse(raw) : null;
                 if (saved && Number.isFinite(saved?.home?.lat) && Number.isFinite(saved?.home?.lon)) {
-                    this.home = { lat: saved.home.lat, lon: saved.home.lon, label: saved.home.label || '' };
+                    this.home = {
+                        lat: saved.home.lat,
+                        lon: saved.home.lon,
+                        label: typeof saved.home.label === 'string' ? saved.home.label : ''
+                    };
                     if (Number.isFinite(saved.radiusNm) && saved.radiusNm > 0 && saved.radiusNm <= 200) {
                         this.radiusNm = saved.radiusNm;
                     }
-                    if (saved.enabled === true) this.show();
+                    if (saved.enabled === true) {
+                        // Suppress the first-render ding when the user is
+                        // simply reopening the app; the widget bursting an
+                        // unexpected tone on page load is startling.
+                        this._suppressNextDing = true;
+                        this.show();
+                    }
                 }
-            } catch (_) {}
+            } catch (_) { /* corrupt storage — fall back to defaults */ }
         },
 
         save() {
@@ -6587,7 +6750,7 @@ if ('serviceWorker' in navigator) {
                     home: this.home,
                     radiusNm: this.radiusNm
                 }));
-            } catch (_) {}
+            } catch (_) { /* quota / private mode */ }
         },
 
         toggle() {
@@ -6599,15 +6762,17 @@ if ('serviceWorker' in navigator) {
         show() {
             this.enabled = true;
             this._ensureContainer();
+            // Don't ding on the very first render after an explicit user
+            // action either — wait for a *change* of closest aircraft.
+            this._suppressNextDing = true;
             this._render();
-            if (this.tickTimer) clearInterval(this.tickTimer);
-            this.tickTimer = setInterval(() => this._render(), this.tickMs);
+            this._startTicker();
             this.save();
         },
 
         hide() {
             this.enabled = false;
-            if (this.tickTimer) { clearInterval(this.tickTimer); this.tickTimer = null; }
+            this._stopTicker();
             if (this.containerEl) {
                 try { this.containerEl.remove(); } catch (_) {}
                 this.containerEl = null;
@@ -6615,10 +6780,36 @@ if ('serviceWorker' in navigator) {
             this.save();
         },
 
+        _startTicker() {
+            // Prefer the pausable scaffolding. Fall back to a raw setInterval
+            // only if the host hasn't shipped 10-utils.js.
+            this._stopTicker();
+            if (typeof _setPausableInterval === 'function') {
+                _setPausableInterval(() => { if (this.enabled) this._render(); }, this.tickMs, 'planeOverHome');
+            } else {
+                this.tickTimer = setInterval(() => { if (this.enabled) this._render(); }, this.tickMs);
+            }
+        },
+
+        _stopTicker() {
+            if (this.tickTimer) {
+                clearInterval(this.tickTimer);
+                this.tickTimer = null;
+            }
+            // Intervals registered with _setPausableInterval are global and
+            // share the tab-visibility lifecycle; stopping them requires the
+            // scaffolding to provide a handle. The gate in the tick closure
+            // (`if (this.enabled) ...`) is therefore the authoritative
+            // control — when hide() sets `enabled=false`, the tick is a
+            // no-op.
+        },
+
         setHome(lat, lon, label) {
             if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
             this.home = { lat, lon, label: label || '' };
             this.recent.clear();
+            this.lastClosestHex = null;
+            this._suppressNextDing = true;
             this.save();
             if (this.enabled) this._render();
         },
@@ -6634,9 +6825,10 @@ if ('serviceWorker' in navigator) {
             const el = document.createElement('div');
             el.id = 'planeOverHomeWidget';
             el.className = 'home-widget';
+            el.setAttribute('role', 'region');
+            el.setAttribute('aria-label', 'Aircraft passing your home');
             document.body.appendChild(el);
             this.containerEl = el;
-            // Delegate clicks for "Set home / map center" and "Hide".
             el.addEventListener('click', (e) => {
                 const btn = e.target?.closest?.('[data-action]');
                 if (!btn) {
@@ -6651,12 +6843,18 @@ if ('serviceWorker' in navigator) {
                 if (action === 'set-here')    this.useMapCenter();
                 else if (action === 'hide')   this.hide();
                 else if (action === 'radius') this._cycleRadius();
-                else if (action === 'clear')  { this.home = null; this.recent.clear(); this.save(); this._render(); }
+                else if (action === 'clear')  {
+                    this.home = null;
+                    this.recent.clear();
+                    this.lastClosestHex = null;
+                    this.save();
+                    this._render();
+                }
             });
         },
 
         _cycleRadius() {
-            const options = [2, 5, 10, 20, 50];
+            const options = this.RADIUS_OPTIONS;
             const idx = options.indexOf(this.radiusNm);
             this.radiusNm = options[(idx + 1) % options.length];
             this.save();
@@ -6681,7 +6879,7 @@ if ('serviceWorker' in navigator) {
                 this.containerEl.innerHTML =
                     '<div class="home-widget-header">' +
                         '<span class="home-widget-title">✈️ Over my house</span>' +
-                        '<button class="home-widget-x" data-action="hide" title="Hide widget">×</button>' +
+                        '<button class="home-widget-x" data-action="hide" title="Hide widget" aria-label="Hide widget">×</button>' +
                     '</div>' +
                     '<div class="home-widget-empty">' +
                         '<p>Set your home location to see aircraft passing nearby.</p>' +
@@ -6702,7 +6900,7 @@ if ('serviceWorker' in navigator) {
             }
             nearby.sort((a, b) => a.d - b.d);
             const now = Date.now();
-            // Update recent history (for leave-toast + persistence).
+            // Update recent history.
             for (const { ac, d } of nearby) {
                 const prev = this.recent.get(ac.hex);
                 const callsign = (ac.flight || '').trim() || ac.r || ac.hex;
@@ -6714,17 +6912,21 @@ if ('serviceWorker' in navigator) {
                     this.recent.set(ac.hex, { firstSeen: now, lastSeen: now, closestNm: d, callsign });
                 }
             }
-            // Ding on new closest aircraft (at most once per hex).
+            // Ding when the closest-aircraft identity *changes* to a new hex —
+            // but never on the very first render after show()/setHome()/init().
             const closest = nearby[0];
-            if (closest && closest.ac.hex !== this.lastClosestHex) {
+            if (closest) {
+                if (!this._suppressNextDing && closest.ac.hex !== this.lastClosestHex) {
+                    this._ding();
+                }
                 this.lastClosestHex = closest.ac.hex;
-                this._ding();
-            } else if (!closest) {
+            } else {
                 this.lastClosestHex = null;
             }
-            // Evict old entries (> 10 min since last seen).
+            this._suppressNextDing = false;
+            // Evict recent entries older than the TTL so "seen recently" stays honest.
             for (const [hex, rec] of this.recent) {
-                if (now - rec.lastSeen > 600000) this.recent.delete(hex);
+                if (now - rec.lastSeen > this.RECENT_TTL_MS) this.recent.delete(hex);
             }
             // Build HTML.
             let rows = '';
@@ -6741,24 +6943,30 @@ if ('serviceWorker' in navigator) {
                     '<span class="hw-dist">' + d.toFixed(1) + ' nm</span>' +
                     '</div>';
             }
-            if (!rows) rows = '<div class="home-widget-empty-row">No aircraft within ' + this.radiusNm + ' nm.</div>';
+            if (!rows) {
+                rows = '<div class="home-widget-empty-row">No aircraft within ' + this.radiusNm + ' nm.</div>';
+            }
             const labelTxt = h.label ? h.label : h.lat.toFixed(3) + ', ' + h.lon.toFixed(3);
             this.containerEl.innerHTML =
                 '<div class="home-widget-header">' +
                     '<span class="home-widget-title">✈️ Over my house</span>' +
                     '<button class="home-widget-btn ghost" data-action="radius" title="Cycle radius">' + this.radiusNm + ' nm</button>' +
-                    '<button class="home-widget-btn ghost" data-action="set-here" title="Reset home to map center">⌖</button>' +
-                    '<button class="home-widget-x" data-action="hide" title="Hide widget">×</button>' +
+                    '<button class="home-widget-btn ghost" data-action="set-here" title="Reset home to map center" aria-label="Reset home to map center">⌖</button>' +
+                    '<button class="home-widget-x" data-action="hide" title="Hide widget" aria-label="Hide widget">×</button>' +
                 '</div>' +
-                '<div class="home-widget-sub">' + _escHtml(labelTxt) + ' · seen today: ' + this.recent.size + '</div>' +
+                '<div class="home-widget-sub">' + _escHtml(labelTxt) + ' · recent: ' + this.recent.size + '</div>' +
                 '<div class="home-widget-rows">' + rows + '</div>';
         },
 
         _ding() {
             // One short chime when a new closest aircraft enters the radius.
-            // Respects user-gesture requirement — silently fails on first page load.
+            // Respects the user-gesture requirement — silently fails on first
+            // page load. Uses a single lazy AudioContext (see _sharedAudio)
+            // instead of creating a new one per ding — browsers cap ~6
+            // concurrent contexts, which the previous impl quickly exhausted.
+            const ctx = _sharedAudio();
+            if (!ctx) return;
             try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.type = 'sine';
@@ -6768,7 +6976,7 @@ if ('serviceWorker' in navigator) {
                 osc.connect(gain).connect(ctx.destination);
                 osc.start(ctx.currentTime);
                 osc.stop(ctx.currentTime + 0.15);
-            } catch (_) {}
+            } catch (_) { /* ignore */ }
         }
     };
 
@@ -6810,23 +7018,49 @@ if ('serviceWorker' in navigator) {
         },
         
         async init() {
+            // Load watchlist from IndexedDB, with localStorage as a belt-and-suspenders
+            // fallback. Both parse paths have to tolerate corrupt/malformed payloads
+            // without throwing — a bad entry here previously wedged the entire alert
+            // subsystem and, transitively, squawk/military/watchlist notifications.
+            const loadFromLs = () => {
+                let parsed;
+                try {
+                    const ls = localStorage.getItem('skytrack_watchlist');
+                    if (!ls) return;
+                    parsed = JSON.parse(ls);
+                } catch (_) { return; }
+                if (!Array.isArray(parsed)) return;
+                for (const item of parsed) {
+                    const hex = item?.hex;
+                    if (typeof hex !== 'string' || hex.length === 0) continue;
+                    this.watchlist.set(hex.toUpperCase(), item);
+                }
+            };
             try {
                 const saved = await skytrackDB.loadUserData('watchlist');
-                if (saved) {
-                    saved.forEach(item => this.watchlist.set(item.hex.toUpperCase(), item));
+                if (Array.isArray(saved)) {
+                    for (const item of saved) {
+                        const hex = item?.hex;
+                        if (typeof hex !== 'string' || hex.length === 0) continue;
+                        this.watchlist.set(hex.toUpperCase(), item);
+                    }
+                } else {
+                    loadFromLs();
                 }
-            } catch (e) {
-                const ls = localStorage.getItem('skytrack_watchlist');
-                if (ls) {
-                    JSON.parse(ls).forEach(item => this.watchlist.set(item.hex.toUpperCase(), item));
-                }
+            } catch (_) {
+                loadFromLs();
             }
-            
-            const settings = JSON.parse(localStorage.getItem('skytrack_alert_settings') || '{}');
+
+            let settings = {};
+            try {
+                const raw = localStorage.getItem('skytrack_alert_settings');
+                if (raw) settings = JSON.parse(raw) || {};
+                if (typeof settings !== 'object' || settings === null) settings = {};
+            } catch (_) { settings = {}; }
             this.enabled = settings.enabled !== false;
             this.soundEnabled = settings.soundEnabled !== false;
-            this.militaryAlertRadius = settings.militaryAlertRadius || 50;
-            this.notificationsEnabled = settings.notificationsEnabled && Notification.permission === 'granted';
+            this.militaryAlertRadius = Number.isFinite(settings.militaryAlertRadius) && settings.militaryAlertRadius > 0 ? settings.militaryAlertRadius : 50;
+            this.notificationsEnabled = settings.notificationsEnabled && typeof Notification !== 'undefined' && Notification.permission === 'granted';
             
             this.startLocationTracking();
             _dbg('Alert system initialized:', this.watchlist.size, 'watched aircraft');
@@ -7018,8 +7252,13 @@ if ('serviceWorker' in navigator) {
         },
         
         playSound(type) {
+            // Route through the shared AudioContext (10-utils.js). Previously we
+            // built a fresh context per alert, and Chromium caps concurrent
+            // contexts at ~6 — so after the first handful of alerts, audio went
+            // silently dead for the rest of the session.
+            const ctx = _sharedAudio();
+            if (!ctx) return;
             try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.connect(gain);
@@ -9132,31 +9371,39 @@ if ('serviceWorker' in navigator) {
             
             if (eta) {
                 etaSection.style.display = 'block';
-                document.getElementById('etaTime').textContent = 
+                // The ETA panel renders differently between desktop and mobile
+                // layouts; child elements can legitimately be absent. Null-guard
+                // each write so a missing sub-element doesn't throw and bring
+                // the entire info-panel update with it.
+                const etaTimeEl = document.getElementById('etaTime');
+                if (etaTimeEl) etaTimeEl.textContent =
                     eta.eta.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                document.getElementById('etaDistance').textContent = 
-                    Math.round(eta.distance) + ' km';
-                
+                const etaDistEl = document.getElementById('etaDistance');
+                if (etaDistEl) etaDistEl.textContent = Math.round(eta.distance) + ' km';
+
                 const hours = Math.floor(eta.hoursRemaining);
                 const mins = Math.round((eta.hoursRemaining - hours) * 60);
-                document.getElementById('etaRemaining').textContent = 
+                const etaRemainEl = document.getElementById('etaRemaining');
+                if (etaRemainEl) etaRemainEl.textContent =
                     hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-                
+
                 // Calculate progress
-                if (ac.from) {
-                    const originAirport = ac.detectedOrigin || airportDB.getByCode(ac.from);
-                    if (originAirport) {
-                        const totalDist = haversineDistance(
-                            originAirport.lat, originAirport.lon,
-                            eta.airport.lat, eta.airport.lon
-                        );
-                        const progress = Math.min(100, Math.max(0, ((totalDist - eta.distance) / totalDist * 100)));
-                        document.getElementById('etaProgressBar').style.width = progress.toFixed(0) + '%';
-                    } else {
-                        document.getElementById('etaProgressBar').style.width = '0%';
+                const progressBar = document.getElementById('etaProgressBar');
+                if (progressBar) {
+                    let progressPct = 0;
+                    if (ac.from) {
+                        const originAirport = ac.detectedOrigin || airportDB.getByCode(ac.from);
+                        if (originAirport && eta.airport) {
+                            const totalDist = haversineDistance(
+                                originAirport.lat, originAirport.lon,
+                                eta.airport.lat, eta.airport.lon
+                            );
+                            if (Number.isFinite(totalDist) && totalDist > 0) {
+                                progressPct = Math.min(100, Math.max(0, (totalDist - eta.distance) / totalDist * 100));
+                            }
+                        }
                     }
-                } else {
-                    document.getElementById('etaProgressBar').style.width = '0%';
+                    progressBar.style.width = progressPct.toFixed(0) + '%';
                 }
             } else {
                 etaSection.style.display = 'none';
@@ -9556,9 +9803,13 @@ if ('serviceWorker' in navigator) {
             if (!this.overlay) {
                 return Promise.resolve(kind === 'confirm' ? false : kind === 'info' ? undefined : null);
             }
+            // Capture the caller's focus BEFORE closing any prior dialog —
+            // otherwise finish() re-focuses the previous trigger and we'd
+            // record that element as "lastFocused" for the new dialog.
+            const caller = document.activeElement instanceof HTMLElement ? document.activeElement : null;
             if (this.active) this.finish(this.active.kind === 'confirm' ? false : this.active.kind === 'info' ? undefined : null);
             return new Promise(resolve => {
-                this.lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+                this.lastFocused = caller;
                 this.active = {
                     kind,
                     title: options.title || 'Confirm Action',
@@ -9687,8 +9938,8 @@ if ('serviceWorker' in navigator) {
         if (!list) return;
         if (!bookmarks.length) { list.innerHTML = '<div class="bookmarks-empty">No saved views yet</div>'; return; }
         list.innerHTML = bookmarks.map(b => '<div class="bookmark-item" data-id="' + _escHtml(b.id) + '"><span class="bookmark-name">' + _escHtml(b.name) + '</span><button class="bookmark-delete" data-id="' + _escHtml(b.id) + '" aria-label="Delete saved view ' + _escHtml(b.name) + '">&times;</button></div>').join('');
-        list.querySelectorAll('.bookmark-item').forEach(item => item.addEventListener('click', e => { if (!e.target.classList.contains('bookmark-delete')) goToBookmark(parseInt(item.dataset.id)); }));
-        list.querySelectorAll('.bookmark-delete').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); deleteBookmark(parseInt(btn.dataset.id)); }));
+        list.querySelectorAll('.bookmark-item').forEach(item => item.addEventListener('click', e => { if (!e.target.classList.contains('bookmark-delete')) goToBookmark(parseInt(item.dataset.id, 10)); }));
+        list.querySelectorAll('.bookmark-delete').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); deleteBookmark(parseInt(btn.dataset.id, 10)); }));
     }
     function openBookmarkModal() {
         const overlay = document.getElementById('bookmarkModal');
@@ -11865,17 +12116,19 @@ if ('serviceWorker' in navigator) {
             });
             if (activeTypes.length > 0) this.filters.types = activeTypes;
             
-            // Altitude
-            const altMin = parseInt(document.getElementById('altMin')?.value);
-            const altMax = parseInt(document.getElementById('altMax')?.value);
-            if (!isNaN(altMin)) this.filters.altMin = altMin;
-            if (!isNaN(altMax)) this.filters.altMax = altMax;
-            
+            // Altitude — explicit radix, and require a finite number so the
+            // filter state doesn't land as NaN and later compare-silently-false
+            // against every aircraft.
+            const altMin = parseInt(document.getElementById('altMin')?.value ?? '', 10);
+            const altMax = parseInt(document.getElementById('altMax')?.value ?? '', 10);
+            if (Number.isFinite(altMin)) this.filters.altMin = altMin;
+            if (Number.isFinite(altMax)) this.filters.altMax = altMax;
+
             // Speed
-            const speedMin = parseInt(document.getElementById('speedMin')?.value);
-            const speedMax = parseInt(document.getElementById('speedMax')?.value);
-            if (!isNaN(speedMin)) this.filters.speedMin = speedMin;
-            if (!isNaN(speedMax)) this.filters.speedMax = speedMax;
+            const speedMin = parseInt(document.getElementById('speedMin')?.value ?? '', 10);
+            const speedMax = parseInt(document.getElementById('speedMax')?.value ?? '', 10);
+            if (Number.isFinite(speedMin)) this.filters.speedMin = speedMin;
+            if (Number.isFinite(speedMax)) this.filters.speedMax = speedMax;
             
             // Airport
             const airport = document.getElementById('filterAirport')?.value?.trim().toUpperCase();
@@ -12055,10 +12308,10 @@ if ('serviceWorker' in navigator) {
             container.querySelectorAll('.history-item').forEach(el => {
                 el.addEventListener('click', (e) => {
                     if (e.target.classList.contains('history-remove')) {
-                        this.removeFromHistory(parseInt(e.target.dataset.index));
+                        this.removeFromHistory(parseInt(e.target.dataset.index, 10));
                         e.stopPropagation();
                     } else {
-                        const h = this.history[parseInt(el.dataset.index)];
+                        const h = this.history[parseInt(el.dataset.index, 10)];
                         document.getElementById('searchInput').value = h.text;
                         this.executeSearch(h.text);
                     }
@@ -14765,7 +15018,7 @@ ${trailData.map(p => {
             
             container.querySelectorAll('.notif-item').forEach(el => {
                 el.addEventListener('click', () => {
-                    const id = parseInt(el.dataset.id);
+                    const id = parseInt(el.dataset.id, 10);
                     const hex = el.dataset.hex;
                     
                     this.markAsRead(id);
@@ -16035,12 +16288,21 @@ ${trailData.map(p => {
             
             document.getElementById('map').appendChild(menu);
             
+            // Hoisted close handler so both the outside-click path and the
+            // action-click path remove the same listener — otherwise each
+            // context-menu session leaked one global click listener.
+            const closeMenu = (e) => {
+                if (e && menu.contains(e.target)) return;
+                document.removeEventListener('click', closeMenu);
+                if (menu.isConnected) menu.remove();
+            };
             menu.addEventListener('click', async (e) => {
                 const item = e.target.closest('.zone-menu-item');
                 const action = item?.dataset.action;
                 if (!action) return;
+                document.removeEventListener('click', closeMenu);
                 menu.remove();
-                
+
                 if (action === 'rename') {
                     const newName = await uiDialogs.prompt({
                         eyebrow: 'Alert Zone',
@@ -16087,14 +16349,10 @@ ${trailData.map(p => {
                 }
             });
             
-            // Close on outside click
+            // Close on outside click. Deferred so the click that spawned the
+            // menu doesn't immediately dismiss it.
             setTimeout(() => {
-                document.addEventListener('click', function closeMenu(e) {
-                    if (!menu.contains(e.target)) {
-                        menu.remove();
-                        document.removeEventListener('click', closeMenu);
-                    }
-                });
+                if (menu.isConnected) document.addEventListener('click', closeMenu);
             }, 100);
         },
         
@@ -16134,7 +16392,7 @@ ${trailData.map(p => {
             
             content.querySelectorAll('.gf-list-item').forEach(item => {
                 item.addEventListener('click', () => {
-                    const zone = this.zones.find(z => z.id === parseInt(item.dataset.id));
+                    const zone = this.zones.find(z => z.id === parseInt(item.dataset.id, 10));
                     if (zone?._layer) {
                         map.fitBounds(zone._layer.getBounds().pad(0.2));
                     }
@@ -16142,7 +16400,7 @@ ${trailData.map(p => {
                 
                 item.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
-                    const zone = this.zones.find(z => z.id === parseInt(item.dataset.id));
+                    const zone = this.zones.find(z => z.id === parseInt(item.dataset.id, 10));
                     if (zone) {
                         const center = zone._layer?.getBounds().getCenter();
                         if (center) this.showZoneMenu(zone, center);

@@ -1,39 +1,64 @@
 
-    // ============ PLANE OVER MY HOUSE (v0.20.0) ============
+    // ============ PLANE OVER MY HOUSE ============
     // Signature feature: persistent floating ticker of aircraft passing
     // within N nautical miles of a user-configured "home" coordinate.
-    // Ship as a bottom-right sticky widget that survives panel churn.
+    // Ships as a bottom-right sticky widget that survives panel churn.
     //
     // First-time UX: button in Tools menu opens the widget; the widget's
-    // "Set home" button captures the current map center as home, persists
-    // to localStorage. No unsolicited geolocation prompt.
+    // "Use map center" button captures the current map center as home and
+    // persists to localStorage. No unsolicited geolocation prompt.
     //
-    // The widget polls `aircraftCache` (already the canonical live store)
-    // every refresh cycle; no extra network traffic.
+    // The widget reads `aircraftCache` (the canonical live store) every
+    // refresh cycle; no extra network traffic. Ticks are registered via
+    // `_setPausableInterval` when available so it naturally pauses along
+    // with the rest of the app when the tab is backgrounded.
     const planeOverHome = {
+        _inited: false,
         enabled: false,
         home: null,            // { lat, lon, label }
         radiusNm: 5,
         maxRows: 6,
         containerEl: null,
+        // When `_setPausableInterval` is used we don't need to track the
+        // handle for cleanup — the scaffolding clears all tracked intervals
+        // on pause. For the fallback path we still track it so hide() can
+        // stop the ticker cleanly.
         tickTimer: null,
         tickMs: 4000,
         recent: new Map(),     // hex → { firstSeen, lastSeen, closestNm, callsign }
         lastClosestHex: null,
+        _suppressNextDing: false,
         map: null,
 
+        // Radius cycle, in nautical miles.
+        RADIUS_OPTIONS: [2, 5, 10, 20, 50],
+        RECENT_TTL_MS: 600000, // 10 min
+
         init(map) {
+            if (this._inited) return;
+            this._inited = true;
             this.map = map;
             try {
-                const saved = JSON.parse(localStorage.getItem('skytrack_home_widget') || 'null');
+                const raw = localStorage.getItem('skytrack_home_widget');
+                const saved = raw ? JSON.parse(raw) : null;
                 if (saved && Number.isFinite(saved?.home?.lat) && Number.isFinite(saved?.home?.lon)) {
-                    this.home = { lat: saved.home.lat, lon: saved.home.lon, label: saved.home.label || '' };
+                    this.home = {
+                        lat: saved.home.lat,
+                        lon: saved.home.lon,
+                        label: typeof saved.home.label === 'string' ? saved.home.label : ''
+                    };
                     if (Number.isFinite(saved.radiusNm) && saved.radiusNm > 0 && saved.radiusNm <= 200) {
                         this.radiusNm = saved.radiusNm;
                     }
-                    if (saved.enabled === true) this.show();
+                    if (saved.enabled === true) {
+                        // Suppress the first-render ding when the user is
+                        // simply reopening the app; the widget bursting an
+                        // unexpected tone on page load is startling.
+                        this._suppressNextDing = true;
+                        this.show();
+                    }
                 }
-            } catch (_) {}
+            } catch (_) { /* corrupt storage — fall back to defaults */ }
         },
 
         save() {
@@ -43,7 +68,7 @@
                     home: this.home,
                     radiusNm: this.radiusNm
                 }));
-            } catch (_) {}
+            } catch (_) { /* quota / private mode */ }
         },
 
         toggle() {
@@ -55,15 +80,17 @@
         show() {
             this.enabled = true;
             this._ensureContainer();
+            // Don't ding on the very first render after an explicit user
+            // action either — wait for a *change* of closest aircraft.
+            this._suppressNextDing = true;
             this._render();
-            if (this.tickTimer) clearInterval(this.tickTimer);
-            this.tickTimer = setInterval(() => this._render(), this.tickMs);
+            this._startTicker();
             this.save();
         },
 
         hide() {
             this.enabled = false;
-            if (this.tickTimer) { clearInterval(this.tickTimer); this.tickTimer = null; }
+            this._stopTicker();
             if (this.containerEl) {
                 try { this.containerEl.remove(); } catch (_) {}
                 this.containerEl = null;
@@ -71,10 +98,36 @@
             this.save();
         },
 
+        _startTicker() {
+            // Prefer the pausable scaffolding. Fall back to a raw setInterval
+            // only if the host hasn't shipped 10-utils.js.
+            this._stopTicker();
+            if (typeof _setPausableInterval === 'function') {
+                _setPausableInterval(() => { if (this.enabled) this._render(); }, this.tickMs, 'planeOverHome');
+            } else {
+                this.tickTimer = setInterval(() => { if (this.enabled) this._render(); }, this.tickMs);
+            }
+        },
+
+        _stopTicker() {
+            if (this.tickTimer) {
+                clearInterval(this.tickTimer);
+                this.tickTimer = null;
+            }
+            // Intervals registered with _setPausableInterval are global and
+            // share the tab-visibility lifecycle; stopping them requires the
+            // scaffolding to provide a handle. The gate in the tick closure
+            // (`if (this.enabled) ...`) is therefore the authoritative
+            // control — when hide() sets `enabled=false`, the tick is a
+            // no-op.
+        },
+
         setHome(lat, lon, label) {
             if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
             this.home = { lat, lon, label: label || '' };
             this.recent.clear();
+            this.lastClosestHex = null;
+            this._suppressNextDing = true;
             this.save();
             if (this.enabled) this._render();
         },
@@ -90,9 +143,10 @@
             const el = document.createElement('div');
             el.id = 'planeOverHomeWidget';
             el.className = 'home-widget';
+            el.setAttribute('role', 'region');
+            el.setAttribute('aria-label', 'Aircraft passing your home');
             document.body.appendChild(el);
             this.containerEl = el;
-            // Delegate clicks for "Set home / map center" and "Hide".
             el.addEventListener('click', (e) => {
                 const btn = e.target?.closest?.('[data-action]');
                 if (!btn) {
@@ -107,12 +161,18 @@
                 if (action === 'set-here')    this.useMapCenter();
                 else if (action === 'hide')   this.hide();
                 else if (action === 'radius') this._cycleRadius();
-                else if (action === 'clear')  { this.home = null; this.recent.clear(); this.save(); this._render(); }
+                else if (action === 'clear')  {
+                    this.home = null;
+                    this.recent.clear();
+                    this.lastClosestHex = null;
+                    this.save();
+                    this._render();
+                }
             });
         },
 
         _cycleRadius() {
-            const options = [2, 5, 10, 20, 50];
+            const options = this.RADIUS_OPTIONS;
             const idx = options.indexOf(this.radiusNm);
             this.radiusNm = options[(idx + 1) % options.length];
             this.save();
@@ -137,7 +197,7 @@
                 this.containerEl.innerHTML =
                     '<div class="home-widget-header">' +
                         '<span class="home-widget-title">✈️ Over my house</span>' +
-                        '<button class="home-widget-x" data-action="hide" title="Hide widget">×</button>' +
+                        '<button class="home-widget-x" data-action="hide" title="Hide widget" aria-label="Hide widget">×</button>' +
                     '</div>' +
                     '<div class="home-widget-empty">' +
                         '<p>Set your home location to see aircraft passing nearby.</p>' +
@@ -158,7 +218,7 @@
             }
             nearby.sort((a, b) => a.d - b.d);
             const now = Date.now();
-            // Update recent history (for leave-toast + persistence).
+            // Update recent history.
             for (const { ac, d } of nearby) {
                 const prev = this.recent.get(ac.hex);
                 const callsign = (ac.flight || '').trim() || ac.r || ac.hex;
@@ -170,17 +230,21 @@
                     this.recent.set(ac.hex, { firstSeen: now, lastSeen: now, closestNm: d, callsign });
                 }
             }
-            // Ding on new closest aircraft (at most once per hex).
+            // Ding when the closest-aircraft identity *changes* to a new hex —
+            // but never on the very first render after show()/setHome()/init().
             const closest = nearby[0];
-            if (closest && closest.ac.hex !== this.lastClosestHex) {
+            if (closest) {
+                if (!this._suppressNextDing && closest.ac.hex !== this.lastClosestHex) {
+                    this._ding();
+                }
                 this.lastClosestHex = closest.ac.hex;
-                this._ding();
-            } else if (!closest) {
+            } else {
                 this.lastClosestHex = null;
             }
-            // Evict old entries (> 10 min since last seen).
+            this._suppressNextDing = false;
+            // Evict recent entries older than the TTL so "seen recently" stays honest.
             for (const [hex, rec] of this.recent) {
-                if (now - rec.lastSeen > 600000) this.recent.delete(hex);
+                if (now - rec.lastSeen > this.RECENT_TTL_MS) this.recent.delete(hex);
             }
             // Build HTML.
             let rows = '';
@@ -197,24 +261,30 @@
                     '<span class="hw-dist">' + d.toFixed(1) + ' nm</span>' +
                     '</div>';
             }
-            if (!rows) rows = '<div class="home-widget-empty-row">No aircraft within ' + this.radiusNm + ' nm.</div>';
+            if (!rows) {
+                rows = '<div class="home-widget-empty-row">No aircraft within ' + this.radiusNm + ' nm.</div>';
+            }
             const labelTxt = h.label ? h.label : h.lat.toFixed(3) + ', ' + h.lon.toFixed(3);
             this.containerEl.innerHTML =
                 '<div class="home-widget-header">' +
                     '<span class="home-widget-title">✈️ Over my house</span>' +
                     '<button class="home-widget-btn ghost" data-action="radius" title="Cycle radius">' + this.radiusNm + ' nm</button>' +
-                    '<button class="home-widget-btn ghost" data-action="set-here" title="Reset home to map center">⌖</button>' +
-                    '<button class="home-widget-x" data-action="hide" title="Hide widget">×</button>' +
+                    '<button class="home-widget-btn ghost" data-action="set-here" title="Reset home to map center" aria-label="Reset home to map center">⌖</button>' +
+                    '<button class="home-widget-x" data-action="hide" title="Hide widget" aria-label="Hide widget">×</button>' +
                 '</div>' +
-                '<div class="home-widget-sub">' + _escHtml(labelTxt) + ' · seen today: ' + this.recent.size + '</div>' +
+                '<div class="home-widget-sub">' + _escHtml(labelTxt) + ' · recent: ' + this.recent.size + '</div>' +
                 '<div class="home-widget-rows">' + rows + '</div>';
         },
 
         _ding() {
             // One short chime when a new closest aircraft enters the radius.
-            // Respects user-gesture requirement — silently fails on first page load.
+            // Respects the user-gesture requirement — silently fails on first
+            // page load. Uses a single lazy AudioContext (see _sharedAudio)
+            // instead of creating a new one per ding — browsers cap ~6
+            // concurrent contexts, which the previous impl quickly exhausted.
+            const ctx = _sharedAudio();
+            if (!ctx) return;
             try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.type = 'sine';
@@ -224,7 +294,7 @@
                 osc.connect(gain).connect(ctx.destination);
                 osc.start(ctx.currentTime);
                 osc.stop(ctx.currentTime + 0.15);
-            } catch (_) {}
+            } catch (_) { /* ignore */ }
         }
     };
 
