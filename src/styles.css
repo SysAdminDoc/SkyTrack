@@ -1498,6 +1498,23 @@
             font-weight: 600;
             letter-spacing: 0.5px;
         }
+        /* ISS marker (module A1-iss-tracker.js) */
+        .iss-marker {
+            background: transparent !important;
+            border: 0 !important;
+        }
+        .iss-pin {
+            font-size: 22px;
+            line-height: 28px;
+            text-align: center;
+            filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.85));
+            animation: iss-spin 8s linear infinite;
+        }
+        @keyframes iss-spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
         /* Callsign lore + Why-here insights (modules 97, 98) */
         .info-insights {
             display: flex;

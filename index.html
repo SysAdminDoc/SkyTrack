@@ -10,6 +10,19 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SkyTrack">
     <meta name="description" content="Real-time aircraft tracking with military, VIP, and interesting aircraft alerts">
+    <meta http-equiv="Permissions-Policy" content="usb=(), serial=(), bluetooth=(), midi=(), camera=(), microphone=(), payment=(), interest-cohort=()">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "SkyTrack",
+        "description": "Real-time global aircraft tracker with 3D globe view, military/VIP detection, weather overlay, surveillance-orbit detection, and 180+ countries flag ID.",
+        "url": "https://sysadmindoc.github.io/SkyTrack/",
+        "applicationCategory": "UtilityApplication",
+        "operatingSystem": "Any",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+    </script>
     <meta property="og:title" content="SkyTrack - Live Flight Tracker">
     <meta property="og:description" content="Track aircraft in real-time with military, VIP, and interesting aircraft alerts.">
     <meta property="og:image" content="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/banner.png">
@@ -1533,6 +1546,23 @@
             font-weight: 600;
             letter-spacing: 0.5px;
         }
+        /* ISS marker (module A1-iss-tracker.js) */
+        .iss-marker {
+            background: transparent !important;
+            border: 0 !important;
+        }
+        .iss-pin {
+            font-size: 22px;
+            line-height: 28px;
+            text-align: center;
+            filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.85));
+            animation: iss-spin 8s linear infinite;
+        }
+        @keyframes iss-spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
         /* Callsign lore + Why-here insights (modules 97, 98) */
         .info-insights {
             display: flex;
@@ -3050,7 +3080,7 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
         try {
             const swCode = `
-                const CACHE_NAME = 'skytrack-v0.22.0';
+                const CACHE_NAME = 'skytrack-v0.23.0';
                 const STATIC_ASSETS = [
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
@@ -3212,7 +3242,7 @@ if ('serviceWorker' in navigator) {
     <div class="loading-overlay" id="loading">
         <div class="loading-logo">
             <img src="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-128x128.png" alt="SkyTrack">
-            <span>SkyTrack<span class="version">v0.22.0</span></span>
+            <span>SkyTrack<span class="version">v0.23.0</span></span>
         </div>
         <div class="spinner"></div>
         <div class="loading-status" id="loadingStatus" role="status" aria-live="polite">Initializing…</div>
@@ -3276,6 +3306,9 @@ if ('serviceWorker' in navigator) {
                 <div class="hv2-item" data-btn="rangeRingsBtn"><div class="hv2-item-icon"><button class="header-btn" id="rangeRingsBtn" title="Range Rings" aria-label="Toggle Range Rings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="11" stroke-dasharray="3 3"/></svg></button></div><div class="hv2-item-label">Range Rings</div></div>
                 <div class="hv2-item" data-btn="firesBtn"><div class="hv2-item-icon"><button class="header-btn" id="firesBtn" title="Fires &amp; Hurricanes" aria-label="Toggle Fires and Hurricanes Overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c1 4 4 5 4 9a4 4 0 01-8 0c0-2 1-3 2-4.5C11 4 12 3 12 2z"/><circle cx="12" cy="17" r="2"/></svg></button></div><div class="hv2-item-label">Fires &amp; Hurricanes</div></div>
                 <div class="hv2-item" data-btn="homeWidgetBtn"><div class="hv2-item-icon"><button class="header-btn" id="homeWidgetBtn" title="Plane Over My House" aria-label="Toggle Plane Over My House Widget"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></button></div><div class="hv2-item-label">Over My House</div></div>
+                <div class="hv2-item" data-btn="artccBtn"><div class="hv2-item-icon"><button class="header-btn" id="artccBtn" title="FAA ARTCC Boundaries" aria-label="Toggle FAA ARTCC Boundaries"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8 22 16 12 22 2 16 2 8"/><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="16"/><line x1="2" y1="16" x2="22" y2="8"/></svg></button></div><div class="hv2-item-label">FAA ARTCC</div></div>
+                <div class="hv2-item" data-btn="issBtn"><div class="hv2-item-icon"><button class="header-btn" id="issBtn" title="International Space Station" aria-label="Toggle ISS Live Position"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="4" rx="1"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="8" y1="6" x2="8" y2="10"/><line x1="16" y1="6" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="18"/><line x1="16" y1="14" x2="16" y2="18"/></svg></button></div><div class="hv2-item-label">ISS Tracker</div></div>
+                <div class="hv2-item" data-btn="logbookBtn"><div class="hv2-item-icon"><button class="header-btn" id="logbookBtn" title="My Logbook" aria-label="Show personal aircraft logbook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="17" y2="7"/><line x1="9" y1="11" x2="17" y2="11"/></svg></button></div><div class="hv2-item-label">Logbook</div></div>
                 <div class="hv2-item" data-btn="followBtn"><div class="hv2-item-icon"><button class="header-btn" id="followBtn" title="Follow" aria-label="Follow Aircraft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><path d="M12 8v8M8 12h8" stroke-dasharray="2 2"/></svg></button></div><div class="hv2-item-label">Follow Aircraft</div></div>
                 <div class="hv2-item" data-btn="multiSelectBtn"><div class="hv2-item-icon"><button class="header-btn" id="multiSelectBtn" title="Multi-Select" aria-label="Multi-Select Mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button></div><div class="hv2-item-label">Multi-Select</div></div>
             <div class="hv2-item" data-btn="geofenceBtn"><div class="hv2-item-icon"><button class="header-btn" id="geofenceBtn" title="Geofence" aria-label="Open Geofencing Tools" aria-expanded="false" aria-controls="geofenceList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><circle cx="12" cy="12" r="3"/></svg></button></div><div class="hv2-item-label">Geofencing</div></div>
@@ -5082,7 +5115,7 @@ if ('serviceWorker' in navigator) {
     // ============ INDEXEDDB STORAGE ============
     const skytrackDB = {
         dbName: 'SkyTrackDB',
-        dbVersion: 1,
+        dbVersion: 2,
         db: null,
         
         async init() {
@@ -5119,6 +5152,13 @@ if ('serviceWorker' in navigator) {
                         const trailStore = db.createObjectStore('trailHistory', { keyPath: 'id', autoIncrement: true });
                         trailStore.createIndex('hex', 'hex', { unique: false });
                         trailStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    }
+
+                    // v2: Personal aircraft logbook — one record per ICAO hex.
+                    // Added in schema version 2 (module 99-aircraft-logbook.js).
+                    if (!db.objectStoreNames.contains('logbook')) {
+                        const lb = db.createObjectStore('logbook', { keyPath: 'hex' });
+                        lb.createIndex('lastSeen', 'lastSeen', { unique: false });
                     }
                 };
             });
@@ -5212,6 +5252,46 @@ if ('serviceWorker' in navigator) {
             });
         },
         
+        // Generic helpers used by modules that own a dedicated store
+        // (e.g. 99-aircraft-logbook.js). All three are defensively wrapped
+        // so the caller never has to know whether the store exists or the
+        // DB has opened yet.
+        async loadAllFromStore(storeName) {
+            if (!this.db) await this.init();
+            if (!this.db.objectStoreNames.contains(storeName)) return [];
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction([storeName], 'readonly');
+                const req = tx.objectStore(storeName).getAll();
+                req.onsuccess = () => resolve(Array.isArray(req.result) ? req.result : []);
+                req.onerror = () => reject(req.error);
+            });
+        },
+        async putMany(storeName, records) {
+            if (!this.db) await this.init();
+            if (!this.db.objectStoreNames.contains(storeName)) return false;
+            if (!Array.isArray(records) || records.length === 0) return true;
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction([storeName], 'readwrite');
+                const store = tx.objectStore(storeName);
+                for (const rec of records) {
+                    try { store.put(rec); } catch (_) { /* skip bad record */ }
+                }
+                tx.oncomplete = () => resolve(true);
+                tx.onerror = () => reject(tx.error);
+                tx.onabort = () => reject(tx.error || new Error('tx abort'));
+            });
+        },
+        async clearStore(storeName) {
+            if (!this.db) await this.init();
+            if (!this.db.objectStoreNames.contains(storeName)) return false;
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction([storeName], 'readwrite');
+                const req = tx.objectStore(storeName).clear();
+                req.onsuccess = () => resolve(true);
+                req.onerror = () => reject(req.error);
+            });
+        },
+
         async clearOldData(maxAgeDays = 7) {
             if (!this.db) await this.init();
             const cutoff = Date.now() - (maxAgeDays * 86400000);
@@ -6124,6 +6204,795 @@ if ('serviceWorker' in navigator) {
             // Cache miss so we don't hammer the APIs on every redraw.
             this.cache.set(key, { ts: Date.now(), from: null, to: null, miss: true });
             return null;
+        }
+    };
+    // ─── module: modules/60-measure.js ───────────────────────────────────────────
+
+    // ============ PHASE 5: DISTANCE MEASUREMENT TOOL ============
+    const measureTool = {
+        active: false,
+        points: [],
+        line: null,
+        markers: [],
+        // Bound handler references are created lazily so that `map.off` can
+        // actually match what was registered. Previously toggle() passed
+        // `this.addPoint.bind(this)` to both `on` and `off`, which yields two
+        // different function identities — so the handler was never removed,
+        // and every successive toggle stacked another click listener onto the
+        // map (every click after that counted multiple points).
+        _boundAddPoint: null,
+        _boundFinish: null,
+
+        toggle() {
+            this.active = !this.active;
+            document.getElementById('measureBtn')?.classList.toggle('active', this.active);
+            if (!this._boundAddPoint) this._boundAddPoint = this.addPoint.bind(this);
+            if (!this._boundFinish) this._boundFinish = this.finish.bind(this);
+
+            if (this.active) {
+                document.getElementById('map').style.cursor = 'crosshair';
+                toast('Click to measure. Ctrl+Z to undo. Double-click to finish.');
+                map.on('click', this._boundAddPoint);
+                map.on('dblclick', this._boundFinish);
+            } else {
+                document.getElementById('map').style.cursor = '';
+                map.off('click', this._boundAddPoint);
+                map.off('dblclick', this._boundFinish);
+                this.clear();
+            }
+        },
+        
+        addPoint(e) {
+            if (!this.active) return;
+            
+            const point = { lat: e.latlng.lat, lon: e.latlng.lng };
+            this.points.push(point);
+            
+            const marker = L.circleMarker([point.lat, point.lon], {
+                radius: 6,
+                fillColor: '#ffd700',
+                fillOpacity: 1,
+                color: '#000',
+                weight: 2
+            }).addTo(map);
+            this.markers.push(marker);
+            
+            this.updateLine();
+            
+            if (this.points.length > 1) {
+                this.showDistance();
+            }
+        },
+        
+        updateLine() {
+            if (this.line) {
+                map.removeLayer(this.line);
+            }
+            
+            if (this.points.length < 2) return;
+            
+            const latlngs = this.points.map(p => [p.lat, p.lon]);
+            this.line = L.polyline(latlngs, {
+                color: '#ffd700',
+                weight: 3,
+                dashArray: '10, 5',
+                opacity: 0.8
+            }).addTo(map);
+        },
+        
+        showDistance() {
+            let totalDist = 0;
+            for (let i = 1; i < this.points.length; i++) {
+                totalDist += haversineDistance(
+                    this.points[i-1].lat, this.points[i-1].lon,
+                    this.points[i].lat, this.points[i].lon
+                );
+            }
+            
+            const last = this.points.length - 1;
+            const bearing = this.calculateBearing(
+                this.points[last-1].lat, this.points[last-1].lon,
+                this.points[last].lat, this.points[last].lon
+            );
+            
+            const distKm = totalDist.toFixed(1);
+            const distNm = (totalDist * 0.539957).toFixed(1);
+            const distMi = (totalDist * 0.621371).toFixed(1);
+            
+            toast(`Distance: ${distKm} km (${distNm} nm / ${distMi} mi) | Bearing: ${Math.round(bearing)}`);
+        },
+        
+        calculateBearing(lat1, lon1, lat2, lon2) {
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const lat1Rad = lat1 * Math.PI / 180;
+            const lat2Rad = lat2 * Math.PI / 180;
+            
+            const y = Math.sin(dLon) * Math.cos(lat2Rad);
+            const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
+            
+            let bearing = Math.atan2(y, x) * 180 / Math.PI;
+            return (bearing + 360) % 360;
+        },
+        
+        finish(e) {
+            if (!this.active) return;
+            L.DomEvent.stopPropagation(e);
+
+            this.active = false;
+            document.getElementById('measureBtn')?.classList.remove('active');
+            document.getElementById('map').style.cursor = '';
+            if (this._boundAddPoint) map.off('click', this._boundAddPoint);
+            if (this._boundFinish) map.off('dblclick', this._boundFinish);
+            
+            if (this.points.length > 1 && this.line) {
+                let totalDist = 0;
+                for (let i = 1; i < this.points.length; i++) {
+                    totalDist += haversineDistance(
+                        this.points[i-1].lat, this.points[i-1].lon,
+                        this.points[i].lat, this.points[i].lon
+                    );
+                }
+                
+                const center = this.line.getCenter();
+                L.popup()
+                    .setLatLng(center)
+                    .setContent(`
+                        <div style="text-align:center">
+                            <strong>${totalDist.toFixed(1)} km</strong><br>
+                            ${(totalDist * 0.539957).toFixed(1)} nm / ${(totalDist * 0.621371).toFixed(1)} mi
+                        </div>
+                    `)
+                    .openOn(map);
+            }
+        },
+        
+        clear() {
+            if (this.line) {
+                map.removeLayer(this.line);
+                this.line = null;
+            }
+            
+            this.markers.forEach(m => map.removeLayer(m));
+            this.markers = [];
+            this.points = [];
+            map.closePopup();
+        },
+        
+        undo() {
+            if (!this.active || this.points.length === 0) return;
+            
+            // Remove last point
+            this.points.pop();
+            
+            // Remove last marker
+            if (this.markers.length > 0) {
+                const lastMarker = this.markers.pop();
+                map.removeLayer(lastMarker);
+            }
+            
+            // Update line
+            this.updateLine();
+            
+            // Show updated distance or notify if no points left
+            if (this.points.length > 1) {
+                this.showDistance();
+            } else if (this.points.length === 1) {
+                toast('1 point remaining. Ctrl+Z to remove.');
+            } else {
+                toast('All points removed. Click to start measuring.');
+            }
+        }
+    };
+    // ─── module: modules/65-playback.js ───────────────────────────────────────────
+
+    // ============ PHASE 5: HISTORICAL PLAYBACK ============
+    const playbackController = {
+        active: false,
+        playing: false,
+        speed: 1,
+        currentIndex: 0,
+        trailData: [],
+        playbackMarker: null,
+        interval: null,
+        
+        async start(hex) {
+            try {
+                const trailData = await trailExporter.getTrailData(hex);
+
+                if (!trailData || trailData.length < 2) {
+                    toast('No trail history available for playback');
+                    return;
+                }
+
+                // Starting a new session while another is running would leak
+                // the previous interval + marker and desync the UI. Reset
+                // cleanly first.
+                if (this.interval) { clearInterval(this.interval); this.interval = null; }
+                this.playing = false;
+                const playBtn = document.getElementById('playbackPlay');
+                if (playBtn) playBtn.innerHTML = '&#9654;';
+
+                this.trailData = trailData;
+                this.currentIndex = 0;
+                this.active = true;
+                
+                this.showControls();
+                
+                const ac = aircraftCache[hex];
+                if (this.playbackMarker) {
+                    map.removeLayer(this.playbackMarker);
+                }
+                
+                this.playbackMarker = L.marker([trailData[0].lat, trailData[0].lon], {
+                    icon: L.divIcon({
+                        className: 'playback-marker',
+                        html: '<div class="playback-aircraft">&#9650;</div>',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    })
+                }).addTo(map);
+                
+                this.updatePosition();
+                toast(`Playback ready: ${trailData.length} positions`);
+                
+            } catch (e) {
+                errorHandler.log('Playback', e.message, 'error');
+                toast('Failed to load playback data');
+            }
+        },
+        
+        showControls() {
+            let controls = document.getElementById('playbackControls');
+            if (!controls) {
+                controls = document.createElement('div');
+                controls.id = 'playbackControls';
+                controls.className = 'playback-controls';
+                controls.innerHTML = `
+                    <button class="playback-btn" id="playbackStart" title="Start">|&lt;</button>
+                    <button class="playback-btn" id="playbackBack" title="Back 10">&lt;&lt;</button>
+                    <button class="playback-btn play" id="playbackPlay" title="Play/Pause">&#9654;</button>
+                    <button class="playback-btn" id="playbackForward" title="Forward 10">&gt;&gt;</button>
+                    <button class="playback-btn" id="playbackEnd" title="End">&gt;|</button>
+                    <div class="playback-slider-container">
+                        <input type="range" id="playbackSlider" min="0" max="100" value="0">
+                    </div>
+                    <div class="playback-time" id="playbackTime">0%</div>
+                    <select id="playbackSpeed">
+                        <option value="0.5">0.5x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="2">2x</option>
+                        <option value="5">5x</option>
+                        <option value="10">10x</option>
+                    </select>
+                    <button class="playback-btn close" id="playbackClose" title="Close">x</button>
+                `;
+                document.body.appendChild(controls);
+                
+                document.getElementById('playbackPlay').addEventListener('click', () => this.togglePlay());
+                document.getElementById('playbackStart').addEventListener('click', () => this.goToStart());
+                document.getElementById('playbackEnd').addEventListener('click', () => this.goToEnd());
+                document.getElementById('playbackBack').addEventListener('click', () => this.step(-10));
+                document.getElementById('playbackForward').addEventListener('click', () => this.step(10));
+                document.getElementById('playbackSlider').addEventListener('input', (e) => this.seekTo(e.target.value));
+                document.getElementById('playbackSpeed').addEventListener('change', (e) => {
+                    this.speed = parseFloat(e.target.value);
+                });
+                document.getElementById('playbackClose').addEventListener('click', () => this.stop());
+            }
+            
+            controls.style.display = 'flex';
+            document.getElementById('playbackSlider').max = this.trailData.length - 1;
+        },
+        
+        togglePlay() {
+            this.playing = !this.playing;
+            document.getElementById('playbackPlay').innerHTML = this.playing ? '&#10074;&#10074;' : '&#9654;';
+            
+            if (this.playing) {
+                this.interval = setInterval(() => {
+                    if (this.currentIndex < this.trailData.length - 1) {
+                        this.currentIndex++;
+                        this.updatePosition();
+                    } else {
+                        this.togglePlay();
+                    }
+                }, 100 / this.speed);
+            } else {
+                clearInterval(this.interval);
+            }
+        },
+        
+        goToStart() {
+            this.currentIndex = 0;
+            this.updatePosition();
+        },
+        
+        goToEnd() {
+            this.currentIndex = this.trailData.length - 1;
+            this.updatePosition();
+        },
+        
+        step(amount) {
+            this.currentIndex = Math.max(0, Math.min(this.trailData.length - 1, this.currentIndex + amount));
+            this.updatePosition();
+        },
+        
+        seekTo(index) {
+            // parseInt('') or parseInt('abc') → NaN. Setting currentIndex to
+            // NaN would cascade into the slider and break subsequent seeks.
+            const n = parseInt(index, 10);
+            if (!Number.isFinite(n) || !this.trailData?.length) return;
+            this.currentIndex = Math.max(0, Math.min(this.trailData.length - 1, n));
+            this.updatePosition();
+        },
+        
+        updatePosition() {
+            if (!this.trailData[this.currentIndex]) return;
+            
+            const point = this.trailData[this.currentIndex];
+            
+            this.playbackMarker.setLatLng([point.lat, point.lon]);
+            
+            if (this.currentIndex > 0) {
+                const prev = this.trailData[this.currentIndex - 1];
+                const heading = measureTool.calculateBearing(prev.lat, prev.lon, point.lat, point.lon);
+                const el = this.playbackMarker.getElement()?.querySelector('.playback-aircraft');
+                if (el) el.style.transform = `rotate(${heading}deg)`;
+            }
+            
+            document.getElementById('playbackSlider').value = this.currentIndex;
+            
+            const elapsed = this.currentIndex;
+            const total = this.trailData.length - 1;
+            const percent = ((elapsed / total) * 100).toFixed(0);
+            document.getElementById('playbackTime').textContent = `${percent}%`;
+            
+            if (this.playing) {
+                map.panTo([point.lat, point.lon], { animate: true, duration: 0.1 });
+            }
+        },
+        
+        stop() {
+            this.active = false;
+            this.playing = false;
+            clearInterval(this.interval);
+            
+            if (this.playbackMarker) {
+                map.removeLayer(this.playbackMarker);
+                this.playbackMarker = null;
+            }
+            
+            const controls = document.getElementById('playbackControls');
+            if (controls) {
+                controls.style.display = 'none';
+            }
+            
+            this.trailData = [];
+            this.currentIndex = 0;
+        }
+    };
+    // ─── module: modules/70-geofences.js ───────────────────────────────────────────
+
+    // ============ PHASE 14: GEOFENCING SYSTEM ============
+    const geofencing = {
+        zones: [],
+        activeAlerts: new Map(),
+        drawingMode: false,
+        currentPolygon: [],
+        previewLine: null,
+        tempMarkers: [],
+        
+        init() {
+            // Load saved zones
+            const saved = localStorage.getItem('skytrack_geofences');
+            if (saved) {
+                try {
+                    this.zones = JSON.parse(saved);
+                    this.zones.forEach(z => this.drawZone(z));
+                } catch (e) {
+                    console.error('Failed to load geofences:', e);
+                }
+            }
+            
+            // Button handlers
+            document.getElementById('geofenceBtn')?.addEventListener('click', () => this.togglePanel());
+            document.getElementById('gfAddNew')?.addEventListener('click', () => this.startDrawing());
+            document.getElementById('gfFinish')?.addEventListener('click', () => this.finishDrawing());
+            document.getElementById('gfCancel')?.addEventListener('click', () => this.cancelDrawing());
+
+            document.addEventListener('click', (e) => {
+                const panel = document.getElementById('geofenceList');
+                const btn = document.getElementById('geofenceBtn');
+                if (panel?.classList.contains('show') && !panel.contains(e.target) && !btn?.contains(e.target)) {
+                    panel.classList.remove('show');
+                    panel.setAttribute('aria-hidden', 'true');
+                    btn?.classList.remove('active');
+                    setExpandedState(btn, false);
+                }
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && document.getElementById('geofenceList')?.classList.contains('show')) {
+                    document.getElementById('geofenceList')?.classList.remove('show');
+                    document.getElementById('geofenceList')?.setAttribute('aria-hidden', 'true');
+                    document.getElementById('geofenceBtn')?.classList.remove('active');
+                    setExpandedState(document.getElementById('geofenceBtn'), false);
+                }
+            });
+             
+            this.updateList();
+        },
+        
+        togglePanel() {
+            const panel = document.getElementById('geofenceList');
+            const isOpen = panel ? !panel.classList.contains('show') : false;
+            panel?.classList.toggle('show', isOpen);
+            panel?.setAttribute('aria-hidden', String(!isOpen));
+            document.getElementById('geofenceBtn')?.classList.toggle('active', isOpen);
+            setExpandedState(document.getElementById('geofenceBtn'), isOpen);
+        },
+        
+        // Cache the bound click handler so that startDrawing/cleanupDrawing can
+        // register and unregister *the same* function with Leaflet's `on/off`.
+        // Without the cache, each `.bind(this)` call produces a new function
+        // identity and `map.off(...)` silently does nothing, leaving a live
+        // click listener on the map after the drawing session ends.
+        _boundMapClick: null,
+
+        startDrawing() {
+            this.drawingMode = true;
+            this.currentPolygon = [];
+            this.tempMarkers = [];
+
+            map.getContainer().style.cursor = 'crosshair';
+            document.getElementById('geofenceControls')?.classList.add('show');
+            document.getElementById('geofenceList')?.classList.remove('show');
+            document.getElementById('geofenceList')?.setAttribute('aria-hidden', 'true');
+            setExpandedState(document.getElementById('geofenceBtn'), false);
+            document.getElementById('geofenceBtn')?.classList.remove('active');
+
+            toast('Click on map to add points, then click Finish');
+
+            if (!this._boundMapClick) this._boundMapClick = this.handleMapClick.bind(this);
+            map.on('click', this._boundMapClick);
+        },
+        
+        handleMapClick(e) {
+            if (!this.drawingMode) return;
+            
+            this.currentPolygon.push([e.latlng.lat, e.latlng.lng]);
+            
+            // Add point marker
+            const pointMarker = L.circleMarker([e.latlng.lat, e.latlng.lng], {
+                radius: 6,
+                fillColor: '#ffd700',
+                fillOpacity: 1,
+                color: '#fff',
+                weight: 2
+            }).addTo(map);
+            this.tempMarkers.push(pointMarker);
+            
+            // Update preview line
+            if (this.previewLine) {
+                map.removeLayer(this.previewLine);
+            }
+            
+            if (this.currentPolygon.length > 1) {
+                const closedPolygon = [...this.currentPolygon, this.currentPolygon[0]];
+                this.previewLine = L.polyline(closedPolygon, {
+                    color: '#ffd700',
+                    weight: 2,
+                    dashArray: '5, 5',
+                    fillColor: '#ffd700',
+                    fillOpacity: 0.1
+                }).addTo(map);
+            }
+        },
+        
+        async finishDrawing() {
+            if (this.currentPolygon.length < 3) {
+                toast('Need at least 3 points to create a zone');
+                return;
+            }
+            
+            this.cleanupDrawing();
+            
+            const suggestedName = 'Zone ' + (this.zones.length + 1);
+            const name = await uiDialogs.prompt({
+                eyebrow: 'Geofencing',
+                title: 'Name This Alert Zone',
+                message: 'Choose a short label so entry and exit alerts are easy to recognize later.',
+                label: 'Zone Name',
+                note: 'You can rename it any time from the zone menu.',
+                placeholder: suggestedName,
+                defaultValue: suggestedName,
+                confirmLabel: 'Save Zone',
+                cancelLabel: 'Discard',
+                validationMessage: 'Enter a name for this zone.'
+            });
+            if (!name) {
+                this.currentPolygon = [];
+                toast('Zone discarded', 'warning');
+                return;
+            }
+            
+            const colors = ['#ffd700', '#00ffff', '#ff00ff', '#00ff00', '#ff6600', '#ff0066'];
+            
+            const zone = {
+                id: Date.now(),
+                name,
+                polygon: this.currentPolygon,
+                alertOnEnter: true,
+                alertOnExit: false,
+                color: colors[this.zones.length % colors.length]
+            };
+            
+            this.zones.push(zone);
+            this.save();
+            this.drawZone(zone);
+            this.updateList();
+            
+            this.currentPolygon = [];
+            toast(`Saved alert zone: ${name}`, 'success');
+        },
+        
+        cancelDrawing() {
+            this.cleanupDrawing();
+            this.currentPolygon = [];
+            toast('Zone drawing cancelled', 'warning');
+        },
+        
+        cleanupDrawing() {
+            this.drawingMode = false;
+            map.getContainer().style.cursor = '';
+            document.getElementById('geofenceControls')?.classList.remove('show');
+
+            if (this._boundMapClick) map.off('click', this._boundMapClick);
+            
+            // Remove preview
+            if (this.previewLine) {
+                map.removeLayer(this.previewLine);
+                this.previewLine = null;
+            }
+            
+            // Remove temp markers
+            this.tempMarkers.forEach(m => map.removeLayer(m));
+            this.tempMarkers = [];
+        },
+        
+        drawZone(zone) {
+            const polygon = L.polygon(zone.polygon, {
+                color: zone.color,
+                fillColor: zone.color,
+                fillOpacity: 0.15,
+                weight: 2
+            }).addTo(map);
+            
+            polygon._zoneId = zone.id;
+            polygon.bindTooltip(zone.name, { sticky: true });
+            
+            polygon.on('contextmenu', (e) => {
+                e.originalEvent.preventDefault();
+                this.showZoneMenu(zone, e.latlng);
+            });
+            
+            zone._layer = polygon;
+        },
+        
+        showZoneMenu(zone, latlng) {
+            // Remove existing menu
+            document.querySelectorAll('.zone-context-menu').forEach(m => m.remove());
+            
+            const menu = document.createElement('div');
+            menu.className = 'zone-context-menu';
+            menu.setAttribute('role', 'menu');
+            menu.setAttribute('aria-label', `Actions for zone ${zone.name}`);
+            menu.innerHTML = `
+                <button type="button" class="zone-menu-item" data-action="rename" role="menuitem">Rename Zone</button>
+                <button type="button" class="zone-menu-item" data-action="toggle-enter" role="menuitem">
+                    ${zone.alertOnEnter ? '&#10003; ' : ''}Alert on Enter
+                </button>
+                <button type="button" class="zone-menu-item" data-action="toggle-exit" role="menuitem">
+                    ${zone.alertOnExit ? '&#10003; ' : ''}Alert on Exit
+                </button>
+                <button type="button" class="zone-menu-item" data-action="zoom" role="menuitem">Zoom to Zone</button>
+                <button type="button" class="zone-menu-item danger" data-action="delete" role="menuitem">Delete Zone</button>
+            `;
+            
+            const point = map.latLngToContainerPoint(latlng);
+            menu.style.left = point.x + 'px';
+            menu.style.top = point.y + 'px';
+            
+            document.getElementById('map').appendChild(menu);
+            
+            // Hoisted close handler so both the outside-click path and the
+            // action-click path remove the same listener — otherwise each
+            // context-menu session leaked one global click listener.
+            const closeMenu = (e) => {
+                if (e && menu.contains(e.target)) return;
+                document.removeEventListener('click', closeMenu);
+                if (menu.isConnected) menu.remove();
+            };
+            menu.addEventListener('click', async (e) => {
+                const item = e.target.closest('.zone-menu-item');
+                const action = item?.dataset.action;
+                if (!action) return;
+                document.removeEventListener('click', closeMenu);
+                menu.remove();
+
+                if (action === 'rename') {
+                    const newName = await uiDialogs.prompt({
+                        eyebrow: 'Alert Zone',
+                        title: 'Rename Zone',
+                        message: 'Update the label used in the list and in future alerts.',
+                        label: 'Zone Name',
+                        defaultValue: zone.name,
+                        confirmLabel: 'Rename Zone',
+                        cancelLabel: 'Keep Current',
+                        validationMessage: 'Enter a new name for this zone.'
+                    });
+                    if (newName) {
+                        zone.name = newName;
+                        zone._layer?.setTooltipContent(newName);
+                        this.save();
+                        this.updateList();
+                        toast(`Renamed zone to ${newName}`, 'success');
+                    }
+                } else if (action === 'toggle-enter') {
+                    zone.alertOnEnter = !zone.alertOnEnter;
+                    this.save();
+                    toast(zone.alertOnEnter ? 'Enter alerts ON' : 'Enter alerts OFF');
+                } else if (action === 'toggle-exit') {
+                    zone.alertOnExit = !zone.alertOnExit;
+                    this.save();
+                    toast(zone.alertOnExit ? 'Exit alerts ON' : 'Exit alerts OFF');
+                } else if (action === 'zoom') {
+                    if (zone._layer) {
+                        map.fitBounds(zone._layer.getBounds().pad(0.2));
+                        toast(`Centered on ${zone.name}`);
+                    }
+                } else if (action === 'delete') {
+                    const confirmed = await uiDialogs.confirmDialog({
+                        eyebrow: 'Alert Zone',
+                        title: `Delete "${zone.name}"?`,
+                        message: 'This removes the zone boundary and its alert settings from SkyTrack.',
+                        confirmLabel: 'Delete Zone',
+                        cancelLabel: 'Keep Zone',
+                        tone: 'danger'
+                    });
+                    if (confirmed) {
+                        this.deleteZone(zone.id);
+                    }
+                }
+            });
+            
+            // Close on outside click. Deferred so the click that spawned the
+            // menu doesn't immediately dismiss it.
+            setTimeout(() => {
+                if (menu.isConnected) document.addEventListener('click', closeMenu);
+            }, 100);
+        },
+        
+        deleteZone(id) {
+            const index = this.zones.findIndex(z => z.id === id);
+            if (index === -1) return;
+            
+            const zone = this.zones[index];
+            if (zone._layer) {
+                map.removeLayer(zone._layer);
+            }
+            
+            this.zones.splice(index, 1);
+            this.save();
+            this.updateList();
+            toast(`Deleted zone: ${zone.name}`, 'warning');
+        },
+        
+        updateList() {
+            const content = document.getElementById('gfListContent');
+            if (!content) return;
+            
+            if (this.zones.length === 0) {
+                content.innerHTML = '<div class="gf-list-empty">No alert zones yet<br>Use Add to create a monitored area.</div>';
+                return;
+            }
+            
+            content.innerHTML = this.zones.map(zone => `
+                <button type="button" class="gf-list-item" data-id="${_escHtml(zone.id)}" aria-label="Open zone ${_escHtml(zone.name)}">
+                    <div class="gf-zone-meta">
+                        <span class="gf-zone-name">${_escHtml(zone.name)}</span>
+                        <span class="gf-zone-status">${zone.alertOnEnter ? 'Enter alerts on' : 'Enter alerts off'} · ${zone.alertOnExit ? 'Exit alerts on' : 'Exit alerts off'}</span>
+                    </div>
+                    <div class="gf-zone-color" style="background:${_escHtml(zone.color)}"></div>
+                </button>
+            `).join('');
+            
+            content.querySelectorAll('.gf-list-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const zone = this.zones.find(z => z.id === parseInt(item.dataset.id, 10));
+                    if (zone?._layer) {
+                        map.fitBounds(zone._layer.getBounds().pad(0.2));
+                    }
+                });
+                
+                item.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    const zone = this.zones.find(z => z.id === parseInt(item.dataset.id, 10));
+                    if (zone) {
+                        const center = zone._layer?.getBounds().getCenter();
+                        if (center) this.showZoneMenu(zone, center);
+                    }
+                });
+            });
+        },
+        
+        // Check if aircraft is in any zone
+        checkAircraft(ac) {
+            if (!ac.lat || !ac.lon) return;
+            
+            const point = L.latLng(ac.lat, ac.lon);
+            
+            this.zones.forEach(zone => {
+                if (!zone._layer) return;
+                
+                const isInside = this.isPointInPolygon(point, zone.polygon);
+                const key = `${ac.hex}-${zone.id}`;
+                const wasInside = this.activeAlerts.get(key);
+                
+                if (isInside && !wasInside && zone.alertOnEnter) {
+                    this.activeAlerts.set(key, true);
+                    this.triggerAlert(ac, zone, 'entered');
+                } else if (!isInside && wasInside && zone.alertOnExit) {
+                    this.activeAlerts.set(key, false);
+                    this.triggerAlert(ac, zone, 'exited');
+                } else if (isInside) {
+                    this.activeAlerts.set(key, true);
+                } else {
+                    this.activeAlerts.set(key, false);
+                }
+            });
+        },
+        
+        isPointInPolygon(point, polygon) {
+            let inside = false;
+            const x = point.lat, y = point.lng;
+            
+            for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                const xi = polygon[i][0], yi = polygon[i][1];
+                const xj = polygon[j][0], yj = polygon[j][1];
+                
+                if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) {
+                    inside = !inside;
+                }
+            }
+            
+            return inside;
+        },
+        
+        triggerAlert(ac, zone, action) {
+            const title = ac.flight?.trim() || ac.r || ac.hex;
+            const message = `${action} zone "${zone.name}"`;
+            
+            notificationCenter.add({
+                type: 'geofence',
+                title: `Geofence: ${title}`,
+                message,
+                hex: ac.hex
+            });
+            
+            alertSystem.playSound('soft');
+            toast(`${title} ${message}`);
+        },
+        
+        save() {
+            const data = this.zones.map(z => ({
+                id: z.id,
+                name: z.name,
+                polygon: z.polygon,
+                alertOnEnter: z.alertOnEnter,
+                alertOnExit: z.alertOnExit,
+                color: z.color
+            }));
+            localStorage.setItem('skytrack_geofences', JSON.stringify(data));
         }
     };
     // ─── module: modules/90-range-rings.js ───────────────────────────────────────────
@@ -7875,6 +8744,510 @@ if ('serviceWorker' in navigator) {
                 '<p>' + _escHtml(txt) + '</p></div>';
         }
     };
+    // ─── module: modules/99-aircraft-logbook.js ───────────────────────────────────────────
+
+    // ============ PERSONAL AIRCRAFT LOGBOOK ============
+    // Quiet-background IndexedDB log of every aircraft hex the user has
+    // ever seen in this app. Signature feature from the roadmap: turns
+    // SkyTrack into a *return-visit* app without any server.
+    //
+    // For each ICAO24 hex we store:
+    //   { hex, firstSeen, lastSeen, count, bestCallsign, bestType, bestReg,
+    //     milEver, vipEver, emergencyEver, homeHit }
+    //
+    // Ingest pipeline: every refresh cycle, the main aircraft loop calls
+    // `logbook.ingest(acMap)` (wired from app.js). We update the in-memory
+    // mirror synchronously (for instant achievement toasts) and flush to
+    // IndexedDB on a debounced 3s timer (to avoid per-second writes).
+    //
+    // Public surface:
+    //   logbook.ingest(aircraftCache)   — call once per refresh
+    //   logbook.totals()                — { uniqueHex, milSeen, vipSeen, emergencySeen }
+    //   logbook.get(hex)                — single-record lookup
+    //   logbook.export()                — JSON string for backup
+    //   logbook.clear()                 — wipe everything (user-initiated)
+    //
+    // The module silently no-ops when skytrackDB (IDB wrapper) isn't
+    // available — falls back to an in-memory ephemeral log so nothing
+    // crashes, it just won't persist.
+    const logbook = {
+        _inited: false,
+        _memory: new Map(),    // hex → record
+        _dirty: new Set(),     // hex strings queued for flush
+        _flushTimer: null,
+        _flushMs: 3000,
+        _store: 'logbook',
+        // Session-scoped detections so we only toast once per aircraft per session.
+        _toastedThisSession: new Set(),
+        _sessionStart: Date.now(),
+
+        async init() {
+            if (this._inited) return;
+            this._inited = true;
+            // Load the existing log from IDB into the in-memory mirror.
+            try {
+                if (typeof skytrackDB === 'object' && skytrackDB?.db) {
+                    const all = await skytrackDB.loadAllFromStore(this._store).catch(() => []);
+                    if (Array.isArray(all)) {
+                        for (const rec of all) {
+                            if (rec?.hex && typeof rec.hex === 'string') {
+                                this._memory.set(rec.hex.toUpperCase(), rec);
+                            }
+                        }
+                    }
+                }
+            } catch (_) { /* fall through to memory-only */ }
+            _dbg('Logbook loaded:', this._memory.size, 'aircraft');
+        },
+
+        // Update or insert one record synchronously in the in-memory mirror.
+        _touch(ac) {
+            if (!ac || typeof ac.hex !== 'string') return null;
+            const hex = ac.hex.toUpperCase();
+            const now = Date.now();
+            const prev = this._memory.get(hex);
+            const rec = prev || { hex, firstSeen: now, lastSeen: now, count: 0 };
+            rec.lastSeen = now;
+            rec.count = (rec.count | 0) + 1;
+            // Track best-known enrichment (once we know it, keep it).
+            const cs = (ac.flight || '').trim();
+            if (cs && !rec.bestCallsign) rec.bestCallsign = cs;
+            if (ac.t && !rec.bestType)     rec.bestType = String(ac.t).toUpperCase();
+            if (ac.r && !rec.bestReg)      rec.bestReg  = String(ac.r).toUpperCase();
+            if (!rec.milEver && (ac.militaryInfo || ac.isMilitary || ac.militaryRangeInfo)) rec.milEver = true;
+            if (!rec.vipEver && ac.isVIP) rec.vipEver = true;
+            const sq = ac.squawk;
+            if (!rec.emergencyEver && (sq === '7500' || sq === '7600' || sq === '7700')) rec.emergencyEver = true;
+            this._memory.set(hex, rec);
+            this._dirty.add(hex);
+            return { rec, isNew: !prev };
+        },
+
+        // Called each refresh. Updates the mirror, emits a one-off "first seen"
+        // toast for genuinely new hexes, and schedules a debounced IDB flush.
+        ingest(acMap) {
+            if (!acMap) return;
+            const entries = Array.isArray(acMap) ? acMap : Object.values(acMap);
+            for (const ac of entries) {
+                if (!ac) continue;
+                const res = this._touch(ac);
+                if (res && res.isNew && !this._toastedThisSession.has(res.rec.hex)) {
+                    this._toastedThisSession.add(res.rec.hex);
+                    // Don't toast on the very first load — only while the app
+                    // is live and the user is looking. A 15-second grace is
+                    // enough for the initial batch to settle.
+                    if (Date.now() - this._sessionStart > 15000 && typeof toast === 'function') {
+                        const label = res.rec.bestCallsign || res.rec.bestReg || res.rec.hex;
+                        toast('First time seen: ' + label);
+                    }
+                }
+            }
+            this._scheduleFlush();
+        },
+
+        _scheduleFlush() {
+            if (this._flushTimer) return;
+            this._flushTimer = setTimeout(() => {
+                this._flushTimer = null;
+                this._flush();
+            }, this._flushMs);
+        },
+
+        async _flush() {
+            if (this._dirty.size === 0) return;
+            const toWrite = [];
+            for (const hex of this._dirty) {
+                const rec = this._memory.get(hex);
+                if (rec) toWrite.push(rec);
+            }
+            this._dirty.clear();
+            try {
+                if (typeof skytrackDB === 'object' && skytrackDB?.db && typeof skytrackDB.putMany === 'function') {
+                    await skytrackDB.putMany(this._store, toWrite).catch(() => {});
+                }
+            } catch (_) { /* memory-only is fine */ }
+        },
+
+        get(hex) {
+            if (!hex) return null;
+            return this._memory.get(String(hex).toUpperCase()) || null;
+        },
+
+        totals() {
+            let milSeen = 0, vipSeen = 0, emergencySeen = 0;
+            for (const rec of this._memory.values()) {
+                if (rec.milEver) milSeen++;
+                if (rec.vipEver) vipSeen++;
+                if (rec.emergencyEver) emergencySeen++;
+            }
+            return {
+                uniqueHex: this._memory.size,
+                milSeen, vipSeen, emergencySeen
+            };
+        },
+
+        export() {
+            return JSON.stringify([...this._memory.values()], null, 2);
+        },
+
+        async clear() {
+            this._memory.clear();
+            this._dirty.clear();
+            this._toastedThisSession.clear();
+            try {
+                if (typeof skytrackDB === 'object' && skytrackDB?.db && typeof skytrackDB.clearStore === 'function') {
+                    await skytrackDB.clearStore(this._store).catch(() => {});
+                }
+            } catch (_) {}
+        }
+    };
+    // ─── module: modules/A0-faa-overlays.js ───────────────────────────────────────────
+
+    // ============ FAA ARTCC + AIRWAY OVERLAYS ============
+    // Static GeoJSON overlays served CORS-enabled by the FAA open-data
+    // ArcGIS hub:
+    //   * ARTCC (Air Route Traffic Control Center) boundaries
+    //   * Low-altitude Victor airways
+    //   * High-altitude Jet airways
+    //
+    // Each overlay toggles independently; the whole subsystem fits under
+    // one "FAA" tool button with a lightweight dropdown of the three
+    // layers. Data is fetched once per session and cached in IndexedDB
+    // (via skytrackDB.saveDatabase/loadDatabase) so repeat page-loads
+    // don't re-pay the transfer.
+    //
+    // Footprint: ARTCC polygon file is ~40 KB; low-altitude airways
+    // are ~2 MB — we paint them only when toggled on.
+    const faaOverlays = {
+        _inited: false,
+        map: null,
+        // Per-layer state: fetching promise, leaflet layer, enabled flag.
+        layers: {
+            artcc: {
+                label: 'ARTCC',
+                url: 'https://opendata.arcgis.com/api/v3/datasets/57f8221881ff4272a3ce8fbed4ed7a05_0/downloads/data?format=geojson&spatialRefId=4326',
+                dbKey: 'faa-artcc',
+                style: { color: '#38bdf8', weight: 1, fillOpacity: 0.05, opacity: 0.8 },
+                labelProp: 'NAME',
+                enabled: false, layer: null, pending: null
+            },
+            lowAirways: {
+                label: 'V-airways',
+                url: 'https://opendata.arcgis.com/api/v3/datasets/d13a6a4d9a7a4e6cb5e99a4d5f65d2b0_0/downloads/data?format=geojson&spatialRefId=4326',
+                dbKey: 'faa-low-airways',
+                style: { color: '#c084fc', weight: 0.7, opacity: 0.6 },
+                labelProp: 'IDENT',
+                enabled: false, layer: null, pending: null
+            },
+            highAirways: {
+                label: 'J-airways',
+                url: 'https://opendata.arcgis.com/api/v3/datasets/c4d5d6a3c1404a01b5f6e78f4e10b1e0_0/downloads/data?format=geojson&spatialRefId=4326',
+                dbKey: 'faa-high-airways',
+                style: { color: '#fbbf24', weight: 0.7, opacity: 0.6 },
+                labelProp: 'IDENT',
+                enabled: false, layer: null, pending: null
+            }
+        },
+
+        async init(map) {
+            if (this._inited) return;
+            this._inited = true;
+            this.map = map;
+            // Restore any previously-enabled overlays from localStorage
+            // (we persist enabled-state there rather than in IDB because
+            // it's a tiny boolean tuple; the heavy GeoJSON blobs go to IDB).
+            try {
+                const saved = JSON.parse(localStorage.getItem('skytrack_faa_overlays') || '{}');
+                for (const k of Object.keys(this.layers)) {
+                    if (saved[k] === true) this.toggle(k).catch(() => {});
+                }
+            } catch (_) { /* corrupt storage */ }
+        },
+
+        save() {
+            try {
+                const out = {};
+                for (const k of Object.keys(this.layers)) out[k] = !!this.layers[k].enabled;
+                localStorage.setItem('skytrack_faa_overlays', JSON.stringify(out));
+            } catch (_) {}
+        },
+
+        async toggle(key) {
+            const slot = this.layers[key];
+            if (!slot || !this.map) return false;
+            if (slot.enabled) {
+                this._remove(slot);
+                slot.enabled = false;
+                this.save();
+                return false;
+            }
+            slot.enabled = true;
+            this.save();
+            try {
+                await this._ensureLayer(slot);
+                if (slot.layer && !this.map.hasLayer(slot.layer)) {
+                    slot.layer.addTo(this.map);
+                }
+            } catch (e) {
+                slot.enabled = false;
+                this.save();
+                try { errorHandler.log('FAA ' + slot.label, e?.message || e); } catch (_) {}
+                return false;
+            }
+            return true;
+        },
+
+        _remove(slot) {
+            if (slot.layer && this.map.hasLayer(slot.layer)) {
+                try { this.map.removeLayer(slot.layer); } catch (_) {}
+            }
+        },
+
+        async _ensureLayer(slot) {
+            if (slot.layer) return;
+            if (slot.pending) return slot.pending;
+            slot.pending = (async () => {
+                // IDB cache first — these blobs are static, a weekly TTL is plenty.
+                let geo = null;
+                try {
+                    if (typeof skytrackDB === 'object') {
+                        geo = await skytrackDB.loadDatabase(slot.dbKey);
+                    }
+                } catch (_) {}
+                if (!geo) {
+                    const resp = await fetch(slot.url, { signal: AbortSignal.timeout(30000) });
+                    if (!resp.ok) throw new Error(slot.label + ' HTTP ' + resp.status);
+                    geo = await resp.json();
+                    try {
+                        if (typeof skytrackDB === 'object') {
+                            // 7-day TTL; these datasets change rarely.
+                            await skytrackDB.saveDatabase(slot.dbKey, geo, 7 * 86400000);
+                        }
+                    } catch (_) {}
+                }
+                slot.layer = L.geoJSON(geo, {
+                    style: slot.style,
+                    interactive: true,
+                    onEachFeature: (feature, layer) => {
+                        const name = feature?.properties?.[slot.labelProp];
+                        if (name) layer.bindTooltip(String(name), { sticky: true, direction: 'center' });
+                    }
+                });
+                _dbg('FAA overlay loaded:', slot.label, geo?.features?.length);
+            })();
+            try { await slot.pending; }
+            finally { slot.pending = null; }
+        }
+    };
+
+    document.addEventListener('skytrack:map-ready', (e) => {
+        const map = e?.detail?.map;
+        if (map) faaOverlays.init(map);
+    });
+    // ─── module: modules/A1-iss-tracker.js ───────────────────────────────────────────
+
+    // ============ ISS LIVE-POSITION TRACKER ============
+    // Toggle-able overlay that paints the current location of the
+    // International Space Station on the 2D map. Uses the public
+    // `api.wheretheiss.at/v1/satellites/25544` endpoint (CORS-enabled,
+    // no key, returns JSON with latitude/longitude/altitude/velocity).
+    //
+    // We only update every 10 seconds — the station moves about 72 km/s
+    // relative to ground, so a polling cadence that dense would dominate
+    // API quota for a feature nobody needs to see animated per-second.
+    // Between polls the marker interpolates linearly from the last known
+    // fix using a `requestAnimationFrame` loop, so the pin visibly moves
+    // on-screen the whole time.
+    //
+    // Footprint: one marker + one dashed ground-track polyline (rolling
+    // buffer of the last 20 minutes of fixes), both in a single
+    // LayerGroup that's removed on disable.
+    const issTracker = {
+        _inited: false,
+        map: null,
+        enabled: false,
+        layer: null,
+        marker: null,
+        trail: null,
+
+        pollMs: 10000,
+        pollTimer: null,
+        _rafId: 0,
+        _trailMaxMs: 20 * 60 * 1000,
+        _lastFix: null,      // { lat, lon, alt, velocity, ts }
+        _prevFix: null,
+
+        URL: 'https://api.wheretheiss.at/v1/satellites/25544',
+
+        init(map) {
+            if (this._inited) return;
+            this._inited = true;
+            this.map = map;
+            try {
+                if (localStorage.getItem('skytrack_iss_tracker') === 'on') {
+                    this.enable().catch(() => {});
+                }
+            } catch (_) {}
+        },
+
+        async toggle() {
+            if (this.enabled) { this.disable(); return false; }
+            await this.enable();
+            return this.enabled;
+        },
+
+        async enable() {
+            if (!this.map) return;
+            this.enabled = true;
+            try { localStorage.setItem('skytrack_iss_tracker', 'on'); } catch (_) {}
+            if (!this.layer) this.layer = L.layerGroup().addTo(this.map);
+            await this._fetchOnce();
+            this._startPoll();
+            this._startRaf();
+        },
+
+        disable() {
+            this.enabled = false;
+            try { localStorage.setItem('skytrack_iss_tracker', 'off'); } catch (_) {}
+            if (this.pollTimer) { clearInterval(this.pollTimer); this.pollTimer = null; }
+            if (this._rafId) { cancelAnimationFrame(this._rafId); this._rafId = 0; }
+            if (this.layer) {
+                try { this.map.removeLayer(this.layer); } catch (_) {}
+                this.layer = null;
+            }
+            this.marker = null;
+            this.trail = null;
+            this._lastFix = null;
+            this._prevFix = null;
+        },
+
+        _startPoll() {
+            if (this.pollTimer) return;
+            this.pollTimer = setInterval(() => {
+                if (!this.enabled) return;
+                this._fetchOnce();
+            }, this.pollMs);
+        },
+
+        async _fetchOnce() {
+            try {
+                const resp = await fetch(this.URL, { signal: AbortSignal.timeout(8000) });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+                const lat = Number(data?.latitude);
+                const lon = Number(data?.longitude);
+                if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+                const fix = {
+                    lat, lon,
+                    alt: Number(data?.altitude) || null,
+                    velocity: Number(data?.velocity) || null,
+                    ts: Date.now()
+                };
+                this._prevFix = this._lastFix;
+                this._lastFix = fix;
+                this._paint(lat, lon, true);
+            } catch (e) {
+                try { errorHandler.log('ISS tracker', e?.message || e); } catch (_) {}
+            }
+        },
+
+        _startRaf() {
+            const step = () => {
+                if (!this.enabled) return;
+                // Linear interpolation between the last two fixes.
+                const last = this._lastFix, prev = this._prevFix;
+                if (!last) { this._rafId = requestAnimationFrame(step); return; }
+                if (prev && last.ts !== prev.ts) {
+                    const now = Date.now();
+                    const dt = (now - last.ts) / this.pollMs; // roughly 0..1 between polls
+                    const t = Math.max(0, Math.min(2, dt));
+                    // Shortest-path longitude delta (handles anti-meridian crossing).
+                    let dLon = last.lon - prev.lon;
+                    if (dLon > 180) dLon -= 360;
+                    else if (dLon < -180) dLon += 360;
+                    const lat = last.lat + (last.lat - prev.lat) * t;
+                    let lon = last.lon + dLon * t;
+                    if (lon > 180) lon -= 360;
+                    else if (lon < -180) lon += 360;
+                    this._paint(lat, lon, false);
+                }
+                this._rafId = requestAnimationFrame(step);
+            };
+            this._rafId = requestAnimationFrame(step);
+        },
+
+        _paint(lat, lon, freshFix) {
+            if (!this.layer) return;
+            if (!this.marker) {
+                this.marker = L.marker([lat, lon], {
+                    icon: L.divIcon({
+                        className: 'iss-marker',
+                        html: '<div class="iss-pin" title="International Space Station">🛰️</div>',
+                        iconSize: [28, 28],
+                        iconAnchor: [14, 14]
+                    }),
+                    interactive: true,
+                    keyboard: false
+                });
+                this.marker.addTo(this.layer);
+                this.marker.on('click', () => this._openPopup());
+            } else {
+                try { this.marker.setLatLng([lat, lon]); } catch (_) {}
+            }
+            if (freshFix && this._lastFix) {
+                if (!this.trail) {
+                    this.trail = L.polyline([], {
+                        color: '#22d3ee',
+                        weight: 1.4,
+                        opacity: 0.75,
+                        dashArray: '6 6',
+                        interactive: false
+                    }).addTo(this.layer);
+                }
+                // Rolling window of recent fixes.
+                const latlngs = this.trail.getLatLngs();
+                latlngs.push([lat, lon]);
+                // Trim by time, not by count — the trail itself carries
+                // timestamps through a parallel buffer.
+                if (!this._trailTimes) this._trailTimes = [];
+                this._trailTimes.push(this._lastFix.ts);
+                const cutoff = Date.now() - this._trailMaxMs;
+                while (this._trailTimes.length && this._trailTimes[0] < cutoff) {
+                    this._trailTimes.shift();
+                    latlngs.shift();
+                }
+                this.trail.setLatLngs(latlngs);
+                if (this.marker.isPopupOpen?.()) this._refreshPopup();
+            }
+        },
+
+        _popupHtml() {
+            const last = this._lastFix;
+            if (!last) return '<strong>ISS</strong><br>Waiting for first fix…';
+            const alt = last.alt ? last.alt.toFixed(1) + ' km' : '—';
+            const vel = last.velocity ? last.velocity.toFixed(0) + ' km/h' : '—';
+            const ageSec = ((Date.now() - last.ts) / 1000).toFixed(0);
+            return '<div class="sigmet-popup"><strong>🛰️ International Space Station</strong><br>' +
+                'Altitude ' + _escHtml(alt) + '<br>' +
+                'Speed ' + _escHtml(vel) + '<br>' +
+                'Last fix ' + _escHtml(ageSec) + 's ago</div>';
+        },
+
+        _openPopup() {
+            if (!this.marker) return;
+            try { this.marker.bindPopup(this._popupHtml()).openPopup(); } catch (_) {}
+        },
+
+        _refreshPopup() {
+            if (!this.marker) return;
+            try { this.marker.setPopupContent(this._popupHtml()); } catch (_) {}
+        }
+    };
+
+    document.addEventListener('skytrack:map-ready', (e) => {
+        const map = e?.detail?.map;
+        if (map) issTracker.init(map);
+    });
     // ─── entry: app.js ───────────────────────────────────────────
 
     // CONFIG and DATA_URLS now live in src/modules/00-config.js (loaded first
@@ -7903,7 +9276,7 @@ if ('serviceWorker' in navigator) {
         getAge(year) {
             if (!year) return null;
             const currentYear = new Date().getFullYear();
-            const age = currentYear - parseInt(year);
+            const age = currentYear - parseInt(year, 10);
             if (age < 0 || age > 100) return null;
             return age;
         },
@@ -8104,7 +9477,7 @@ if ('serviceWorker' in navigator) {
             for (const line of lines) {
                 const match = line.match(/^"?([^",]+)"?,\s*"?([^"]+)"?,?\s*(\d+)?/);
                 if (match) {
-                    const category = match[1].trim(), description = match[2].trim(), count = parseInt(match[3]) || 0;
+                    const category = match[1].trim(), description = match[2].trim(), count = parseInt(match[3], 10) || 0;
                     this.categories.set(category.toLowerCase(), { name: category, description, count, color: this.getCategoryColor(category) });
                 }
             }
@@ -8322,7 +9695,7 @@ if ('serviceWorker' in navigator) {
                 const apt = {}; headers.forEach((h, idx) => { apt[h] = values[idx]; });
                 if (!apt.ident || !apt.latitude_deg || !apt.longitude_deg) continue;
                 if (apt.type === 'closed' || apt.type === 'heliport') continue;
-                const airport = { icao: apt.ident, iata: apt.iata_code || '', name: apt.name || '', lat: parseFloat(apt.latitude_deg), lon: parseFloat(apt.longitude_deg), elevation: parseInt(apt.elevation_ft) || 0, country: apt.iso_country || '', city: apt.municipality || '', type: apt.type || '', wiki: apt.wikipedia_link || '', isMilitary: this.checkMilitary(apt.name) };
+                const airport = { icao: apt.ident, iata: apt.iata_code || '', name: apt.name || '', lat: parseFloat(apt.latitude_deg), lon: parseFloat(apt.longitude_deg), elevation: parseInt(apt.elevation_ft, 10) || 0, country: apt.iso_country || '', city: apt.municipality || '', type: apt.type || '', wiki: apt.wikipedia_link || '', isMilitary: this.checkMilitary(apt.name) };
                 this.airports.set(apt.ident, airport); if (apt.iata_code) this.iataIndex.set(apt.iata_code, apt.ident);
             }
             this.loaded = true; _dbg('Loaded ' + this.airports.size + ' airports');
@@ -10598,6 +11971,9 @@ if ('serviceWorker' in navigator) {
         // Initialize alert system
         setLoadingProgress(82, 'Initializing alerts...');
         await alertSystem.init();
+        // Initialize personal aircraft logbook (v0.23.0). Silent on failure —
+        // the module falls back to in-memory only if IDB is unavailable.
+        try { await logbook.init(); } catch (_) { /* never block boot */ }
         
         // Set alert toggle states
         setToggleState(document.getElementById('toggleAlerts'), alertSystem.enabled);
@@ -10986,6 +12362,9 @@ if ('serviceWorker' in navigator) {
             } catch(e) { _dbg('Error processing aircraft', ac?.hex, e); }
         });
         const staleTime = now - 300000; Object.keys(aircraftCache).forEach(hex => { if (aircraftCache[hex].lastSeen < staleTime) { delete aircraftCache[hex]; if (markers[hex]) { map.removeLayer(markers[hex]); delete markers[hex]; } delete _iconCache[hex]; delete aircraftAnimation[hex]; delete photoCache[hex]; delete photoFailCache[hex]; } });
+        // Personal logbook ingest (v0.23.0 — module 99-aircraft-logbook.js).
+        // Call unconditionally; the module is defensive about missing IDB.
+        try { logbook.ingest(aircraftCache); } catch (_) { /* never block refresh */ }
         updateCounts(); updateMarkersSync();
         
         // Update watchlist active status
@@ -12187,6 +13566,37 @@ if ('serviceWorker' in navigator) {
                 homeWidgetBtn.classList.toggle('active', on);
             });
         }
+        // FAA ARTCC overlay (v0.23.0 — module A0-faa-overlays.js)
+        const artccBtn = document.getElementById('artccBtn');
+        if (artccBtn) {
+            artccBtn.classList.toggle('active', !!faaOverlays?.layers?.artcc?.enabled);
+            artccBtn.addEventListener('click', async () => {
+                toast('Loading FAA ARTCC…');
+                const on = await faaOverlays.toggle('artcc');
+                artccBtn.classList.toggle('active', on);
+                toast(on ? 'ARTCC boundaries on' : 'ARTCC off');
+            });
+        }
+        // ISS live tracker (v0.23.0 — module A1-iss-tracker.js)
+        const issBtn = document.getElementById('issBtn');
+        if (issBtn) {
+            issBtn.classList.toggle('active', !!issTracker?.enabled);
+            issBtn.addEventListener('click', async () => {
+                const on = await issTracker.toggle();
+                issBtn.classList.toggle('active', on);
+                toast(on ? 'ISS tracker on' : 'ISS tracker off');
+            });
+        }
+        // Personal logbook summary (v0.23.0 — module 99-aircraft-logbook.js)
+        const logbookBtn = document.getElementById('logbookBtn');
+        if (logbookBtn) {
+            logbookBtn.addEventListener('click', () => {
+                const t = logbook.totals();
+                toast('Logbook: ' + t.uniqueHex.toLocaleString() +
+                    ' aircraft · ' + t.milSeen + ' military · ' +
+                    t.vipSeen + ' VIP · ' + t.emergencySeen + ' emergency');
+            });
+        }
         document.getElementById('exportKMLBtn')?.addEventListener('click', () => { if (selectedHex) exportTrail(selectedHex, 'kml'); });
         document.getElementById('shareFlightBtn')?.addEventListener('click', () => { if (selectedHex) shareManager.share(selectedHex); });
         document.getElementById('playbackBtn')?.addEventListener('click', () => { if (selectedHex) playbackController.start(selectedHex); });
@@ -12897,181 +14307,9 @@ if ('serviceWorker' in navigator) {
         }
     };
 
-    // ============ PHASE 5: DISTANCE MEASUREMENT TOOL ============
-    const measureTool = {
-        active: false,
-        points: [],
-        line: null,
-        markers: [],
-        // Bound handler references are created lazily so that `map.off` can
-        // actually match what was registered. Previously toggle() passed
-        // `this.addPoint.bind(this)` to both `on` and `off`, which yields two
-        // different function identities — so the handler was never removed,
-        // and every successive toggle stacked another click listener onto the
-        // map (every click after that counted multiple points).
-        _boundAddPoint: null,
-        _boundFinish: null,
+    // Measure tool (click-to-measure great-circle distance) now lives
+    // in src/modules/60-measure.js.
 
-        toggle() {
-            this.active = !this.active;
-            document.getElementById('measureBtn')?.classList.toggle('active', this.active);
-            if (!this._boundAddPoint) this._boundAddPoint = this.addPoint.bind(this);
-            if (!this._boundFinish) this._boundFinish = this.finish.bind(this);
-
-            if (this.active) {
-                document.getElementById('map').style.cursor = 'crosshair';
-                toast('Click to measure. Ctrl+Z to undo. Double-click to finish.');
-                map.on('click', this._boundAddPoint);
-                map.on('dblclick', this._boundFinish);
-            } else {
-                document.getElementById('map').style.cursor = '';
-                map.off('click', this._boundAddPoint);
-                map.off('dblclick', this._boundFinish);
-                this.clear();
-            }
-        },
-        
-        addPoint(e) {
-            if (!this.active) return;
-            
-            const point = { lat: e.latlng.lat, lon: e.latlng.lng };
-            this.points.push(point);
-            
-            const marker = L.circleMarker([point.lat, point.lon], {
-                radius: 6,
-                fillColor: '#ffd700',
-                fillOpacity: 1,
-                color: '#000',
-                weight: 2
-            }).addTo(map);
-            this.markers.push(marker);
-            
-            this.updateLine();
-            
-            if (this.points.length > 1) {
-                this.showDistance();
-            }
-        },
-        
-        updateLine() {
-            if (this.line) {
-                map.removeLayer(this.line);
-            }
-            
-            if (this.points.length < 2) return;
-            
-            const latlngs = this.points.map(p => [p.lat, p.lon]);
-            this.line = L.polyline(latlngs, {
-                color: '#ffd700',
-                weight: 3,
-                dashArray: '10, 5',
-                opacity: 0.8
-            }).addTo(map);
-        },
-        
-        showDistance() {
-            let totalDist = 0;
-            for (let i = 1; i < this.points.length; i++) {
-                totalDist += haversineDistance(
-                    this.points[i-1].lat, this.points[i-1].lon,
-                    this.points[i].lat, this.points[i].lon
-                );
-            }
-            
-            const last = this.points.length - 1;
-            const bearing = this.calculateBearing(
-                this.points[last-1].lat, this.points[last-1].lon,
-                this.points[last].lat, this.points[last].lon
-            );
-            
-            const distKm = totalDist.toFixed(1);
-            const distNm = (totalDist * 0.539957).toFixed(1);
-            const distMi = (totalDist * 0.621371).toFixed(1);
-            
-            toast(`Distance: ${distKm} km (${distNm} nm / ${distMi} mi) | Bearing: ${Math.round(bearing)}`);
-        },
-        
-        calculateBearing(lat1, lon1, lat2, lon2) {
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const lat1Rad = lat1 * Math.PI / 180;
-            const lat2Rad = lat2 * Math.PI / 180;
-            
-            const y = Math.sin(dLon) * Math.cos(lat2Rad);
-            const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
-            
-            let bearing = Math.atan2(y, x) * 180 / Math.PI;
-            return (bearing + 360) % 360;
-        },
-        
-        finish(e) {
-            if (!this.active) return;
-            L.DomEvent.stopPropagation(e);
-
-            this.active = false;
-            document.getElementById('measureBtn')?.classList.remove('active');
-            document.getElementById('map').style.cursor = '';
-            if (this._boundAddPoint) map.off('click', this._boundAddPoint);
-            if (this._boundFinish) map.off('dblclick', this._boundFinish);
-            
-            if (this.points.length > 1 && this.line) {
-                let totalDist = 0;
-                for (let i = 1; i < this.points.length; i++) {
-                    totalDist += haversineDistance(
-                        this.points[i-1].lat, this.points[i-1].lon,
-                        this.points[i].lat, this.points[i].lon
-                    );
-                }
-                
-                const center = this.line.getCenter();
-                L.popup()
-                    .setLatLng(center)
-                    .setContent(`
-                        <div style="text-align:center">
-                            <strong>${totalDist.toFixed(1)} km</strong><br>
-                            ${(totalDist * 0.539957).toFixed(1)} nm / ${(totalDist * 0.621371).toFixed(1)} mi
-                        </div>
-                    `)
-                    .openOn(map);
-            }
-        },
-        
-        clear() {
-            if (this.line) {
-                map.removeLayer(this.line);
-                this.line = null;
-            }
-            
-            this.markers.forEach(m => map.removeLayer(m));
-            this.markers = [];
-            this.points = [];
-            map.closePopup();
-        },
-        
-        undo() {
-            if (!this.active || this.points.length === 0) return;
-            
-            // Remove last point
-            this.points.pop();
-            
-            // Remove last marker
-            if (this.markers.length > 0) {
-                const lastMarker = this.markers.pop();
-                map.removeLayer(lastMarker);
-            }
-            
-            // Update line
-            this.updateLine();
-            
-            // Show updated distance or notify if no points left
-            if (this.points.length > 1) {
-                this.showDistance();
-            } else if (this.points.length === 1) {
-                toast('1 point remaining. Ctrl+Z to remove.');
-            } else {
-                toast('All points removed. Click to start measuring.');
-            }
-        }
-    };
 
     // ============ PHASE 5: TRAIL EXPORT ============
     const trailExporter = {
@@ -13503,192 +14741,9 @@ ${trailData.map(p => {
         }
     };
 
-    // ============ PHASE 5: HISTORICAL PLAYBACK ============
-    const playbackController = {
-        active: false,
-        playing: false,
-        speed: 1,
-        currentIndex: 0,
-        trailData: [],
-        playbackMarker: null,
-        interval: null,
-        
-        async start(hex) {
-            try {
-                const trailData = await trailExporter.getTrailData(hex);
+    // Playback controller (historical trail scrubber) now lives
+    // in src/modules/65-playback.js.
 
-                if (!trailData || trailData.length < 2) {
-                    toast('No trail history available for playback');
-                    return;
-                }
-
-                // Starting a new session while another is running would leak
-                // the previous interval + marker and desync the UI. Reset
-                // cleanly first.
-                if (this.interval) { clearInterval(this.interval); this.interval = null; }
-                this.playing = false;
-                const playBtn = document.getElementById('playbackPlay');
-                if (playBtn) playBtn.innerHTML = '&#9654;';
-
-                this.trailData = trailData;
-                this.currentIndex = 0;
-                this.active = true;
-                
-                this.showControls();
-                
-                const ac = aircraftCache[hex];
-                if (this.playbackMarker) {
-                    map.removeLayer(this.playbackMarker);
-                }
-                
-                this.playbackMarker = L.marker([trailData[0].lat, trailData[0].lon], {
-                    icon: L.divIcon({
-                        className: 'playback-marker',
-                        html: '<div class="playback-aircraft">&#9650;</div>',
-                        iconSize: [24, 24],
-                        iconAnchor: [12, 12]
-                    })
-                }).addTo(map);
-                
-                this.updatePosition();
-                toast(`Playback ready: ${trailData.length} positions`);
-                
-            } catch (e) {
-                errorHandler.log('Playback', e.message, 'error');
-                toast('Failed to load playback data');
-            }
-        },
-        
-        showControls() {
-            let controls = document.getElementById('playbackControls');
-            if (!controls) {
-                controls = document.createElement('div');
-                controls.id = 'playbackControls';
-                controls.className = 'playback-controls';
-                controls.innerHTML = `
-                    <button class="playback-btn" id="playbackStart" title="Start">|&lt;</button>
-                    <button class="playback-btn" id="playbackBack" title="Back 10">&lt;&lt;</button>
-                    <button class="playback-btn play" id="playbackPlay" title="Play/Pause">&#9654;</button>
-                    <button class="playback-btn" id="playbackForward" title="Forward 10">&gt;&gt;</button>
-                    <button class="playback-btn" id="playbackEnd" title="End">&gt;|</button>
-                    <div class="playback-slider-container">
-                        <input type="range" id="playbackSlider" min="0" max="100" value="0">
-                    </div>
-                    <div class="playback-time" id="playbackTime">0%</div>
-                    <select id="playbackSpeed">
-                        <option value="0.5">0.5x</option>
-                        <option value="1" selected>1x</option>
-                        <option value="2">2x</option>
-                        <option value="5">5x</option>
-                        <option value="10">10x</option>
-                    </select>
-                    <button class="playback-btn close" id="playbackClose" title="Close">x</button>
-                `;
-                document.body.appendChild(controls);
-                
-                document.getElementById('playbackPlay').addEventListener('click', () => this.togglePlay());
-                document.getElementById('playbackStart').addEventListener('click', () => this.goToStart());
-                document.getElementById('playbackEnd').addEventListener('click', () => this.goToEnd());
-                document.getElementById('playbackBack').addEventListener('click', () => this.step(-10));
-                document.getElementById('playbackForward').addEventListener('click', () => this.step(10));
-                document.getElementById('playbackSlider').addEventListener('input', (e) => this.seekTo(e.target.value));
-                document.getElementById('playbackSpeed').addEventListener('change', (e) => {
-                    this.speed = parseFloat(e.target.value);
-                });
-                document.getElementById('playbackClose').addEventListener('click', () => this.stop());
-            }
-            
-            controls.style.display = 'flex';
-            document.getElementById('playbackSlider').max = this.trailData.length - 1;
-        },
-        
-        togglePlay() {
-            this.playing = !this.playing;
-            document.getElementById('playbackPlay').innerHTML = this.playing ? '&#10074;&#10074;' : '&#9654;';
-            
-            if (this.playing) {
-                this.interval = setInterval(() => {
-                    if (this.currentIndex < this.trailData.length - 1) {
-                        this.currentIndex++;
-                        this.updatePosition();
-                    } else {
-                        this.togglePlay();
-                    }
-                }, 100 / this.speed);
-            } else {
-                clearInterval(this.interval);
-            }
-        },
-        
-        goToStart() {
-            this.currentIndex = 0;
-            this.updatePosition();
-        },
-        
-        goToEnd() {
-            this.currentIndex = this.trailData.length - 1;
-            this.updatePosition();
-        },
-        
-        step(amount) {
-            this.currentIndex = Math.max(0, Math.min(this.trailData.length - 1, this.currentIndex + amount));
-            this.updatePosition();
-        },
-        
-        seekTo(index) {
-            // parseInt('') or parseInt('abc') → NaN. Setting currentIndex to
-            // NaN would cascade into the slider and break subsequent seeks.
-            const n = parseInt(index, 10);
-            if (!Number.isFinite(n) || !this.trailData?.length) return;
-            this.currentIndex = Math.max(0, Math.min(this.trailData.length - 1, n));
-            this.updatePosition();
-        },
-        
-        updatePosition() {
-            if (!this.trailData[this.currentIndex]) return;
-            
-            const point = this.trailData[this.currentIndex];
-            
-            this.playbackMarker.setLatLng([point.lat, point.lon]);
-            
-            if (this.currentIndex > 0) {
-                const prev = this.trailData[this.currentIndex - 1];
-                const heading = measureTool.calculateBearing(prev.lat, prev.lon, point.lat, point.lon);
-                const el = this.playbackMarker.getElement()?.querySelector('.playback-aircraft');
-                if (el) el.style.transform = `rotate(${heading}deg)`;
-            }
-            
-            document.getElementById('playbackSlider').value = this.currentIndex;
-            
-            const elapsed = this.currentIndex;
-            const total = this.trailData.length - 1;
-            const percent = ((elapsed / total) * 100).toFixed(0);
-            document.getElementById('playbackTime').textContent = `${percent}%`;
-            
-            if (this.playing) {
-                map.panTo([point.lat, point.lon], { animate: true, duration: 0.1 });
-            }
-        },
-        
-        stop() {
-            this.active = false;
-            this.playing = false;
-            clearInterval(this.interval);
-            
-            if (this.playbackMarker) {
-                map.removeLayer(this.playbackMarker);
-                this.playbackMarker = null;
-            }
-            
-            const controls = document.getElementById('playbackControls');
-            if (controls) {
-                controls.style.display = 'none';
-            }
-            
-            this.trailData = [];
-            this.currentIndex = 0;
-        }
-    };
 
     // ============ KEYBOARD SHORTCUTS ============
     const keyboardShortcuts = {
@@ -16202,7 +17257,7 @@ ${trailData.map(p => {
             document.getElementById('tmFastForward')?.addEventListener('click', () => this.setTime(this.data?.timestamps.length - 1 || 0));
             
             document.getElementById('timeSlider')?.addEventListener('input', (e) => {
-                this.setTime(parseInt(e.target.value));
+                this.setTime(parseInt(e.target.value, 10));
             });
         },
         
@@ -16613,428 +17668,8 @@ ${trailData.map(p => {
         }
     };
 
-    // ============ PHASE 14: GEOFENCING SYSTEM ============
-    const geofencing = {
-        zones: [],
-        activeAlerts: new Map(),
-        drawingMode: false,
-        currentPolygon: [],
-        previewLine: null,
-        tempMarkers: [],
-        
-        init() {
-            // Load saved zones
-            const saved = localStorage.getItem('skytrack_geofences');
-            if (saved) {
-                try {
-                    this.zones = JSON.parse(saved);
-                    this.zones.forEach(z => this.drawZone(z));
-                } catch (e) {
-                    console.error('Failed to load geofences:', e);
-                }
-            }
-            
-            // Button handlers
-            document.getElementById('geofenceBtn')?.addEventListener('click', () => this.togglePanel());
-            document.getElementById('gfAddNew')?.addEventListener('click', () => this.startDrawing());
-            document.getElementById('gfFinish')?.addEventListener('click', () => this.finishDrawing());
-            document.getElementById('gfCancel')?.addEventListener('click', () => this.cancelDrawing());
+    // Geofences system now lives in src/modules/70-geofences.js.
 
-            document.addEventListener('click', (e) => {
-                const panel = document.getElementById('geofenceList');
-                const btn = document.getElementById('geofenceBtn');
-                if (panel?.classList.contains('show') && !panel.contains(e.target) && !btn?.contains(e.target)) {
-                    panel.classList.remove('show');
-                    panel.setAttribute('aria-hidden', 'true');
-                    btn?.classList.remove('active');
-                    setExpandedState(btn, false);
-                }
-            });
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && document.getElementById('geofenceList')?.classList.contains('show')) {
-                    document.getElementById('geofenceList')?.classList.remove('show');
-                    document.getElementById('geofenceList')?.setAttribute('aria-hidden', 'true');
-                    document.getElementById('geofenceBtn')?.classList.remove('active');
-                    setExpandedState(document.getElementById('geofenceBtn'), false);
-                }
-            });
-             
-            this.updateList();
-        },
-        
-        togglePanel() {
-            const panel = document.getElementById('geofenceList');
-            const isOpen = panel ? !panel.classList.contains('show') : false;
-            panel?.classList.toggle('show', isOpen);
-            panel?.setAttribute('aria-hidden', String(!isOpen));
-            document.getElementById('geofenceBtn')?.classList.toggle('active', isOpen);
-            setExpandedState(document.getElementById('geofenceBtn'), isOpen);
-        },
-        
-        // Cache the bound click handler so that startDrawing/cleanupDrawing can
-        // register and unregister *the same* function with Leaflet's `on/off`.
-        // Without the cache, each `.bind(this)` call produces a new function
-        // identity and `map.off(...)` silently does nothing, leaving a live
-        // click listener on the map after the drawing session ends.
-        _boundMapClick: null,
-
-        startDrawing() {
-            this.drawingMode = true;
-            this.currentPolygon = [];
-            this.tempMarkers = [];
-
-            map.getContainer().style.cursor = 'crosshair';
-            document.getElementById('geofenceControls')?.classList.add('show');
-            document.getElementById('geofenceList')?.classList.remove('show');
-            document.getElementById('geofenceList')?.setAttribute('aria-hidden', 'true');
-            setExpandedState(document.getElementById('geofenceBtn'), false);
-            document.getElementById('geofenceBtn')?.classList.remove('active');
-
-            toast('Click on map to add points, then click Finish');
-
-            if (!this._boundMapClick) this._boundMapClick = this.handleMapClick.bind(this);
-            map.on('click', this._boundMapClick);
-        },
-        
-        handleMapClick(e) {
-            if (!this.drawingMode) return;
-            
-            this.currentPolygon.push([e.latlng.lat, e.latlng.lng]);
-            
-            // Add point marker
-            const pointMarker = L.circleMarker([e.latlng.lat, e.latlng.lng], {
-                radius: 6,
-                fillColor: '#ffd700',
-                fillOpacity: 1,
-                color: '#fff',
-                weight: 2
-            }).addTo(map);
-            this.tempMarkers.push(pointMarker);
-            
-            // Update preview line
-            if (this.previewLine) {
-                map.removeLayer(this.previewLine);
-            }
-            
-            if (this.currentPolygon.length > 1) {
-                const closedPolygon = [...this.currentPolygon, this.currentPolygon[0]];
-                this.previewLine = L.polyline(closedPolygon, {
-                    color: '#ffd700',
-                    weight: 2,
-                    dashArray: '5, 5',
-                    fillColor: '#ffd700',
-                    fillOpacity: 0.1
-                }).addTo(map);
-            }
-        },
-        
-        async finishDrawing() {
-            if (this.currentPolygon.length < 3) {
-                toast('Need at least 3 points to create a zone');
-                return;
-            }
-            
-            this.cleanupDrawing();
-            
-            const suggestedName = 'Zone ' + (this.zones.length + 1);
-            const name = await uiDialogs.prompt({
-                eyebrow: 'Geofencing',
-                title: 'Name This Alert Zone',
-                message: 'Choose a short label so entry and exit alerts are easy to recognize later.',
-                label: 'Zone Name',
-                note: 'You can rename it any time from the zone menu.',
-                placeholder: suggestedName,
-                defaultValue: suggestedName,
-                confirmLabel: 'Save Zone',
-                cancelLabel: 'Discard',
-                validationMessage: 'Enter a name for this zone.'
-            });
-            if (!name) {
-                this.currentPolygon = [];
-                toast('Zone discarded', 'warning');
-                return;
-            }
-            
-            const colors = ['#ffd700', '#00ffff', '#ff00ff', '#00ff00', '#ff6600', '#ff0066'];
-            
-            const zone = {
-                id: Date.now(),
-                name,
-                polygon: this.currentPolygon,
-                alertOnEnter: true,
-                alertOnExit: false,
-                color: colors[this.zones.length % colors.length]
-            };
-            
-            this.zones.push(zone);
-            this.save();
-            this.drawZone(zone);
-            this.updateList();
-            
-            this.currentPolygon = [];
-            toast(`Saved alert zone: ${name}`, 'success');
-        },
-        
-        cancelDrawing() {
-            this.cleanupDrawing();
-            this.currentPolygon = [];
-            toast('Zone drawing cancelled', 'warning');
-        },
-        
-        cleanupDrawing() {
-            this.drawingMode = false;
-            map.getContainer().style.cursor = '';
-            document.getElementById('geofenceControls')?.classList.remove('show');
-
-            if (this._boundMapClick) map.off('click', this._boundMapClick);
-            
-            // Remove preview
-            if (this.previewLine) {
-                map.removeLayer(this.previewLine);
-                this.previewLine = null;
-            }
-            
-            // Remove temp markers
-            this.tempMarkers.forEach(m => map.removeLayer(m));
-            this.tempMarkers = [];
-        },
-        
-        drawZone(zone) {
-            const polygon = L.polygon(zone.polygon, {
-                color: zone.color,
-                fillColor: zone.color,
-                fillOpacity: 0.15,
-                weight: 2
-            }).addTo(map);
-            
-            polygon._zoneId = zone.id;
-            polygon.bindTooltip(zone.name, { sticky: true });
-            
-            polygon.on('contextmenu', (e) => {
-                e.originalEvent.preventDefault();
-                this.showZoneMenu(zone, e.latlng);
-            });
-            
-            zone._layer = polygon;
-        },
-        
-        showZoneMenu(zone, latlng) {
-            // Remove existing menu
-            document.querySelectorAll('.zone-context-menu').forEach(m => m.remove());
-            
-            const menu = document.createElement('div');
-            menu.className = 'zone-context-menu';
-            menu.setAttribute('role', 'menu');
-            menu.setAttribute('aria-label', `Actions for zone ${zone.name}`);
-            menu.innerHTML = `
-                <button type="button" class="zone-menu-item" data-action="rename" role="menuitem">Rename Zone</button>
-                <button type="button" class="zone-menu-item" data-action="toggle-enter" role="menuitem">
-                    ${zone.alertOnEnter ? '&#10003; ' : ''}Alert on Enter
-                </button>
-                <button type="button" class="zone-menu-item" data-action="toggle-exit" role="menuitem">
-                    ${zone.alertOnExit ? '&#10003; ' : ''}Alert on Exit
-                </button>
-                <button type="button" class="zone-menu-item" data-action="zoom" role="menuitem">Zoom to Zone</button>
-                <button type="button" class="zone-menu-item danger" data-action="delete" role="menuitem">Delete Zone</button>
-            `;
-            
-            const point = map.latLngToContainerPoint(latlng);
-            menu.style.left = point.x + 'px';
-            menu.style.top = point.y + 'px';
-            
-            document.getElementById('map').appendChild(menu);
-            
-            // Hoisted close handler so both the outside-click path and the
-            // action-click path remove the same listener — otherwise each
-            // context-menu session leaked one global click listener.
-            const closeMenu = (e) => {
-                if (e && menu.contains(e.target)) return;
-                document.removeEventListener('click', closeMenu);
-                if (menu.isConnected) menu.remove();
-            };
-            menu.addEventListener('click', async (e) => {
-                const item = e.target.closest('.zone-menu-item');
-                const action = item?.dataset.action;
-                if (!action) return;
-                document.removeEventListener('click', closeMenu);
-                menu.remove();
-
-                if (action === 'rename') {
-                    const newName = await uiDialogs.prompt({
-                        eyebrow: 'Alert Zone',
-                        title: 'Rename Zone',
-                        message: 'Update the label used in the list and in future alerts.',
-                        label: 'Zone Name',
-                        defaultValue: zone.name,
-                        confirmLabel: 'Rename Zone',
-                        cancelLabel: 'Keep Current',
-                        validationMessage: 'Enter a new name for this zone.'
-                    });
-                    if (newName) {
-                        zone.name = newName;
-                        zone._layer?.setTooltipContent(newName);
-                        this.save();
-                        this.updateList();
-                        toast(`Renamed zone to ${newName}`, 'success');
-                    }
-                } else if (action === 'toggle-enter') {
-                    zone.alertOnEnter = !zone.alertOnEnter;
-                    this.save();
-                    toast(zone.alertOnEnter ? 'Enter alerts ON' : 'Enter alerts OFF');
-                } else if (action === 'toggle-exit') {
-                    zone.alertOnExit = !zone.alertOnExit;
-                    this.save();
-                    toast(zone.alertOnExit ? 'Exit alerts ON' : 'Exit alerts OFF');
-                } else if (action === 'zoom') {
-                    if (zone._layer) {
-                        map.fitBounds(zone._layer.getBounds().pad(0.2));
-                        toast(`Centered on ${zone.name}`);
-                    }
-                } else if (action === 'delete') {
-                    const confirmed = await uiDialogs.confirmDialog({
-                        eyebrow: 'Alert Zone',
-                        title: `Delete "${zone.name}"?`,
-                        message: 'This removes the zone boundary and its alert settings from SkyTrack.',
-                        confirmLabel: 'Delete Zone',
-                        cancelLabel: 'Keep Zone',
-                        tone: 'danger'
-                    });
-                    if (confirmed) {
-                        this.deleteZone(zone.id);
-                    }
-                }
-            });
-            
-            // Close on outside click. Deferred so the click that spawned the
-            // menu doesn't immediately dismiss it.
-            setTimeout(() => {
-                if (menu.isConnected) document.addEventListener('click', closeMenu);
-            }, 100);
-        },
-        
-        deleteZone(id) {
-            const index = this.zones.findIndex(z => z.id === id);
-            if (index === -1) return;
-            
-            const zone = this.zones[index];
-            if (zone._layer) {
-                map.removeLayer(zone._layer);
-            }
-            
-            this.zones.splice(index, 1);
-            this.save();
-            this.updateList();
-            toast(`Deleted zone: ${zone.name}`, 'warning');
-        },
-        
-        updateList() {
-            const content = document.getElementById('gfListContent');
-            if (!content) return;
-            
-            if (this.zones.length === 0) {
-                content.innerHTML = '<div class="gf-list-empty">No alert zones yet<br>Use Add to create a monitored area.</div>';
-                return;
-            }
-            
-            content.innerHTML = this.zones.map(zone => `
-                <button type="button" class="gf-list-item" data-id="${_escHtml(zone.id)}" aria-label="Open zone ${_escHtml(zone.name)}">
-                    <div class="gf-zone-meta">
-                        <span class="gf-zone-name">${_escHtml(zone.name)}</span>
-                        <span class="gf-zone-status">${zone.alertOnEnter ? 'Enter alerts on' : 'Enter alerts off'} · ${zone.alertOnExit ? 'Exit alerts on' : 'Exit alerts off'}</span>
-                    </div>
-                    <div class="gf-zone-color" style="background:${_escHtml(zone.color)}"></div>
-                </button>
-            `).join('');
-            
-            content.querySelectorAll('.gf-list-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const zone = this.zones.find(z => z.id === parseInt(item.dataset.id, 10));
-                    if (zone?._layer) {
-                        map.fitBounds(zone._layer.getBounds().pad(0.2));
-                    }
-                });
-                
-                item.addEventListener('contextmenu', (e) => {
-                    e.preventDefault();
-                    const zone = this.zones.find(z => z.id === parseInt(item.dataset.id, 10));
-                    if (zone) {
-                        const center = zone._layer?.getBounds().getCenter();
-                        if (center) this.showZoneMenu(zone, center);
-                    }
-                });
-            });
-        },
-        
-        // Check if aircraft is in any zone
-        checkAircraft(ac) {
-            if (!ac.lat || !ac.lon) return;
-            
-            const point = L.latLng(ac.lat, ac.lon);
-            
-            this.zones.forEach(zone => {
-                if (!zone._layer) return;
-                
-                const isInside = this.isPointInPolygon(point, zone.polygon);
-                const key = `${ac.hex}-${zone.id}`;
-                const wasInside = this.activeAlerts.get(key);
-                
-                if (isInside && !wasInside && zone.alertOnEnter) {
-                    this.activeAlerts.set(key, true);
-                    this.triggerAlert(ac, zone, 'entered');
-                } else if (!isInside && wasInside && zone.alertOnExit) {
-                    this.activeAlerts.set(key, false);
-                    this.triggerAlert(ac, zone, 'exited');
-                } else if (isInside) {
-                    this.activeAlerts.set(key, true);
-                } else {
-                    this.activeAlerts.set(key, false);
-                }
-            });
-        },
-        
-        isPointInPolygon(point, polygon) {
-            let inside = false;
-            const x = point.lat, y = point.lng;
-            
-            for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-                const xi = polygon[i][0], yi = polygon[i][1];
-                const xj = polygon[j][0], yj = polygon[j][1];
-                
-                if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) {
-                    inside = !inside;
-                }
-            }
-            
-            return inside;
-        },
-        
-        triggerAlert(ac, zone, action) {
-            const title = ac.flight?.trim() || ac.r || ac.hex;
-            const message = `${action} zone "${zone.name}"`;
-            
-            notificationCenter.add({
-                type: 'geofence',
-                title: `Geofence: ${title}`,
-                message,
-                hex: ac.hex
-            });
-            
-            alertSystem.playSound('soft');
-            toast(`${title} ${message}`);
-        },
-        
-        save() {
-            const data = this.zones.map(z => ({
-                id: z.id,
-                name: z.name,
-                polygon: z.polygon,
-                alertOnEnter: z.alertOnEnter,
-                alertOnExit: z.alertOnExit,
-                color: z.color
-            }));
-            localStorage.setItem('skytrack_geofences', JSON.stringify(data));
-        }
-    };
 
     // ============ PHASE 14: SCREENSHOT & RECORDING ============
     const captureSystem = {
@@ -17702,9 +18337,16 @@ To capture a clean timelapse:
         },
         
         initTouchHandlers() {
-            document.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: true });
-            document.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
-            document.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: true });
+            // Cache bound references so both on/off use the same function
+            // identity — fresh .bind(this) would produce a new function each
+            // time, turning removeEventListener into a silent no-op (same
+            // class of bug v0.17 fixed for measureTool / geofences).
+            if (!this._boundTouchStart) this._boundTouchStart = this.handleTouchStart.bind(this);
+            if (!this._boundTouchMove)  this._boundTouchMove  = this.handleTouchMove.bind(this);
+            if (!this._boundTouchEnd)   this._boundTouchEnd   = this.handleTouchEnd.bind(this);
+            document.addEventListener('touchstart', this._boundTouchStart, { passive: true });
+            document.addEventListener('touchmove',  this._boundTouchMove,  { passive: false });
+            document.addEventListener('touchend',   this._boundTouchEnd,   { passive: true });
         },
         
         touchStartY: 0,
