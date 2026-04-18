@@ -327,7 +327,7 @@
             if (!container) return;
             
             if (this.watchlist.size === 0) {
-                container.innerHTML = '<div class="watchlist-empty">No aircraft watched<br><span>Click star on any aircraft to add</span></div>';
+                container.innerHTML = '<div class="watchlist-empty">No watched aircraft yet<br><span>Select an aircraft and choose Watch to keep it close.</span></div>';
                 return;
             }
             
@@ -340,8 +340,8 @@
                     const safeName = _escHtml(entry.name);
                     return '<div class="watchlist-item ' + (isActive ? 'active' : '') + '" data-hex="' + safeHex + '">' +
                         '<div class="watchlist-info"><div class="watchlist-name">' + safeName + '</div>' +
-                        '<div class="watchlist-hex">' + safeHex + (isActive ? ' - ACTIVE' : '') + '</div></div>' +
-                        '<button class="watchlist-remove" data-hex="' + safeHex + '" title="Remove">x</button></div>';
+                        '<div class="watchlist-hex">' + safeHex + (isActive ? ' · Live Now' : ' · Waiting') + '</div></div>' +
+                        '<button class="watchlist-remove" data-hex="' + safeHex + '" title="Remove from Watchlist" aria-label="Remove ' + safeName + ' from Watchlist">×</button></div>';
                 }).join('');
             
             container.innerHTML = items;
@@ -2667,6 +2667,223 @@
     function saveAircraftCache() { try { const d = { ts: Date.now(), ac: {} }; const keys = Object.keys(aircraftCache); for (let i = 0; i < keys.length; i++) { const h = keys[i], a = aircraftCache[h]; d.ac[h] = { hex: a.hex, flight: a.flight, r: a.r, t: a.t, desc: a.desc, ownOp: a.ownOp, lat: a.lat, lon: a.lon, alt_baro: a.alt_baro, gs: a.gs, track: a.track, baro_rate: a.baro_rate, squawk: a.squawk, category: a.category, dbFlags: a.dbFlags, from: a.from, to: a.to, lastSeen: a.lastSeen, history: a.history?.slice(-50) || [] }; } localStorage.setItem('skytrack_aircraft', JSON.stringify(d)); } catch(e){} }
     function loadAircraftCache() { try { const s = localStorage.getItem('skytrack_aircraft'); if (s) { const d = JSON.parse(s); if (Date.now() - d.ts < CONFIG.cacheExpiry) { aircraftCache = d.ac; return true; } } } catch(e){} return false; }
     function saveSettings() { localStorage.setItem('skytrack_settings_v3', JSON.stringify(settings)); }
+    function normalizeUiText(text) { return String(text ?? '').replace(/\.{3}/g, '…'); }
+    function setToggleState(el, isOn) {
+        if (!el) return;
+        const enabled = !!isOn;
+        el.classList.toggle('on', enabled);
+        el.setAttribute('aria-checked', String(enabled));
+    }
+    function setExpandedState(el, expanded) {
+        if (!el) return;
+        el.setAttribute('aria-expanded', String(!!expanded));
+    }
+    function openOverlayModal(overlay) {
+        if (!overlay) return;
+        overlay.classList.add('show');
+        overlay.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+    }
+    function closeOverlayModal(overlay) {
+        if (!overlay) return;
+        overlay.classList.remove('show');
+        overlay.setAttribute('aria-hidden', 'true');
+        if (!document.querySelector('.modal-overlay.show')) {
+            document.body.classList.remove('modal-open');
+        }
+    }
+    const uiDialogs = {
+        overlay: null,
+        titleEl: null,
+        messageEl: null,
+        eyebrowEl: null,
+        fieldEl: null,
+        labelEl: null,
+        inputEl: null,
+        noteEl: null,
+        closeBtn: null,
+        cancelBtn: null,
+        confirmBtn: null,
+        active: null,
+        lastFocused: null,
+        init() {
+            this.overlay = document.getElementById('systemDialog');
+            if (!this.overlay) return;
+            this.titleEl = document.getElementById('systemDialogTitle');
+            this.messageEl = document.getElementById('systemDialogMessage');
+            this.eyebrowEl = document.getElementById('systemDialogEyebrow');
+            this.fieldEl = document.getElementById('systemDialogField');
+            this.labelEl = document.getElementById('systemDialogLabel');
+            this.inputEl = document.getElementById('systemDialogInput');
+            this.noteEl = document.getElementById('systemDialogNote');
+            this.closeBtn = document.getElementById('systemDialogClose');
+            this.cancelBtn = document.getElementById('systemDialogCancel');
+            this.confirmBtn = document.getElementById('systemDialogConfirm');
+
+            this.overlay.addEventListener('click', (e) => {
+                if (e.target === this.overlay) this.cancel();
+            });
+            this.overlay.addEventListener('keydown', (e) => this.onKeydown(e));
+            this.closeBtn?.addEventListener('click', () => this.cancel());
+            this.cancelBtn?.addEventListener('click', () => this.cancel());
+            this.confirmBtn?.addEventListener('click', () => this.confirm());
+            this.inputEl?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.confirm();
+                }
+            });
+        },
+        onKeydown(e) {
+            if (!this.active) return;
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                this.cancel();
+                return;
+            }
+            if (e.key !== 'Tab') return;
+            const focusables = Array.from(this.overlay.querySelectorAll('button:not([disabled]):not([hidden]), input:not([disabled]):not([hidden])'))
+                .filter(el => !el.closest('[hidden]'));
+            if (!focusables.length) return;
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        },
+        resetValidation() {
+            if (!this.fieldEl || !this.noteEl || !this.inputEl) return;
+            this.fieldEl.classList.remove('has-error');
+            this.inputEl.removeAttribute('aria-invalid');
+            const note = this.active?.note ? normalizeUiText(this.active.note) : '';
+            this.noteEl.textContent = note;
+            this.noteEl.hidden = !note;
+        },
+        showValidation(message) {
+            if (!this.fieldEl || !this.noteEl || !this.inputEl) return;
+            this.fieldEl.classList.add('has-error');
+            this.inputEl.setAttribute('aria-invalid', 'true');
+            this.noteEl.hidden = false;
+            this.noteEl.textContent = normalizeUiText(message);
+            this.inputEl.focus();
+            this.inputEl.select?.();
+        },
+        open(options = {}) {
+            const kind = options.kind || 'prompt';
+            if (!this.overlay) {
+                return Promise.resolve(kind === 'confirm' ? false : kind === 'info' ? undefined : null);
+            }
+            if (this.active) this.finish(this.active.kind === 'confirm' ? false : this.active.kind === 'info' ? undefined : null);
+            return new Promise(resolve => {
+                this.lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+                this.active = {
+                    kind,
+                    title: options.title || 'Confirm Action',
+                    message: options.message || '',
+                    eyebrow: options.eyebrow || '',
+                    label: options.label || 'Value',
+                    note: options.note || '',
+                    placeholder: options.placeholder || '',
+                    defaultValue: options.defaultValue ?? '',
+                    inputType: options.inputType || 'text',
+                    inputMode: options.inputMode || '',
+                    min: options.min,
+                    max: options.max,
+                    step: options.step,
+                    confirmLabel: options.confirmLabel || (kind === 'info' ? 'Done' : 'Continue'),
+                    cancelLabel: options.cancelLabel || 'Cancel',
+                    showCancel: options.showCancel ?? (kind !== 'info'),
+                    tone: options.tone || 'accent',
+                    validate: options.validate,
+                    validationMessage: options.validationMessage || 'Check the value and try again.',
+                    resolve
+                };
+
+                this.titleEl.textContent = normalizeUiText(this.active.title);
+                this.messageEl.textContent = normalizeUiText(this.active.message);
+                this.eyebrowEl.textContent = normalizeUiText(this.active.eyebrow);
+                this.eyebrowEl.hidden = !this.active.eyebrow;
+                this.fieldEl.hidden = kind !== 'prompt';
+                this.labelEl.textContent = normalizeUiText(this.active.label);
+                this.inputEl.type = this.active.inputType;
+                this.inputEl.inputMode = this.active.inputMode || '';
+                this.inputEl.value = String(this.active.defaultValue);
+                this.inputEl.placeholder = normalizeUiText(this.active.placeholder);
+                this.inputEl.autocomplete = 'off';
+                this.inputEl.spellcheck = false;
+                if (this.active.min !== undefined) this.inputEl.min = String(this.active.min); else this.inputEl.removeAttribute('min');
+                if (this.active.max !== undefined) this.inputEl.max = String(this.active.max); else this.inputEl.removeAttribute('max');
+                if (this.active.step !== undefined) this.inputEl.step = String(this.active.step); else this.inputEl.removeAttribute('step');
+                this.cancelBtn.hidden = !this.active.showCancel;
+                this.cancelBtn.textContent = normalizeUiText(this.active.cancelLabel);
+                this.confirmBtn.textContent = normalizeUiText(this.active.confirmLabel);
+                this.confirmBtn.dataset.tone = this.active.tone;
+                this.resetValidation();
+
+                openOverlayModal(this.overlay);
+                setTimeout(() => {
+                    if (!this.active) return;
+                    if (kind === 'prompt') {
+                        this.inputEl.focus();
+                        this.inputEl.select?.();
+                    } else {
+                        this.confirmBtn.focus();
+                    }
+                }, 0);
+            });
+        },
+        confirm() {
+            if (!this.active) return;
+            let result = true;
+            if (this.active.kind === 'prompt') {
+                const raw = this.inputEl.value.trim();
+                if (!raw) {
+                    this.showValidation(this.active.validationMessage);
+                    return;
+                }
+                if (typeof this.active.validate === 'function') {
+                    const validated = this.active.validate(raw);
+                    if (validated === false || validated === null || validated === undefined) {
+                        this.showValidation(this.active.validationMessage);
+                        return;
+                    }
+                    result = validated === true ? raw : validated;
+                } else {
+                    result = raw;
+                }
+            }
+            this.finish(result);
+        },
+        cancel() {
+            if (!this.active) return;
+            const fallback = this.active.kind === 'confirm' ? false : this.active.kind === 'info' ? undefined : null;
+            this.finish(fallback);
+        },
+        finish(result) {
+            if (!this.active) return;
+            const { resolve } = this.active;
+            this.active = null;
+            closeOverlayModal(this.overlay);
+            this.confirmBtn.removeAttribute('data-tone');
+            resolve?.(result);
+            if (this.lastFocused && document.contains(this.lastFocused)) {
+                this.lastFocused.focus();
+            }
+        },
+        prompt(options = {}) {
+            return this.open({ ...options, kind: 'prompt' });
+        },
+        confirmDialog(options = {}) {
+            return this.open({ ...options, kind: 'confirm' });
+        },
+        info(options = {}) {
+            return this.open({ ...options, kind: 'info', showCancel: false });
+        }
+    };
     // Whitelist of filter values that are valid (mirrors marker filter logic
     // in _updateMarkersCore). Anything else in saved settings is dropped so a
     // stale/corrupt storage value cannot put the UI in an inconsistent state
@@ -2683,16 +2900,27 @@
     }
     function loadBookmarks() { try { const s = localStorage.getItem('skytrack_bookmarks'); if (s) bookmarks = JSON.parse(s); } catch(e) { bookmarks = []; } renderBookmarks(); }
     function saveBookmarks() { localStorage.setItem('skytrack_bookmarks', JSON.stringify(bookmarks)); renderBookmarks(); }
-    function addBookmark(name) { const c = map.getCenter(); bookmarks.push({ id: Date.now(), name, lat: c.lat, lng: c.lng, zoom: map.getZoom() }); saveBookmarks(); toast('Saved: ' + name); }
+    function addBookmark(name) { const c = map.getCenter(); bookmarks.push({ id: Date.now(), name, lat: c.lat, lng: c.lng, zoom: map.getZoom() }); saveBookmarks(); toast('Saved View: ' + name, 'success'); }
     function deleteBookmark(id) { bookmarks = bookmarks.filter(b => b.id !== id); saveBookmarks(); }
-    function goToBookmark(id) { const b = bookmarks.find(x => x.id === id); if (b) { map.setView([b.lat, b.lng], b.zoom); toast('Jumped to ' + b.name); } }
+    function goToBookmark(id) { const b = bookmarks.find(x => x.id === id); if (b) { map.setView([b.lat, b.lng], b.zoom); toast('Opened View: ' + b.name); } }
     function renderBookmarks() {
         const list = document.getElementById('bookmarksList');
         if (!list) return;
-        if (!bookmarks.length) { list.innerHTML = '<div class="bookmarks-empty">No saved locations</div>'; return; }
-        list.innerHTML = bookmarks.map(b => '<div class="bookmark-item" data-id="' + _escHtml(b.id) + '"><span class="bookmark-name">' + _escHtml(b.name) + '</span><button class="bookmark-delete" data-id="' + _escHtml(b.id) + '">&times;</button></div>').join('');
+        if (!bookmarks.length) { list.innerHTML = '<div class="bookmarks-empty">No saved views yet</div>'; return; }
+        list.innerHTML = bookmarks.map(b => '<div class="bookmark-item" data-id="' + _escHtml(b.id) + '"><span class="bookmark-name">' + _escHtml(b.name) + '</span><button class="bookmark-delete" data-id="' + _escHtml(b.id) + '" aria-label="Delete saved view ' + _escHtml(b.name) + '">&times;</button></div>').join('');
         list.querySelectorAll('.bookmark-item').forEach(item => item.addEventListener('click', e => { if (!e.target.classList.contains('bookmark-delete')) goToBookmark(parseInt(item.dataset.id)); }));
         list.querySelectorAll('.bookmark-delete').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); deleteBookmark(parseInt(btn.dataset.id)); }));
+    }
+    function openBookmarkModal() {
+        const overlay = document.getElementById('bookmarkModal');
+        const input = document.getElementById('bookmarkNameInput');
+        if (!overlay || !input) return;
+        openOverlayModal(overlay);
+        input.value = '';
+        setTimeout(() => input.focus(), 0);
+    }
+    function closeBookmarkModal() {
+        closeOverlayModal(document.getElementById('bookmarkModal'));
     }
     function loadApiCredentials() { try { const s = localStorage.getItem('skytrack_api_credentials'); apiCredentials = s ? JSON.parse(s) : { ...CONFIG.defaultCredentials }; } catch(e) { apiCredentials = { ...CONFIG.defaultCredentials }; } updateApiUI(); }
     function saveApiCredentials() { const cid = document.getElementById('apiClientId').value.trim(), cs = document.getElementById('apiClientSecret').value.trim(); if (!cid || !cs) { toast('Enter both fields'); return; } apiCredentials = { clientId: cid, clientSecret: cs }; localStorage.setItem('skytrack_api_credentials', JSON.stringify(apiCredentials)); updateApiUI(); toast('Saved'); }
@@ -2709,8 +2937,11 @@
         s.className = 'api-status ' + (hasCustom ? 'connected' : '');
     }
     async function getWikipediaSummary(url) { if (!settings.showWiki || !url) return null; try { const m = url.match(/wikipedia\.org\/wiki\/(.+)$/); if (!m) return null; const r = await fetchWithTimeout('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(decodeURIComponent(m[1])), {}, 5000); if (!r?.ok) return null; const d = await r.json(); return { title: d.title, extract: d.extract, thumbnail: d.thumbnail?.source, url }; } catch(e) { return null; } }
-    function setLoadingProgress(pct, status) { document.getElementById('loadingProgress').style.width = pct + '%'; document.getElementById('loadingStatus').textContent = status; }
-    async function getInitialLocation() { if (loadMapPosition()) { setLoadingProgress(5, 'Restoring view...'); return; } if (!navigator.geolocation) { setLoadingProgress(5, 'Using default...'); return; } setLoadingProgress(3, 'Getting location...'); return new Promise(resolve => { navigator.geolocation.getCurrentPosition(pos => { CONFIG.center = [pos.coords.latitude, pos.coords.longitude]; CONFIG.zoom = CONFIG.localZoom; setLoadingProgress(5, 'Found!'); resolve(); }, () => { setLoadingProgress(5, 'Using default...'); resolve(); }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }); }); }
+    function setLoadingProgress(pct, status) {
+        document.getElementById('loadingProgress').style.width = pct + '%';
+        document.getElementById('loadingStatus').textContent = normalizeUiText(status);
+    }
+    async function getInitialLocation() { if (loadMapPosition()) { setLoadingProgress(5, 'Restoring View…'); return; } if (!navigator.geolocation) { setLoadingProgress(5, 'Using Default View…'); return; } setLoadingProgress(3, 'Finding Your Location…'); return new Promise(resolve => { navigator.geolocation.getCurrentPosition(pos => { CONFIG.center = [pos.coords.latitude, pos.coords.longitude]; CONFIG.zoom = CONFIG.localZoom; setLoadingProgress(5, 'Location Ready'); resolve(); }, () => { setLoadingProgress(5, 'Using Default View…'); resolve(); }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }); }); }
 
     // ============ INITIALIZATION ============
     document.addEventListener('DOMContentLoaded', async () => {
@@ -2725,6 +2956,7 @@
             console.warn('IndexedDB not available, using localStorage fallback');
         }
         
+        uiDialogs.init();
         loadSettings(); loadApiCredentials(); loadBookmarks();
         const hadCache = loadAircraftCache();
         await getInitialLocation();
@@ -2829,9 +3061,9 @@
         await alertSystem.init();
         
         // Set alert toggle states
-        document.getElementById('toggleAlerts')?.classList.toggle('on', alertSystem.enabled);
-        document.getElementById('toggleAlertSounds')?.classList.toggle('on', alertSystem.soundEnabled);
-        document.getElementById('toggleNotifications')?.classList.toggle('on', alertSystem.notificationsEnabled);
+        setToggleState(document.getElementById('toggleAlerts'), alertSystem.enabled);
+        setToggleState(document.getElementById('toggleAlertSounds'), alertSystem.soundEnabled);
+        setToggleState(document.getElementById('toggleNotifications'), alertSystem.notificationsEnabled);
         if (document.getElementById('militaryAlertRadius')) {
             document.getElementById('militaryAlertRadius').value = alertSystem.militaryAlertRadius;
         }
@@ -2948,7 +3180,7 @@
             freqSection.style.display = 'none';
         }
         
-        const photoDiv = document.getElementById('airportPhoto'); photoDiv.innerHTML = '<div class="no-photo">Loading...</div>';
+        const photoDiv = document.getElementById('airportPhoto'); photoDiv.innerHTML = '<div class="no-photo">Loading Photo…</div>';
         const wikiSection = document.getElementById('airportWikiSection'); wikiSection.style.display = 'none';
         if (apt.wiki && settings.showWiki) {
             getWikipediaSummary(apt.wiki).then(wiki => {
@@ -2958,11 +3190,11 @@
                     document.getElementById('airportWikiLink').href = wiki.url;
                     wikiSection.style.display = 'block';
                 } else {
-                    photoDiv.innerHTML = '<div class="no-photo">No photo</div>';
+                    photoDiv.innerHTML = '<div class="no-photo">No Photo Available</div>';
                 }
             });
         } else {
-            photoDiv.innerHTML = '<div class="no-photo">No photo</div>';
+                photoDiv.innerHTML = '<div class="no-photo">No Photo Available</div>';
         }
         
         // Fetch and display weather
@@ -3730,7 +3962,7 @@
         if (photoCache[hex]) { displayPhoto(photoCache[hex]); return; }
         if (photoFailCache[hex]) { showFallbackPhoto(type, div); return; }
         
-        div.innerHTML = '<div class="no-photo">Loading...</div>';
+        div.innerHTML = '<div class="no-photo">Loading Photo…</div>';
         
         // PRIORITY 1: Check preloaded images database (fastest - no API call)
         if (preloadedImagesDB.loaded && preloadedImagesDB.hasImage(hex)) {
@@ -3806,7 +4038,7 @@
                 if (this.src !== externalUrl) {
                     this.src = externalUrl;
                 } else {
-                    div.innerHTML = '<div class="no-photo">No image</div>';
+            div.innerHTML = '<div class="no-photo">No Photo Available</div>';
                 }
             };
             img.src = selfHostedUrl;
@@ -3823,7 +4055,7 @@
         const img = document.createElement('img');
         img.alt = '';
         img.style.cssText = photo.isSilhouette ? 'object-fit:contain;background:#1a1a2e;padding:20px;' : 'object-fit:cover;';
-        img.onerror = () => { div.innerHTML = '<div class="no-photo">No photo</div>'; };
+        img.onerror = () => { div.innerHTML = '<div class="no-photo">No Photo Available</div>'; };
         img.src = photo.url;
         div.appendChild(img);
     }
@@ -4126,7 +4358,7 @@
         if (watchBtn) {
             const isWatched = alertSystem.isWatched(hex);
             watchBtn.classList.toggle('watched', isWatched);
-            watchBtn.querySelector('.star').textContent = isWatched ? 'x' : '*';
+            watchBtn.querySelector('.star').textContent = isWatched ? '★' : '☆';
             watchBtn.querySelector('.watch-text').textContent = isWatched ? 'Watching' : 'Watch';
         }
         
@@ -4175,8 +4407,8 @@
             if (settings.filter && settings.filter !== 'all') shareManager.shareFilter(settings.filter);
         });
         document.getElementById('dayNightBtn').addEventListener('click', () => { const styles = ['dark', 'satellite', 'google-streets', 'google-satellite', 'google-hybrid', 'google-terrain']; const next = styles[(styles.indexOf(currentBaseMap) + 1) % styles.length]; changeBasemap(next); });
-        document.getElementById('labelBtn').addEventListener('click', function() { settings.showLabels = !settings.showLabels; this.classList.toggle('active', settings.showLabels); document.getElementById('toggleLabels').classList.toggle('on', settings.showLabels); saveSettings(); updateMarkers(); });
-        document.getElementById('airportsBtn').addEventListener('click', function() { settings.showAirports = !settings.showAirports; this.classList.toggle('active', settings.showAirports); document.getElementById('toggleAirports').classList.toggle('on', settings.showAirports); saveSettings(); updateAirportMarkers(); });
+        document.getElementById('labelBtn').addEventListener('click', function() { settings.showLabels = !settings.showLabels; this.classList.toggle('active', settings.showLabels); setToggleState(document.getElementById('toggleLabels'), settings.showLabels); saveSettings(); updateMarkers(); });
+        document.getElementById('airportsBtn').addEventListener('click', function() { settings.showAirports = !settings.showAirports; this.classList.toggle('active', settings.showAirports); setToggleState(document.getElementById('toggleAirports'), settings.showAirports); saveSettings(); updateAirportMarkers(); });
         document.getElementById('radarBtn').addEventListener('click', toggleRadar);
         document.getElementById('locateBtn').addEventListener('click', geolocate);
         document.getElementById('followBtn')?.addEventListener('click', function() {
@@ -4201,20 +4433,22 @@
             }
         });
         document.getElementById('settingsBtn').addEventListener('click', () => { _el('settingsPanel').classList.toggle('show'); _el('infoPanel').classList.remove('show'); _el('airportPanel').classList.remove('show'); });
-        document.getElementById('toggleLabels').classList.toggle('on', settings.showLabels); document.getElementById('toggleLabels').addEventListener('click', function() { settings.showLabels = !settings.showLabels; this.classList.toggle('on', settings.showLabels); document.getElementById('labelBtn').classList.toggle('active', settings.showLabels); saveSettings(); updateMarkers(); });
-        document.getElementById('toggleAirports').classList.toggle('on', settings.showAirports); document.getElementById('toggleAirports').addEventListener('click', function() { settings.showAirports = !settings.showAirports; this.classList.toggle('on', settings.showAirports); document.getElementById('airportsBtn').classList.toggle('active', settings.showAirports); saveSettings(); updateAirportMarkers(); });
+        setToggleState(document.getElementById('toggleLabels'), settings.showLabels); document.getElementById('toggleLabels').addEventListener('click', function() { settings.showLabels = !settings.showLabels; setToggleState(this, settings.showLabels); document.getElementById('labelBtn').classList.toggle('active', settings.showLabels); saveSettings(); updateMarkers(); });
+        setToggleState(document.getElementById('toggleAirports'), settings.showAirports); document.getElementById('toggleAirports').addEventListener('click', function() { settings.showAirports = !settings.showAirports; setToggleState(this, settings.showAirports); document.getElementById('airportsBtn').classList.toggle('active', settings.showAirports); saveSettings(); updateAirportMarkers(); });
+        setToggleState(document.getElementById('toggleRadar'), settings.showRadar);
         document.getElementById('toggleRadar').addEventListener('click', toggleRadar);
-        document.getElementById('toggleAltColors').classList.toggle('on', settings.altitudeColors); document.getElementById('toggleAltColors').addEventListener('click', function() { settings.altitudeColors = !settings.altitudeColors; this.classList.toggle('on', settings.altitudeColors); saveSettings(); if (selectedHex) loadTrail(selectedHex); });
-        document.getElementById('toggleWiki').classList.toggle('on', settings.showWiki); document.getElementById('toggleWiki').addEventListener('click', function() { settings.showWiki = !settings.showWiki; this.classList.toggle('on', settings.showWiki); saveSettings(); });
-        document.getElementById('toggleInterestingBadges').classList.toggle('on', settings.showInterestingBadges); document.getElementById('toggleInterestingBadges').addEventListener('click', function() { settings.showInterestingBadges = !settings.showInterestingBadges; this.classList.toggle('on', settings.showInterestingBadges); saveSettings(); updateMarkers(); });
-        document.getElementById('toggleWeatherOverlay')?.addEventListener('click', function() { weatherOverlay.toggle(); this.classList.toggle('on', weatherOverlay.enabled); });
+        setToggleState(document.getElementById('toggleAltColors'), settings.altitudeColors); document.getElementById('toggleAltColors').addEventListener('click', function() { settings.altitudeColors = !settings.altitudeColors; setToggleState(this, settings.altitudeColors); saveSettings(); if (selectedHex) loadTrail(selectedHex); });
+        setToggleState(document.getElementById('toggleWiki'), settings.showWiki); document.getElementById('toggleWiki').addEventListener('click', function() { settings.showWiki = !settings.showWiki; setToggleState(this, settings.showWiki); saveSettings(); });
+        setToggleState(document.getElementById('toggleInterestingBadges'), settings.showInterestingBadges); document.getElementById('toggleInterestingBadges').addEventListener('click', function() { settings.showInterestingBadges = !settings.showInterestingBadges; setToggleState(this, settings.showInterestingBadges); saveSettings(); updateMarkers(); });
+        document.getElementById('toggleWeatherOverlay')?.addEventListener('click', function() { weatherOverlay.toggle(); setToggleState(this, weatherOverlay.enabled); });
         document.getElementById('mapStyleSelect').addEventListener('change', function() { changeBasemap(this.value); });
         document.getElementById('saveApiBtn').addEventListener('click', saveApiCredentials); document.getElementById('clearApiBtn').addEventListener('click', clearApiCredentials);
-        document.getElementById('addBookmarkBtn').addEventListener('click', () => { document.getElementById('bookmarkModal').classList.add('show'); document.getElementById('bookmarkNameInput').value = ''; document.getElementById('bookmarkNameInput').focus(); });
-        document.getElementById('bookmarkCancelBtn').addEventListener('click', () => document.getElementById('bookmarkModal').classList.remove('show'));
-        document.getElementById('bookmarkSaveBtn').addEventListener('click', () => { const name = document.getElementById('bookmarkNameInput').value.trim(); if (name) { addBookmark(name); document.getElementById('bookmarkModal').classList.remove('show'); } else toast('Enter name'); });
-        document.getElementById('bookmarkNameInput').addEventListener('keypress', e => { if (e.key === 'Enter') { const name = e.target.value.trim(); if (name) { addBookmark(name); document.getElementById('bookmarkModal').classList.remove('show'); } } });
-        document.getElementById('bookmarkModal').addEventListener('click', e => { if (e.target.id === 'bookmarkModal') document.getElementById('bookmarkModal').classList.remove('show'); });
+        document.getElementById('addBookmarkBtn').addEventListener('click', openBookmarkModal);
+        document.getElementById('bookmarkCancelBtn').addEventListener('click', closeBookmarkModal);
+        document.getElementById('bookmarkSaveBtn').addEventListener('click', () => { const name = document.getElementById('bookmarkNameInput').value.trim(); if (name) { addBookmark(name); closeBookmarkModal(); } else toast('Enter a name'); });
+        document.getElementById('bookmarkNameInput').addEventListener('keydown', e => { if (e.key === 'Enter') { const name = e.target.value.trim(); if (name) { addBookmark(name); closeBookmarkModal(); } } });
+        document.getElementById('bookmarkModal').addEventListener('click', e => { if (e.target.id === 'bookmarkModal') closeBookmarkModal(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('bookmarkModal')?.classList.contains('show')) closeBookmarkModal(); });
         document.getElementById('btnZoomAirport').addEventListener('click', () => { const p = _el('airportPanel'); if (p._airport) map.setView([p._airport.lat, p._airport.lon], 14); });
         document.getElementById('btnShowDepartures').addEventListener('click', () => { const p = _el('airportPanel'); if (p._airport) { const deps = Object.values(aircraftCache).filter(ac => ac.from === p._airport.icao || ac.from === p._airport.iata); if (deps.length) { toast('Found ' + deps.length + ' departures'); selectAircraft(deps[0].hex); } else toast('No departures found'); } });
         document.getElementById('btnShowArrivals').addEventListener('click', () => { const p = _el('airportPanel'); if (p._airport) { const arrs = Object.values(aircraftCache).filter(ac => ac.to === p._airport.icao || ac.to === p._airport.iata); if (arrs.length) { toast('Found ' + arrs.length + ' arrivals'); selectAircraft(arrs[0].hex); } else toast('No arrivals found'); } });
@@ -4230,13 +4464,13 @@
             if (isWatched) {
                 alertSystem.removeFromWatchlist(selectedHex);
                 this.classList.remove('watched');
-                this.querySelector('.star').textContent = '*';
+                this.querySelector('.star').textContent = '☆';
                 this.querySelector('.watch-text').textContent = 'Watch';
             } else {
                 const name = ac?.flight?.trim() || ac?.r || selectedHex;
                 alertSystem.addToWatchlist(selectedHex, name);
                 this.classList.add('watched');
-                this.querySelector('.star').textContent = 'x';
+                this.querySelector('.star').textContent = '★';
                 this.querySelector('.watch-text').textContent = 'Watching';
             }
         });
@@ -4244,22 +4478,22 @@
         // Alert settings handlers
         document.getElementById('toggleAlerts')?.addEventListener('click', function() {
             alertSystem.enabled = !alertSystem.enabled;
-            this.classList.toggle('on', alertSystem.enabled);
+            setToggleState(this, alertSystem.enabled);
             alertSystem.saveSettings();
             toast(alertSystem.enabled ? 'Alerts enabled' : 'Alerts disabled');
         });
         document.getElementById('toggleAlertSounds')?.addEventListener('click', function() {
             alertSystem.soundEnabled = !alertSystem.soundEnabled;
-            this.classList.toggle('on', alertSystem.soundEnabled);
+            setToggleState(this, alertSystem.soundEnabled);
             alertSystem.saveSettings();
         });
         document.getElementById('toggleNotifications')?.addEventListener('click', async function() {
             if (!alertSystem.notificationsEnabled) {
                 const granted = await alertSystem.requestNotificationPermission();
-                this.classList.toggle('on', granted);
+                setToggleState(this, granted);
             } else {
                 alertSystem.notificationsEnabled = false;
-                this.classList.remove('on');
+                setToggleState(this, false);
                 alertSystem.saveSettings();
                 toast('Notifications disabled');
             }
@@ -4276,7 +4510,7 @@
         
         // Phase 16: Data source and reliability handlers
         document.getElementById('checkSourcesBtn')?.addEventListener('click', async () => {
-            toast('Checking all data sources...');
+            toast('Checking all data sources…');
             await dataSourceManager.checkAllSources();
             updateDataSourceList();
             toast('Source check complete');
@@ -4487,7 +4721,7 @@
     async function toggleRadar() {
         settings.showRadar = !settings.showRadar;
         document.getElementById('radarBtn')?.classList.toggle('active', settings.showRadar);
-        document.getElementById('toggleRadar')?.classList.toggle('on', settings.showRadar);
+        setToggleState(document.getElementById('toggleRadar'), settings.showRadar);
         saveSettings();
         if (radarLayer) { map.removeLayer(radarLayer); radarLayer = null; } // legacy cleanup
         if (settings.showRadar) {
@@ -4501,8 +4735,19 @@
             radarAnimator.disable();
         }
     }
-    function geolocate() { if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(pos => { map.setView([pos.coords.latitude, pos.coords.longitude], CONFIG.localZoom); toast('Location updated'); }, () => toast('Location denied')); } }
-    function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 3000); }
+    function geolocate() { if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(pos => { map.setView([pos.coords.latitude, pos.coords.longitude], CONFIG.localZoom); toast('Location updated'); }, () => toast('Location denied', 'warning')); } }
+    let toastTimer = null;
+    function toast(msg, tone = 'info') {
+        const el = document.getElementById('toast');
+        if (!el) return;
+        el.textContent = normalizeUiText(msg);
+        el.dataset.tone = tone;
+        el.classList.remove('show');
+        void el.offsetWidth;
+        el.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove('show'), tone === 'error' ? 4200 : 3200);
+    }
 
     // ============ PHASE 8: ENHANCED SEARCH SYSTEM ============
     const searchSystem = {
@@ -4570,11 +4815,13 @@
         open() {
             this.isOpen = true;
             document.getElementById('searchDropdown')?.classList.add('show');
+            setExpandedState(document.getElementById('searchFilterBtn'), true);
         },
         
         close() {
             this.isOpen = false;
             document.getElementById('searchDropdown')?.classList.remove('show');
+            setExpandedState(document.getElementById('searchFilterBtn'), false);
         },
         
         switchTab(tab) {
@@ -4628,7 +4875,7 @@
                         interesting.map(ac => this.renderAircraftResult(ac)).join('');
                     this.attachResultHandlers(container);
                 } else {
-                    container.innerHTML = '<div class="search-placeholder">Start typing to search...</div>';
+                    container.innerHTML = '<div class="search-placeholder">Type to search flights, aircraft, and airports…</div>';
                 }
                 return;
             }
@@ -4688,7 +4935,7 @@
             }
             
             if (!html) {
-                html = '<div class="search-placeholder">No results found</div>';
+            html = '<div class="search-placeholder">No matches in the current view. Try a broader search or fewer filters.</div>';
             }
             
             container.innerHTML = html;
@@ -5013,7 +5260,7 @@
             if (!container) return;
             
             if (this.history.length === 0) {
-                container.innerHTML = '<div class="search-placeholder">No recent searches</div>';
+                container.innerHTML = '<div class="search-placeholder">Recent searches appear here.</div>';
                 return;
             }
             
@@ -5021,7 +5268,7 @@
                 '<div class="history-item" data-index="' + i + '">' +
                     '<span class="history-text">' + _escHtml(h.text) + '</span>' +
                     '<span class="history-time">' + _escHtml(this.formatTime(h.time)) + '</span>' +
-                    '<button class="history-remove" data-index="' + i + '">x</button>' +
+                    '<button class="history-remove" data-index="' + i + '" aria-label="Remove search from history">×</button>' +
                 '</div>'
             ).join('');
             
@@ -5942,7 +6189,7 @@ ${trailData.map(p => {
                     _el('airportPanel').classList.remove('show');
                     _el('statsPanel')?.classList.remove('show');
                     _el('statsBtn')?.classList.remove('active');
-                    document.getElementById('keyboardHelp')?.classList.remove('show');
+                    keyboardShortcuts.hideHelp();
                     document.getElementById('comparisonPanel')?.classList.remove('show');
                     if (multiSelect.enabled) multiSelect.clearAll();
                     break;
@@ -5973,7 +6220,7 @@ ${trailData.map(p => {
                 case 'labels':
                     settings.showLabels = !settings.showLabels;
                     document.getElementById('labelBtn').classList.toggle('active', settings.showLabels);
-                    document.getElementById('toggleLabels').classList.toggle('on', settings.showLabels);
+                    setToggleState(document.getElementById('toggleLabels'), settings.showLabels);
                     saveSettings();
                     updateMarkers();
                     toast(settings.showLabels ? 'Labels ON' : 'Labels OFF');
@@ -5981,7 +6228,7 @@ ${trailData.map(p => {
                 case 'airports':
                     settings.showAirports = !settings.showAirports;
                     document.getElementById('airportsBtn').classList.toggle('active', settings.showAirports);
-                    document.getElementById('toggleAirports').classList.toggle('on', settings.showAirports);
+                    setToggleState(document.getElementById('toggleAirports'), settings.showAirports);
                     saveSettings();
                     updateAirportMarkers();
                     toast(settings.showAirports ? 'Airports ON' : 'Airports OFF');
@@ -6142,18 +6389,40 @@ ${trailData.map(p => {
         toggleHelp() {
             let helpPanel = document.getElementById('keyboardHelp');
             if (!helpPanel) helpPanel = this.createHelpPanel();
-            helpPanel.classList.toggle('show');
+            const nextOpen = !helpPanel.classList.contains('show');
+            helpPanel.classList.toggle('show', nextOpen);
+            helpPanel.setAttribute('aria-hidden', String(!nextOpen));
+            if (nextOpen) {
+                helpPanel.querySelector('.keyboard-help-close')?.focus();
+            }
+        },
+
+        hideHelp() {
+            const helpPanel = document.getElementById('keyboardHelp');
+            if (!helpPanel) return;
+            helpPanel.classList.remove('show');
+            helpPanel.setAttribute('aria-hidden', 'true');
         },
         
         createHelpPanel() {
             const panel = document.createElement('div');
             panel.id = 'keyboardHelp';
             panel.className = 'keyboard-help';
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'false');
+            panel.setAttribute('aria-hidden', 'true');
+            panel.setAttribute('aria-labelledby', 'keyboardHelpTitle');
             const shortcuts = Object.entries(this.shortcuts)
                 .filter(([key]) => !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '='].includes(key))
                 .map(([key, info]) => '<div class="shortcut-item"><kbd>' + (key === ' ' ? 'Space' : key) + '</kbd><span>' + info.description + '</span></div>').join('');
-            panel.innerHTML = '<div class="keyboard-help-header"><span>Keyboard Shortcuts</span><button class="keyboard-help-close">x</button></div><div class="keyboard-help-content">' + shortcuts + '<div class="shortcut-item"><kbd>Arrows</kbd><span>Pan map</span></div></div>';
-            panel.querySelector('.keyboard-help-close').addEventListener('click', () => panel.classList.remove('show'));
+            panel.innerHTML = '<div class="keyboard-help-header"><span id="keyboardHelpTitle">Keyboard Shortcuts</span><button type="button" class="keyboard-help-close" aria-label="Close Keyboard Shortcuts">×</button></div><div class="keyboard-help-content">' + shortcuts + '<div class="shortcut-item"><kbd>Arrows</kbd><span>Pan map</span></div></div>';
+            panel.querySelector('.keyboard-help-close').addEventListener('click', () => this.hideHelp());
+            panel.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    this.hideHelp();
+                }
+            });
             document.body.appendChild(panel);
             return panel;
         }
@@ -7257,6 +7526,7 @@ ${trailData.map(p => {
                 this.apply(this.currentTheme);
             }
             
+            setToggleState(document.getElementById('toggleAutoTheme'), this.autoMode);
             this.setupEventListeners();
         },
         
@@ -7269,8 +7539,7 @@ ${trailData.map(p => {
             });
             
             // Auto theme toggle
-            document.getElementById('toggleAutoTheme')?.addEventListener('click', function() {
-                this.classList.toggle('on');
+            document.getElementById('toggleAutoTheme')?.addEventListener('click', () => {
                 themeSystem.toggleAutoMode();
             });
             
@@ -7339,6 +7608,7 @@ ${trailData.map(p => {
         
         toggleAutoMode() {
             this.autoMode = !this.autoMode;
+            setToggleState(document.getElementById('toggleAutoTheme'), this.autoMode);
             if (this.autoMode) {
                 this.checkAutoTheme();
                 toast('Auto day/night enabled');
@@ -7414,6 +7684,7 @@ ${trailData.map(p => {
                     this.options = { ...this.options, ...JSON.parse(saved) };
                 } catch(e) {}
             }
+            setToggleState(document.getElementById('toggleTrailArrows'), this.options.showDirection);
             this.setupEventListeners();
         },
         
@@ -7430,8 +7701,9 @@ ${trailData.map(p => {
             });
             
             document.getElementById('toggleTrailArrows')?.addEventListener('click', function() {
-                this.classList.toggle('on');
-                trailRenderer.options.showDirection = this.classList.contains('on');
+                const next = !this.classList.contains('on');
+                setToggleState(this, next);
+                trailRenderer.options.showDirection = next;
                 trailRenderer.save();
             });
         },
@@ -7666,11 +7938,13 @@ ${trailData.map(p => {
         open() {
             document.getElementById('notificationCenter')?.classList.add('show');
             document.getElementById('notifBtn')?.classList.add('active');
+            setExpandedState(document.getElementById('notifBtn'), true);
         },
         
         close() {
             document.getElementById('notificationCenter')?.classList.remove('show');
             document.getElementById('notifBtn')?.classList.remove('active');
+            setExpandedState(document.getElementById('notifBtn'), false);
         },
         
         updateUnreadCount() {
@@ -7693,7 +7967,7 @@ ${trailData.map(p => {
             }
             
             if (filtered.length === 0) {
-                container.innerHTML = '<div class="notif-empty">No notifications</div>';
+                container.innerHTML = '<div class="notif-empty">Alerts, saves, and notable flight events will appear here.</div>';
                 return;
             }
             
@@ -8344,22 +8618,41 @@ ${trailData.map(p => {
             });
         },
         
-        showLoadDialog() {
-            const hours = prompt('Load history for how many hours? (1-24)', '6');
-            if (hours) {
-                const h = Math.min(24, Math.max(1, parseInt(hours) || 6));
-                this.loadHistory(h);
+        async showLoadDialog() {
+            const hours = await uiDialogs.prompt({
+                eyebrow: 'Time Machine',
+                title: 'Load Recent History',
+                message: 'Choose how much cached traffic to rebuild into playback.',
+                label: 'Hours to Load',
+                note: 'SkyTrack can rebuild between 1 and 24 hours from the local cache.',
+                placeholder: '6',
+                defaultValue: '6',
+                inputType: 'number',
+                inputMode: 'numeric',
+                min: 1,
+                max: 24,
+                step: 1,
+                confirmLabel: 'Load History',
+                cancelLabel: 'Not Now',
+                validationMessage: 'Enter a whole number between 1 and 24.',
+                validate: (raw) => {
+                    const parsed = parseInt(raw, 10);
+                    return Number.isFinite(parsed) ? Math.min(24, Math.max(1, parsed)) : null;
+                }
+            });
+            if (hours !== null) {
+                this.loadHistory(hours);
             }
         },
         
         async loadHistory(hours = 6) {
-            toast('Building historical data from cache...');
+            toast('Building historical data from cache…');
             
             try {
                 this.data = this.buildFromCache(hours);
                 
                 if (this.data.timestamps.length < 5) {
-                    toast('Not enough historical data available. Track more aircraft first.');
+                    toast('Not enough historical data is available yet. Keep SkyTrack running a little longer.', 'warning');
                     return false;
                 }
                 
@@ -8369,12 +8662,12 @@ ${trailData.map(p => {
                 this.showControls();
                 this.updateDisplay();
                 
-                toast(`Loaded ${this.data.timestamps.length} time points over ${hours} hours`);
+                toast(`Loaded ${this.data.timestamps.length} time points across ${hours} hours`, 'success');
                 return true;
                 
             } catch (e) {
                 errorHandler.log('TimeMachine', e.message);
-                toast('Failed to load history');
+                toast('History could not be loaded right now', 'error');
                 return false;
             }
         },
@@ -8424,6 +8717,7 @@ ${trailData.map(p => {
         
         showControls() {
             document.getElementById('timeMachineControls')?.classList.add('show');
+            document.getElementById('timeMachineControls')?.setAttribute('aria-hidden', 'false');
             document.getElementById('historyIndicator')?.classList.add('show');
             document.getElementById('timeMachineBtn')?.classList.add('active');
             
@@ -8446,6 +8740,7 @@ ${trailData.map(p => {
         
         hideControls() {
             document.getElementById('timeMachineControls')?.classList.remove('show');
+            document.getElementById('timeMachineControls')?.setAttribute('aria-hidden', 'true');
             document.getElementById('historyIndicator')?.classList.remove('show');
             document.getElementById('timeMachineBtn')?.classList.remove('active');
         },
@@ -8756,14 +9051,36 @@ ${trailData.map(p => {
             document.getElementById('gfAddNew')?.addEventListener('click', () => this.startDrawing());
             document.getElementById('gfFinish')?.addEventListener('click', () => this.finishDrawing());
             document.getElementById('gfCancel')?.addEventListener('click', () => this.cancelDrawing());
-            
+
+            document.addEventListener('click', (e) => {
+                const panel = document.getElementById('geofenceList');
+                const btn = document.getElementById('geofenceBtn');
+                if (panel?.classList.contains('show') && !panel.contains(e.target) && !btn?.contains(e.target)) {
+                    panel.classList.remove('show');
+                    panel.setAttribute('aria-hidden', 'true');
+                    btn?.classList.remove('active');
+                    setExpandedState(btn, false);
+                }
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && document.getElementById('geofenceList')?.classList.contains('show')) {
+                    document.getElementById('geofenceList')?.classList.remove('show');
+                    document.getElementById('geofenceList')?.setAttribute('aria-hidden', 'true');
+                    document.getElementById('geofenceBtn')?.classList.remove('active');
+                    setExpandedState(document.getElementById('geofenceBtn'), false);
+                }
+            });
+             
             this.updateList();
         },
         
         togglePanel() {
             const panel = document.getElementById('geofenceList');
-            panel?.classList.toggle('show');
-            document.getElementById('geofenceBtn')?.classList.toggle('active', panel?.classList.contains('show'));
+            const isOpen = panel ? !panel.classList.contains('show') : false;
+            panel?.classList.toggle('show', isOpen);
+            panel?.setAttribute('aria-hidden', String(!isOpen));
+            document.getElementById('geofenceBtn')?.classList.toggle('active', isOpen);
+            setExpandedState(document.getElementById('geofenceBtn'), isOpen);
         },
         
         // Cache the bound click handler so that startDrawing/cleanupDrawing can
@@ -8781,6 +9098,9 @@ ${trailData.map(p => {
             map.getContainer().style.cursor = 'crosshair';
             document.getElementById('geofenceControls')?.classList.add('show');
             document.getElementById('geofenceList')?.classList.remove('show');
+            document.getElementById('geofenceList')?.setAttribute('aria-hidden', 'true');
+            setExpandedState(document.getElementById('geofenceBtn'), false);
+            document.getElementById('geofenceBtn')?.classList.remove('active');
 
             toast('Click on map to add points, then click Finish');
 
@@ -8820,7 +9140,7 @@ ${trailData.map(p => {
             }
         },
         
-        finishDrawing() {
+        async finishDrawing() {
             if (this.currentPolygon.length < 3) {
                 toast('Need at least 3 points to create a zone');
                 return;
@@ -8828,10 +9148,22 @@ ${trailData.map(p => {
             
             this.cleanupDrawing();
             
-            // Prompt for zone name
-            const name = prompt('Enter zone name:', 'Zone ' + (this.zones.length + 1));
+            const suggestedName = 'Zone ' + (this.zones.length + 1);
+            const name = await uiDialogs.prompt({
+                eyebrow: 'Geofencing',
+                title: 'Name This Alert Zone',
+                message: 'Choose a short label so entry and exit alerts are easy to recognize later.',
+                label: 'Zone Name',
+                note: 'You can rename it any time from the zone menu.',
+                placeholder: suggestedName,
+                defaultValue: suggestedName,
+                confirmLabel: 'Save Zone',
+                cancelLabel: 'Discard',
+                validationMessage: 'Enter a name for this zone.'
+            });
             if (!name) {
-                this.cancelDrawing();
+                this.currentPolygon = [];
+                toast('Zone discarded', 'warning');
                 return;
             }
             
@@ -8852,13 +9184,13 @@ ${trailData.map(p => {
             this.updateList();
             
             this.currentPolygon = [];
-            toast(`Zone "${name}" created`);
+            toast(`Saved alert zone: ${name}`, 'success');
         },
         
         cancelDrawing() {
             this.cleanupDrawing();
             this.currentPolygon = [];
-            toast('Drawing cancelled');
+            toast('Zone drawing cancelled', 'warning');
         },
         
         cleanupDrawing() {
@@ -8904,16 +9236,18 @@ ${trailData.map(p => {
             
             const menu = document.createElement('div');
             menu.className = 'zone-context-menu';
+            menu.setAttribute('role', 'menu');
+            menu.setAttribute('aria-label', `Actions for zone ${zone.name}`);
             menu.innerHTML = `
-                <div class="zone-menu-item" data-action="rename">Rename Zone</div>
-                <div class="zone-menu-item" data-action="toggle-enter">
+                <button type="button" class="zone-menu-item" data-action="rename" role="menuitem">Rename Zone</button>
+                <button type="button" class="zone-menu-item" data-action="toggle-enter" role="menuitem">
                     ${zone.alertOnEnter ? '&#10003; ' : ''}Alert on Enter
-                </div>
-                <div class="zone-menu-item" data-action="toggle-exit">
+                </button>
+                <button type="button" class="zone-menu-item" data-action="toggle-exit" role="menuitem">
                     ${zone.alertOnExit ? '&#10003; ' : ''}Alert on Exit
-                </div>
-                <div class="zone-menu-item" data-action="zoom">Zoom to Zone</div>
-                <div class="zone-menu-item danger" data-action="delete">Delete Zone</div>
+                </button>
+                <button type="button" class="zone-menu-item" data-action="zoom" role="menuitem">Zoom to Zone</button>
+                <button type="button" class="zone-menu-item danger" data-action="delete" role="menuitem">Delete Zone</button>
             `;
             
             const point = map.latLngToContainerPoint(latlng);
@@ -8922,17 +9256,29 @@ ${trailData.map(p => {
             
             document.getElementById('map').appendChild(menu);
             
-            menu.addEventListener('click', (e) => {
-                const action = e.target.dataset.action;
+            menu.addEventListener('click', async (e) => {
+                const item = e.target.closest('.zone-menu-item');
+                const action = item?.dataset.action;
                 if (!action) return;
+                menu.remove();
                 
                 if (action === 'rename') {
-                    const newName = prompt('New name:', zone.name);
+                    const newName = await uiDialogs.prompt({
+                        eyebrow: 'Alert Zone',
+                        title: 'Rename Zone',
+                        message: 'Update the label used in the list and in future alerts.',
+                        label: 'Zone Name',
+                        defaultValue: zone.name,
+                        confirmLabel: 'Rename Zone',
+                        cancelLabel: 'Keep Current',
+                        validationMessage: 'Enter a new name for this zone.'
+                    });
                     if (newName) {
                         zone.name = newName;
                         zone._layer?.setTooltipContent(newName);
                         this.save();
                         this.updateList();
+                        toast(`Renamed zone to ${newName}`, 'success');
                     }
                 } else if (action === 'toggle-enter') {
                     zone.alertOnEnter = !zone.alertOnEnter;
@@ -8945,13 +9291,21 @@ ${trailData.map(p => {
                 } else if (action === 'zoom') {
                     if (zone._layer) {
                         map.fitBounds(zone._layer.getBounds().pad(0.2));
+                        toast(`Centered on ${zone.name}`);
                     }
                 } else if (action === 'delete') {
-                    if (confirm(`Delete zone "${zone.name}"?`)) {
+                    const confirmed = await uiDialogs.confirmDialog({
+                        eyebrow: 'Alert Zone',
+                        title: `Delete "${zone.name}"?`,
+                        message: 'This removes the zone boundary and its alert settings from SkyTrack.',
+                        confirmLabel: 'Delete Zone',
+                        cancelLabel: 'Keep Zone',
+                        tone: 'danger'
+                    });
+                    if (confirmed) {
                         this.deleteZone(zone.id);
                     }
                 }
-                menu.remove();
             });
             
             // Close on outside click
@@ -8977,7 +9331,7 @@ ${trailData.map(p => {
             this.zones.splice(index, 1);
             this.save();
             this.updateList();
-            toast('Zone deleted');
+            toast(`Deleted zone: ${zone.name}`, 'warning');
         },
         
         updateList() {
@@ -8985,15 +9339,18 @@ ${trailData.map(p => {
             if (!content) return;
             
             if (this.zones.length === 0) {
-                content.innerHTML = '<div class="gf-list-empty">No zones defined<br>Click + Add to create one</div>';
+                content.innerHTML = '<div class="gf-list-empty">No alert zones yet<br>Use Add to create a monitored area.</div>';
                 return;
             }
             
             content.innerHTML = this.zones.map(zone => `
-                <div class="gf-list-item" data-id="${_escHtml(zone.id)}">
-                    <span class="gf-zone-name">${_escHtml(zone.name)}</span>
+                <button type="button" class="gf-list-item" data-id="${_escHtml(zone.id)}" aria-label="Open zone ${_escHtml(zone.name)}">
+                    <div class="gf-zone-meta">
+                        <span class="gf-zone-name">${_escHtml(zone.name)}</span>
+                        <span class="gf-zone-status">${zone.alertOnEnter ? 'Enter alerts on' : 'Enter alerts off'} · ${zone.alertOnExit ? 'Exit alerts on' : 'Exit alerts off'}</span>
+                    </div>
                     <div class="gf-zone-color" style="background:${_escHtml(zone.color)}"></div>
-                </div>
+                </button>
             `).join('');
             
             content.querySelectorAll('.gf-list-item').forEach(item => {
@@ -9115,18 +9472,34 @@ ${trailData.map(p => {
                     this.hideMenu();
                 }
             });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && document.getElementById('captureMenu')?.classList.contains('show')) {
+                    this.hideMenu();
+                }
+            });
         },
         
         toggleMenu() {
-            document.getElementById('captureMenu')?.classList.toggle('show');
+            const menu = document.getElementById('captureMenu');
+            const isOpen = menu ? !menu.classList.contains('show') : false;
+            menu?.classList.toggle('show', isOpen);
+            menu?.setAttribute('aria-hidden', String(!isOpen));
+            setExpandedState(document.getElementById('captureBtn'), isOpen);
+            document.getElementById('captureBtn')?.classList.toggle('active', isOpen);
+            if (isOpen) {
+                menu?.querySelector('.capture-menu-item')?.focus();
+            }
         },
         
         hideMenu() {
             document.getElementById('captureMenu')?.classList.remove('show');
+            document.getElementById('captureMenu')?.setAttribute('aria-hidden', 'true');
+            setExpandedState(document.getElementById('captureBtn'), false);
+            document.getElementById('captureBtn')?.classList.remove('active');
         },
         
         async takeScreenshot() {
-            toast('Preparing screenshot...');
+            toast('Preparing screenshot…');
             
             try {
                 // Load html2canvas if not available
@@ -9460,6 +9833,7 @@ ${trailData.map(p => {
                     </svg>
                     <span>Stop Recording</span>
                 `;
+                document.getElementById('captureRecord')?.setAttribute('aria-label', 'Stop Screen Recording');
                 
                 toast('Recording started - click again to stop');
                 
@@ -9482,8 +9856,9 @@ ${trailData.map(p => {
                     </svg>
                     <span>Start Recording</span>
                 `;
+                document.getElementById('captureRecord')?.setAttribute('aria-label', 'Start Screen Recording');
                 
-                toast('Recording stopped - saving...');
+                toast('Recording stopped - saving…');
             }
         },
         
@@ -9506,42 +9881,69 @@ ${trailData.map(p => {
             toast('Recording saved!');
         },
         
-        createTimelapse() {
+        async createTimelapse() {
             if (!timeMachine.data || timeMachine.data.timestamps.length < 10) {
-                toast('Load Time Machine data first (at least 10 time points needed)');
-                
-                const hours = prompt('Load history for timelapse? Enter hours (1-24):', '6');
-                if (hours) {
-                    timeMachine.loadHistory(parseInt(hours) || 6).then(() => {
-                        if (timeMachine.data && timeMachine.data.timestamps.length >= 10) {
-                            this.generateTimelapseInfo();
-                        }
-                    });
+                const hours = await uiDialogs.prompt({
+                    eyebrow: 'Capture',
+                    title: 'Load History for Timelapse',
+                    message: 'Timelapse capture needs at least 10 time points. Choose how many hours of history to rebuild first.',
+                    label: 'Hours to Load',
+                    note: 'A longer range gives you a richer playback sequence.',
+                    placeholder: '6',
+                    defaultValue: '6',
+                    inputType: 'number',
+                    inputMode: 'numeric',
+                    min: 1,
+                    max: 24,
+                    step: 1,
+                    confirmLabel: 'Load & Prepare',
+                    cancelLabel: 'Cancel',
+                    validationMessage: 'Enter a whole number between 1 and 24.',
+                    validate: (raw) => {
+                        const parsed = parseInt(raw, 10);
+                        return Number.isFinite(parsed) ? Math.min(24, Math.max(1, parsed)) : null;
+                    }
+                });
+                if (hours !== null) {
+                    const loaded = await timeMachine.loadHistory(hours);
+                    if (loaded && timeMachine.data && timeMachine.data.timestamps.length >= 10) {
+                        await this.generateTimelapseInfo();
+                    }
                 }
                 return;
             }
             
-            this.generateTimelapseInfo();
+            await this.generateTimelapseInfo();
         },
         
-        generateTimelapseInfo() {
+        async generateTimelapseInfo() {
             const data = timeMachine.data;
             const frames = data.timestamps.length;
             const duration = (data.timestamps[frames - 1] - data.timestamps[0]) / 1000;
-            
-            const info = `Timelapse Info:
-- ${frames} frames available
-- Covers ${Math.round(duration / 3600)} hours of data
-- Start: ${new Date(data.timestamps[0]).toLocaleString()}
-- End: ${new Date(data.timestamps[frames - 1]).toLocaleString()}
+            const format = new Intl.DateTimeFormat(undefined, {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
 
-To create a timelapse video:
+            const info = `Frames ready: ${frames}
+Covers about ${Math.round(duration / 3600)} hours
+Start: ${format.format(new Date(data.timestamps[0]))}
+End: ${format.format(new Date(data.timestamps[frames - 1]))}
+
+To capture a clean timelapse:
 1. Start screen recording
-2. Click Play in Time Machine
+2. Press Play in Time Machine
 3. Set speed to 8x or 16x
-4. Stop recording when complete`;
-            
-            alert(info);
+4. Stop recording when playback finishes`;
+
+            await uiDialogs.info({
+                eyebrow: 'Capture',
+                title: 'Timelapse Ready',
+                message: info,
+                confirmLabel: 'Close'
+            });
             toast('Use Time Machine + Recording for timelapse');
         }
     };
@@ -9868,22 +10270,23 @@ To create a timelapse video:
         createBottomNav() {
             const nav = document.createElement('nav');
             nav.className = 'mobile-bottom-nav';
+            nav.setAttribute('aria-label', 'Mobile Navigation');
             nav.innerHTML = `
-                <button class="nav-item active" data-panel="map">
+                <button type="button" class="nav-item active" data-panel="map" aria-label="Show Map" aria-pressed="true">
                     <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
                     <span>Map</span>
                 </button>
-                <button class="nav-item" data-panel="list">
+                <button type="button" class="nav-item" data-panel="list" aria-label="Show Aircraft List" aria-pressed="false">
                     <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
                     <span>List</span>
                 </button>
-                <button class="nav-item" data-panel="watchlist">
+                <button type="button" class="nav-item" data-panel="watchlist" aria-label="Show Watchlist" aria-pressed="false">
                     <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    <span>Watch</span>
+                    <span>Watchlist</span>
                 </button>
-                <button class="nav-item" data-panel="settings">
+                <button type="button" class="nav-item" data-panel="settings" aria-label="Show Preferences" aria-pressed="false">
                     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    <span>Settings</span>
+                    <span>Preferences</span>
                 </button>
             `;
             document.body.appendChild(nav);
@@ -9891,8 +10294,12 @@ To create a timelapse video:
             // Handle nav clicks
             nav.querySelectorAll('.nav-item').forEach(item => {
                 item.addEventListener('click', () => {
-                    nav.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    nav.querySelectorAll('.nav-item').forEach(i => {
+                        i.classList.remove('active');
+                        i.setAttribute('aria-pressed', 'false');
+                    });
                     item.classList.add('active');
+                    item.setAttribute('aria-pressed', 'true');
                     this.showMobilePanel(item.dataset.panel);
                     haptics.light();
                 });
@@ -9902,6 +10309,10 @@ To create a timelapse video:
         createFAB() {
             const fab = document.createElement('button');
             fab.className = 'mobile-fab';
+            fab.type = 'button';
+            fab.setAttribute('aria-label', 'Open Quick Actions');
+            fab.setAttribute('aria-haspopup', 'menu');
+            fab.setAttribute('aria-expanded', 'false');
             fab.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
             fab.title = 'Quick Actions';
             fab.addEventListener('click', () => {
@@ -9912,23 +10323,27 @@ To create a timelapse video:
             
             // Create quick actions menu
             const menu = document.createElement('div');
+            menu.id = 'quickActionsMenu';
             menu.className = 'quick-actions-menu';
+            menu.setAttribute('role', 'menu');
+            menu.setAttribute('aria-label', 'Quick Actions');
+            menu.setAttribute('aria-hidden', 'true');
             menu.innerHTML = `
-                <button class="quick-action-item" data-action="locate">
+                <button type="button" class="quick-action-item" data-action="locate" role="menuitem" aria-label="Center on My Location">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-                    My Location
+                    Center on Me
                 </button>
-                <button class="quick-action-item" data-action="screenshot">
+                <button type="button" class="quick-action-item" data-action="screenshot" role="menuitem" aria-label="Capture Screenshot">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    Screenshot
+                    Capture View
                 </button>
-                <button class="quick-action-item" data-action="geofence">
+                <button type="button" class="quick-action-item" data-action="geofence" role="menuitem" aria-label="Draw Alert Zone">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/></svg>
-                    Draw Zone
+                    Draw Alert Zone
                 </button>
-                <button class="quick-action-item" data-action="search">
+                <button type="button" class="quick-action-item" data-action="search" role="menuitem" aria-label="Search Flights">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    Search
+                    Search Flights
                 </button>
             `;
             document.body.appendChild(menu);
@@ -9946,6 +10361,15 @@ To create a timelapse video:
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.mobile-fab') && !e.target.closest('.quick-actions-menu')) {
                     menu.classList.remove('show');
+                    menu.setAttribute('aria-hidden', 'true');
+                    setExpandedState(fab, false);
+                }
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && menu.classList.contains('show')) {
+                    menu.classList.remove('show');
+                    menu.setAttribute('aria-hidden', 'true');
+                    setExpandedState(fab, false);
                 }
             });
         },
@@ -9953,7 +10377,13 @@ To create a timelapse video:
         toggleQuickActions() {
             const menu = document.querySelector('.quick-actions-menu');
             if (menu) {
-                menu.classList.toggle('show');
+                const isOpen = !menu.classList.contains('show');
+                menu.classList.toggle('show', isOpen);
+                menu.setAttribute('aria-hidden', String(!isOpen));
+                setExpandedState(document.querySelector('.mobile-fab'), isOpen);
+                if (isOpen) {
+                    menu.querySelector('.quick-action-item')?.focus();
+                }
             }
         },
         
@@ -9985,6 +10415,7 @@ To create a timelapse video:
                     const searchBox = document.querySelector('.search-box');
                     if (searchBox) {
                         searchBox.focus();
+                        searchSystem.open?.();
                         this.hideAllPanels();
                     }
                     break;
@@ -10443,7 +10874,7 @@ To create a timelapse video:
                 const ds = _el('dataSource');
                 const txt = ds ? ds.textContent : '';
                 const srcName = txt.split(' - ')[0] || 'Connecting';
-                srcEl.textContent = srcName;
+                srcEl.textContent = normalizeUiText(srcName);
             }
             if (dotEl) {
                 const healthy = dataSourceManager.sources.filter(s => s.status === 'healthy').length;
@@ -10453,7 +10884,7 @@ To create a timelapse video:
             const timeEl = document.getElementById('dockTime');
             if (timeEl && lastFetchTime) {
                 const ago = Math.round((Date.now() - lastFetchTime) / 1000);
-                timeEl.textContent = ago < 5 ? 'just now' : ago + 's ago';
+                timeEl.textContent = ago < 5 ? 'Live' : ago < 60 ? ago + 's ago' : Math.round(ago / 60) + 'm ago';
             }
         }
         _setPausableInterval(updateStatusDock, 1500, "statusDock");
@@ -10466,16 +10897,17 @@ To create a timelapse video:
                 const wasOpen = panel.classList.contains('show');
                 // Close all
                 document.querySelectorAll('.hv2-panel.show').forEach(p => p.classList.remove('show'));
-                document.querySelectorAll('.hv2-dropdown-trigger.open').forEach(t => t.classList.remove('open'));
+                document.querySelectorAll('.hv2-dropdown-trigger.open').forEach(t => { t.classList.remove('open'); setExpandedState(t, false); });
                 if (!wasOpen) {
                     panel.classList.add('show');
                     trigger.classList.add('open');
+                    setExpandedState(trigger, true);
                 }
             });
         });
         document.addEventListener('click', () => {
             document.querySelectorAll('.hv2-panel.show').forEach(p => p.classList.remove('show'));
-            document.querySelectorAll('.hv2-dropdown-trigger.open').forEach(t => t.classList.remove('open'));
+            document.querySelectorAll('.hv2-dropdown-trigger.open').forEach(t => { t.classList.remove('open'); setExpandedState(t, false); });
         });
         document.querySelectorAll('.hv2-panel').forEach(p => p.addEventListener('click', e => e.stopPropagation()));
         
@@ -10517,6 +10949,7 @@ To create a timelapse video:
                 chipsVisible = !chipsVisible;
                 chipsBar.classList.toggle('show', chipsVisible);
                 chipsToggle.classList.toggle('active', chipsVisible);
+                setExpandedState(chipsToggle, chipsVisible);
             });
         }
         document.querySelectorAll('.filter-chip-btn').forEach(chip => {
@@ -10590,7 +11023,7 @@ To create a timelapse video:
                 const count = Object.keys(aircraftCache).filter(h => aircraftCache[h].lat !== undefined).length;
                 const loadText = document.getElementById('loadingText');
                 if (count > 0) {
-                    if (loadText) loadText.textContent = count + ' aircraft found';
+                    if (loadText) loadText.textContent = count.toLocaleString() + ' aircraft in view';
                     setTimeout(() => loadingOverlay.classList.add('hidden'), 800);
                     setTimeout(() => { loadingOverlay.style.display = 'none'; }, 1300);
                     clearInterval(checkLoaded);
