@@ -2,6 +2,63 @@
 
 All notable changes to SkyTrack will be documented in this file.
 
+## [v0.24.0] - 2026-04-18
+
+Second wide-net pass: two more module extractions, four new feature
+modules, a multi-tab coordination primitive, and the first-ever
+scene-sharing link. `src/app.js` now sits at ~9,520 lines. Total
+modules: 29 + app.js. Built: 1.06 MB / 20,071 lines.
+
+### Project layout
+- `routePredictor` + enhanced altitude chart (337 lines) →
+  `src/modules/55-route-predictor.js`
+- `miniMap` (213 lines) → `src/modules/75-minimap.js`
+
+### Added
+- **Flight Card** (module 9A). Offscreen-canvas renderer of the
+  currently-selected aircraft — banner, callsign, reg, phase chip,
+  emergency/LOITER/VIP/MIL pills, metric grid (alt, speed, heading,
+  vertical rate, route, operator, year, position), footer timestamp.
+  Copied to clipboard as `image/png` via `ClipboardItem`; falls back
+  to a PNG download on browsers that refuse raw-image clipboard
+  writes. Canvas 2D draws text directly so XSS is inherently
+  blocked. Exposed via `Flight Card` toolbar button.
+- **Scene URL** (module 9B). Serializes the current view state —
+  map center + zoom + selected hex + active filter + map style +
+  theme — into a base64url payload stored in the URL hash
+  fragment. Recipients opening the link restore the same scene
+  (with lat/lon/zoom clamped to sane ranges so crafted URLs can't
+  push the map off-world). Copied to clipboard; scene-token
+  automatically restored on boot after the first aircraft fetch.
+- **Diagnostics copy-report** (module 9C). Single-click JSON
+  snapshot of build/module inventory, recent-error ring, circuit-
+  breaker state, data-source health, safe settings subset, active
+  feature toggles, and IDB store listing. Excludes all PII
+  (watchlist contents, bookmarks, home coord, user location). One
+  blob to paste into a bug report.
+- **Flight analytics** (module AA). Two rule-based trail
+  detectors that annotate the selected aircraft:
+  - `detectGoAround` — scans for a descent below 2,000 ft followed
+    by a positive-VS climb within 60 s; flagged as an amber
+    **GO-AROUND** chip.
+  - `detectSpeedAnomaly` — compares ground speed against a loose
+    per-type envelope (< 0.7× vMin or > 1.3× vMax) and flags a
+    **SPEED ANOMALY** chip. Useful for catching data glitches.
+- **Multi-tab coordination** (utility in 10-utils). New `tabLeader`
+  helper using `BroadcastChannel` — elects the oldest-`timeOrigin`
+  tab as leader. Today it's a primitive only (`tabLeader.isLeader`
+  is queryable by anything that cares); follow-ups in 0.25 will
+  throttle network loops in non-leader tabs using it.
+
+### Notes
+- Four new toolbar buttons: **Flight Card**, **Scene URL**,
+  **Diagnostics**. Callsign row now also renders the GO-AROUND /
+  SPEED ANOMALY analytics chips alongside the existing phase /
+  LOITER chips.
+- `sceneUrl.restore()` is called once at startup after the first
+  aircraft fetch. No-op if there's no scene token in the URL hash.
+
+### Previous
 ## [v0.23.0] - 2026-04-18
 
 A wide-net improvement pass: three more modules extracted, three new
