@@ -92,7 +92,7 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
         try {
             const swCode = `
-                const CACHE_NAME = 'skytrack-v0.24.2';
+                const CACHE_NAME = 'skytrack-v0.24.3';
                 const STATIC_ASSETS = [
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
@@ -254,7 +254,7 @@ if ('serviceWorker' in navigator) {
     <div class="loading-overlay" id="loading">
         <div class="loading-logo">
             <img src="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-128x128.png" alt="SkyTrack">
-            <span>SkyTrack<span class="version">v0.24.2</span></span>
+            <span>SkyTrack<span class="version">v0.24.3</span></span>
         </div>
         <div class="spinner"></div>
         <div class="loading-status" id="loadingStatus" role="status" aria-live="polite">Initializing…</div>
@@ -506,7 +506,8 @@ if ('serviceWorker' in navigator) {
         <button class="filter-btn pia-btn" data-filter="pia">PIA <span class="count" id="countPIA">0</span></button>
         <button class="filter-btn vip-btn" data-filter="vip" title="Highlighted VIP and Must-See Aircraft">VIP <span class="count" id="countVIP">0</span></button>
         <button class="filter-share-btn" id="filterShareBtn" title="Share this filter view" aria-label="Share filter link" style="display:none;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v13"/></svg></button>
-    </div>
+        </div><!-- /role="radiogroup" -->
+    </div><!-- /#filterBar -->
     <div class="info-panel" id="infoPanel" role="dialog" aria-label="Aircraft Details">
         <div class="aircraft-photo" id="aircraftPhoto"><div class="no-photo">Loading...</div></div>
         <div class="airline-banner" id="airlineBanner" style="display:none;"><img src="" alt=""></div>

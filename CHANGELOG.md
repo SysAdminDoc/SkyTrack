@@ -2,6 +2,21 @@
 
 All notable changes to SkyTrack will be documented in this file.
 
+## [v0.24.3] - 2026-05-01
+
+### Fixed
+- **Aircraft details panel was invisible after clicking a plane.**
+  The `<div role="radiogroup">` opened at the category-filter row in
+  `src/index.html` was never closed before its parent `</div>`, so
+  the browser left `#filterBar` open and parsed the *entire rest of
+  `<body>`* — including `#infoPanel`, modals, scripts, every other
+  panel — as children of `#filterBar`. Because filterBar uses
+  `backdrop-filter: blur(...)`, it becomes a containing block for
+  fixed-positioned descendants, so the panel's `top:50; bottom:32`
+  resolved against filterBar's tiny box and the panel collapsed to
+  height 0 (visually invisible). Added the missing `</div>` to close
+  the radiogroup before the filterBar close.
+
 ## [v0.24.2] - 2026-05-01
 
 ### Fixed

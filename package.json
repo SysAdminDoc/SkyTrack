@@ -1,6 +1,6 @@
 {
   "name": "skytrack",
-  "version": "0.24.2",
+  "version": "0.24.3",
   "private": true,
   "description": "Real-time global aircraft tracker with 3D globe view and military/VIP detection.",
   "license": "MIT",
