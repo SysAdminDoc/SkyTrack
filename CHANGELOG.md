@@ -2,6 +2,21 @@
 
 All notable changes to SkyTrack will be documented in this file.
 
+## [v0.24.1] - 2026-05-01
+
+### Fixed
+- **Live aircraft no longer load on the map.** Upstream tar1090 API
+  (adsb.fi `/v2/lat/.../lon/.../dist/`, adsb.lol/adsb.one `/v2/point/`)
+  silently changed its response schema from `{ ac: [...] }` to
+  `{ aircraft: [...] }` for area queries. SkyTrack's parser only
+  checked `d.ac` so every successful HTTP 200 was discarded as empty
+  and the data-source pill stayed at "0 aircraft". Parser now accepts
+  both shapes (`d.aircraft || d.ac`) so the older `/v2/mil`, `/v2/pia`,
+  and `/v2/ladd` endpoints (which still return `ac`) keep working.
+  Touches both the active definition in
+  [src/modules/20-reliability.js](src/modules/20-reliability.js) and
+  the legacy `DATA_SOURCES` map in [src/app.js](src/app.js).
+
 ## [v0.24.0] - 2026-04-18
 
 Second wide-net pass: two more module extractions, four new feature
