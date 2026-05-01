@@ -3096,7 +3096,7 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
         try {
             const swCode = `
-                const CACHE_NAME = 'skytrack-v0.24.1';
+                const CACHE_NAME = 'skytrack-v0.24.2';
                 const STATIC_ASSETS = [
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
@@ -3258,7 +3258,7 @@ if ('serviceWorker' in navigator) {
     <div class="loading-overlay" id="loading">
         <div class="loading-logo">
             <img src="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-128x128.png" alt="SkyTrack">
-            <span>SkyTrack<span class="version">v0.24.1</span></span>
+            <span>SkyTrack<span class="version">v0.24.2</span></span>
         </div>
         <div class="spinner"></div>
         <div class="loading-status" id="loadingStatus" role="status" aria-live="polite">Initializing…</div>
@@ -4154,7 +4154,12 @@ if ('serviceWorker' in navigator) {
         airlineBannerUrl: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/airlines/',
         flagUrl: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/flags/',
         // External APIs (cannot self-host)
-        traceUrl: 'https://globe.airplanes.live/data/traces/',
+        // Trace host: globe.airplanes.live died (DNS unreachable), adsb.fi
+        // returns 403 to browsers. globe.adsb.lol 302-redirects to adsb.lol
+        // which serves the same tar1090 trace JSON shape and works through
+        // the codetabs CORS proxy. If a future host outage hits adsb.lol,
+        // try globe.adsb.fi or globe.adsbexchange.com next.
+        traceUrl: 'https://globe.adsb.lol/data/traces/',
         planespottersApi: 'https://api.planespotters.net/pub/photos/hex/'
     };
     const DATA_URLS = {

@@ -2,6 +2,18 @@
 
 All notable changes to SkyTrack will be documented in this file.
 
+## [v0.24.2] - 2026-05-01
+
+### Fixed
+- **Aircraft trail fails to load when you click a plane.**
+  `globe.airplanes.live` (the previous trace host) is currently
+  DNS-unreachable, so every `loadTrail` call hit `503 (Offline)`.
+  `CONFIG.traceUrl` now points at `globe.adsb.lol`, which
+  302-redirects to `adsb.lol` and serves the same tar1090 trace
+  JSON shape. The codetabs CORS proxy follows the redirect
+  server-side, so the existing `fetchWithProxy` path works
+  unchanged. See [src/modules/00-config.js](src/modules/00-config.js).
+
 ## [v0.24.1] - 2026-05-01
 
 ### Fixed

@@ -24,7 +24,12 @@
         airlineBannerUrl: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/airlines/',
         flagUrl: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/flags/',
         // External APIs (cannot self-host)
-        traceUrl: 'https://globe.airplanes.live/data/traces/',
+        // Trace host: globe.airplanes.live died (DNS unreachable), adsb.fi
+        // returns 403 to browsers. globe.adsb.lol 302-redirects to adsb.lol
+        // which serves the same tar1090 trace JSON shape and works through
+        // the codetabs CORS proxy. If a future host outage hits adsb.lol,
+        // try globe.adsb.fi or globe.adsbexchange.com next.
+        traceUrl: 'https://globe.adsb.lol/data/traces/',
         planespottersApi: 'https://api.planespotters.net/pub/photos/hex/'
     };
     const DATA_URLS = {
