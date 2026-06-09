@@ -7,3 +7,7 @@ node_modules/
 # Ad-hoc scratch files sometimes produced by the build/audit tooling.
 _*.mjs
 _*.js
+
+# Markdown files local-only (except README)
+*.md
+!README.md
