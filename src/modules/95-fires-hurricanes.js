@@ -12,14 +12,18 @@
         _pendingOp: null,   // in-flight enable()/disable() — blocks re-entry
         map: null,
         fireLayer: null,
+        firefighterLayer: null,
         stormLayer: null,
+        fireIncidents: [],
+        firefighterAircraft: [],
         enabled: false,
         refreshTimer: null,
         refreshMs: 600000, // 10 min
+        correlationRadiusKm: 80,
         NIFC_URL:
             'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/' +
             'WFIGS_Incident_Locations_Current/FeatureServer/0/query?' +
-            'f=geojson&where=FireCause%20%3D%20FireCause&outFields=*',
+            'f=geojson&where=ActiveFireCandidate%20%3D%201%20AND%20IncidentTypeKind%20%3D%20%27FI%27%20AND%20IncidentTypeCategory%20%3C%3E%20%27RX%27&outFields=*',
         NHC_URL: 'https://www.nhc.noaa.gov/CurrentStorms.json',
 
         init(map) {
@@ -78,6 +82,12 @@
                 try { this.map?.removeLayer(this.fireLayer); } catch (_) {}
                 this.fireLayer = null;
             }
+            if (this.firefighterLayer) {
+                try { this.map?.removeLayer(this.firefighterLayer); } catch (_) {}
+                this.firefighterLayer = null;
+            }
+            this.firefighterAircraft = [];
+            this.fireIncidents = [];
             if (this.stormLayer) {
                 try { this.map?.removeLayer(this.stormLayer); } catch (_) {}
                 this.stormLayer = null;
@@ -100,6 +110,7 @@
                     try { this.map.removeLayer(this.fireLayer); } catch (_) {}
                 }
                 this.fireLayer = L.layerGroup();
+                this.fireIncidents = [];
                 const features = Array.isArray(geo?.features) ? geo.features : [];
                 for (const f of features) {
                     const c = f?.geometry?.coordinates;
@@ -127,6 +138,8 @@
                     const containment = Number.isFinite(containmentNum)
                         ? Math.round(containmentNum) + '% contained'
                         : '';
+                    const incident = { lat, lon, name, state, acres: acresTxt, containment };
+                    this.fireIncidents.push(incident);
                     marker.bindPopup(
                         '<div class="sigmet-popup"><strong>🔥 ' + _escHtml(name) + '</strong><br>' +
                         (state ? _escHtml(state) + '<br>' : '') +
@@ -139,9 +152,112 @@
                 if (this.enabled && this.fireLayer.getLayers().length > 0) {
                     this.fireLayer.addTo(this.map);
                 }
-                _dbg('NIFC fires loaded:', this.fireLayer.getLayers().length);
+                this._syncFirefightingAircraft();
+                _dbg('NIFC fires loaded:', this.fireLayer.getLayers().length,
+                    'nearby firefighting aircraft:', this.firefighterAircraft.length);
             } catch (e) {
                 try { errorHandler.log('NIFC fires', e?.message || e); } catch (_) {}
+            }
+        },
+
+        updateAircraft(aircraft) {
+            if (!this.enabled) return;
+            this._syncFirefightingAircraft(aircraft);
+        },
+
+        _isFirefighting(ac) {
+            const values = [
+                ac?.flight, ac?.r, ac?.desc, ac?.t, ac?.ownOp,
+                ac?.interesting?.operator, ac?.interesting?.type, ac?.interesting?.tag,
+                ac?.militaryInfo?.operator, ac?.militaryInfo?.type, ac?.militaryInfo?.tag,
+                ac?.civilianInteresting?.operator, ac?.civilianInteresting?.type,
+                ac?.civilianInteresting?.tag
+            ].filter(Boolean).join(' ').toUpperCase();
+            if (!values) return false;
+            return /FIRE(FIGHTING|BIRD)?|WILDFIRE|AIR\s*ATTACK|AERIAL\s*FIREFIGHT|FOREST\s*FIRE|CAL\s*FIRE|FIRE\s*(SERVICE|DEPT|DEPARTMENT)|WATER\s*BOMBER|SUPER\s*SCOOPER|SMOKEJUMPER|(?:AIR)?TANKER(?:\s|-)?\d*/.test(values);
+        },
+
+        _distanceKm(lat1, lon1, lat2, lon2) {
+            const radians = value => value * Math.PI / 180;
+            const dLat = radians(lat2 - lat1);
+            const dLon = radians(lon2 - lon1);
+            const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(radians(lat1)) * Math.cos(radians(lat2)) * Math.sin(dLon / 2) ** 2;
+            return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(Math.max(0, 1 - a)));
+        },
+
+        _nearestFire(ac) {
+            let nearest = null;
+            for (const incident of this.fireIncidents) {
+                const distanceKm = this._distanceKm(ac.lat, ac.lon, incident.lat, incident.lon);
+                if (!nearest || distanceKm < nearest.distanceKm) nearest = { incident, distanceKm };
+            }
+            return nearest;
+        },
+
+        _syncFirefightingAircraft(aircraft) {
+            if (!this.map || !this.enabled) return;
+            if (this.firefighterLayer) {
+                try { this.map.removeLayer(this.firefighterLayer); } catch (_) {}
+                this.firefighterLayer = null;
+            }
+            this.firefighterAircraft = [];
+            if (!this.fireIncidents.length) return;
+
+            const group = L.layerGroup();
+            const list = Array.isArray(aircraft)
+                ? aircraft
+                : Object.values(aircraft || (typeof aircraftCache === 'object' ? aircraftCache : {}));
+            for (const ac of list) {
+                const lat = Number(ac?.lat);
+                const lon = Number(ac?.lon);
+                const altitude = Number(ac?.alt_baro);
+                const groundSpeed = Number(ac?.gs);
+                const airborne = ac?.alt_baro !== 'ground' &&
+                    ((Number.isFinite(altitude) && altitude > 100) ||
+                     (Number.isFinite(groundSpeed) && groundSpeed > 35));
+                if (!Number.isFinite(lat) || !Number.isFinite(lon) || !airborne || !this._isFirefighting(ac)) continue;
+                const nearest = this._nearestFire({ lat, lon });
+                if (!nearest || nearest.distanceKm > this.correlationRadiusKm) continue;
+
+                const callsign = String(ac.flight || ac.r || ac.hex || 'Firefighting aircraft').trim();
+                const registration = ac.r && ac.r !== callsign ? ' · ' + ac.r : '';
+                const type = ac.desc || ac.t || 'aircraft';
+                const fire = nearest.incident;
+                const distance = Math.round(nearest.distanceKm) + ' km from fire';
+                const line = L.polyline([[lat, lon], [fire.lat, fire.lon]], {
+                    color: '#facc15', weight: 1, opacity: 0.55, dashArray: '4 5', interactive: false
+                });
+                const halo = L.circle([lat, lon], {
+                    radius: 6000, color: '#facc15', weight: 1, opacity: 0.5,
+                    fillColor: '#facc15', fillOpacity: 0.06, interactive: false
+                });
+                const marker = L.circleMarker([lat, lon], {
+                    radius: 9, color: '#fef08a', weight: 2,
+                    fillColor: '#f97316', fillOpacity: 0.95
+                });
+                marker.bindPopup(
+                    '<div class="sigmet-popup"><strong>🛩 Firefighting aircraft</strong><br>' +
+                    _escHtml(callsign + registration) + '<br>' +
+                    _escHtml(type) + '<br>' +
+                    _escHtml(distance + ' · ' + (fire.name || 'active fire')) +
+                    (fire.state ? '<br>' + _escHtml(fire.state) : '') +
+                    '</div>'
+                );
+                marker.bindTooltip('🛩 ' + _escHtml(callsign) + ' · ' + _escHtml(distance), {
+                    sticky: true, direction: 'top'
+                });
+                marker.on('click', () => {
+                    try { if (typeof selectAircraft === 'function' && ac.hex) selectAircraft(ac.hex); } catch (_) {}
+                });
+                group.addLayer(line);
+                group.addLayer(halo);
+                group.addLayer(marker);
+                this.firefighterAircraft.push({ hex: ac.hex, callsign, fire: fire.name, distanceKm: nearest.distanceKm });
+            }
+            if (this.firefighterAircraft.length) {
+                group.addTo(this.map);
+                this.firefighterLayer = group;
             }
         },
 

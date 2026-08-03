@@ -13,6 +13,10 @@ All notable changes to SkyTrack will be documented in this file.
   (`TRSA`/`CTA`) and V/J airway layers now use live FAA Feature Services,
   refresh for the visible map bounds, cache by viewport, and each has its own
   Tools toggle. Retired ArcGIS Hub download URLs are no longer used.
+- **Active-fire aircraft correlation.** The NIFC fires overlay now filters to
+  active non-prescribed incidents and highlights airborne fire-service and
+  air-tanker aircraft within 80 km of the nearest incident, including a
+  nearest-fire connector and aircraft details.
 
 ## [v0.24.3] - 2026-05-01
 

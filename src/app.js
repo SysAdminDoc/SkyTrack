@@ -2790,6 +2790,9 @@
         // Call unconditionally; the module is defensive about missing IDB.
         try { logbook.ingest(aircraftCache); } catch (_) { /* never block refresh */ }
         updateCounts(); updateMarkersSync();
+        // Refresh the fires overlay's nearby firefighting-aircraft correlation
+        // on the same cadence as live aircraft positions.
+        try { firesHurricanes.updateAircraft(aircraftCache); } catch (_) {}
         
         // Update watchlist active status
         alertSystem.updateWatchlistUI();
@@ -3978,7 +3981,8 @@
                 if (on) {
                     const fc = firesHurricanes.fireLayer?.getLayers()?.length || 0;
                     const sc = firesHurricanes.stormLayer?.getLayers()?.length || 0;
-                    toast('Fires: ' + fc + ' · Storms: ' + sc);
+                    const tc = firesHurricanes.firefighterAircraft?.length || 0;
+                    toast('Fires: ' + fc + ' · Tankers: ' + tc + ' · Storms: ' + sc);
                 } else {
                     toast('Overlay off');
                 }
