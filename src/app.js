@@ -2451,7 +2451,7 @@
         baseMaps['google-terrain'] = L.tileLayer('https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'] });
         currentBaseMap = settings.mapStyle && baseMaps[settings.mapStyle] ? settings.mapStyle : 'google-hybrid'; baseMaps[currentBaseMap].addTo(map); document.getElementById('mapStyleSelect').value = currentBaseMap;
         airportLayer = L.layerGroup().addTo(map);
-        let moveTimeout; map.on('moveend', () => { clearTimeout(moveTimeout); moveTimeout = setTimeout(() => { loadAircraft(); if (settings.showAirports) updateAirportMarkers(); }, 800); saveMapPosition(); });
+        let moveTimeout; map.on('moveend', () => { clearTimeout(moveTimeout); moveTimeout = setTimeout(() => { loadAircraft(); if (settings.showAirports) updateAirportMarkers(); if (airspaceLayer.enabled) airspaceLayer.load(); }, 800); saveMapPosition(); });
         map.on('zoomend', () => { if (settings.showAirports) updateAirportMarkers(); });
         map.on('click', () => { deselectAircraft(); _el('settingsPanel').classList.remove('show'); _el('airportPanel').classList.remove('show'); _el('statsPanel').classList.remove('show'); _el('statsBtn')?.classList.remove('active'); document.getElementById('comparisonPanel')?.classList.remove('show'); });
         if (settings.showAirports) updateAirportMarkers();
@@ -5767,92 +5767,173 @@ ${trailData.map(p => {
         }
     };
 
-    // ============ PHASE 6: AIRSPACE OVERLAY ============
+    // ============ PHASE 6: FAA AIRSPACE POLYGON OVERLAY ============
+    // The old implementation drew a handful of guessed circles around major
+    // airports.  Use the FAA's public Class Airspace feature service instead:
+    // the response contains the actual shelf polygons plus class, floor, and
+    // ceiling metadata.  Queries stay viewport-scoped and are cached in IDB
+    // for one hour so panning back over a familiar area is inexpensive.
     const airspaceLayer = {
         layer: null,
         enabled: false,
-        
+        pending: null,
+        lastKey: null,
+        requestId: 0,
+        endpoint: 'https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/arcgis/rest/services/Class_Airspace/FeatureServer/0/query',
+
         async toggle() {
             this.enabled = !this.enabled;
             document.getElementById('airspaceBtn')?.classList.toggle('active', this.enabled);
-            
             if (this.enabled) {
                 await this.load();
             } else {
                 this.remove();
             }
+            return this.enabled;
         },
-        
-        async load() {
-            if (this.layer) {
-                this.layer.addTo(map);
-                return;
-            }
-            
-            toast('Loading airspace...');
-            const airspaces = this.getCommonAirspaces();
-            this.createLayer(airspaces);
-            toast('Airspace loaded');
+
+        _bounds() {
+            if (!map) return null;
+            const b = map.getBounds();
+            const south = Math.max(-60, b.getSouth());
+            const north = Math.min(75, b.getNorth());
+            if (!(north > south)) return null;
+
+            let west = b.getWest();
+            let east = b.getEast();
+            while (west < -180) { west += 360; east += 360; }
+            while (east > 180) { west -= 360; east -= 360; }
+            if (east <= west) { west = -180; east = 180; }
+
+            // Round the cache envelope so small pan movements reuse the same
+            // service response without making the visible layer imprecise.
+            const round = value => Math.round(value * 4) / 4;
+            return {
+                west: Math.max(-180, round(west)),
+                south: Math.max(-60, round(south)),
+                east: Math.min(180, round(east)),
+                north: Math.min(75, round(north))
+            };
         },
-        
-        getCommonAirspaces() {
-            return [
-                // Class B (major airports)
-                { name: 'LAX Class B', type: 'B', center: [33.9425, -118.408], radius: 50, color: '#3b82f6' },
-                { name: 'JFK Class B', type: 'B', center: [40.6413, -73.7781], radius: 40, color: '#3b82f6' },
-                { name: 'ORD Class B', type: 'B', center: [41.9742, -87.9073], radius: 45, color: '#3b82f6' },
-                { name: 'DFW Class B', type: 'B', center: [32.8998, -97.0403], radius: 45, color: '#3b82f6' },
-                { name: 'ATL Class B', type: 'B', center: [33.6407, -84.4277], radius: 45, color: '#3b82f6' },
-                { name: 'DEN Class B', type: 'B', center: [39.8561, -104.6737], radius: 45, color: '#3b82f6' },
-                { name: 'SFO Class B', type: 'B', center: [37.6213, -122.3790], radius: 40, color: '#3b82f6' },
-                { name: 'SEA Class B', type: 'B', center: [47.4502, -122.3088], radius: 40, color: '#3b82f6' },
-                { name: 'PHX Class B', type: 'B', center: [33.4373, -112.0078], radius: 40, color: '#3b82f6' },
-                { name: 'MIA Class B', type: 'B', center: [25.7959, -80.2870], radius: 40, color: '#3b82f6' },
-                { name: 'BOS Class B', type: 'B', center: [42.3656, -71.0096], radius: 35, color: '#3b82f6' },
-                { name: 'LAS Class B', type: 'B', center: [36.0840, -115.1537], radius: 40, color: '#3b82f6' },
-                // Restricted areas
-                { name: 'R-2508 Edwards AFB', type: 'R', center: [34.9, -117.9], radius: 80, color: '#ef4444' },
-                { name: 'R-4807 White Sands', type: 'R', center: [33.0, -106.5], radius: 60, color: '#ef4444' },
-                { name: 'R-2301 Eglin AFB', type: 'R', center: [30.5, -86.5], radius: 50, color: '#ef4444' },
-                { name: 'R-4808 Nevada Test', type: 'R', center: [37.2, -116.0], radius: 50, color: '#ef4444' },
-                { name: 'R-2903 Twentynine Palms', type: 'R', center: [34.3, -116.0], radius: 40, color: '#ef4444' },
-                // Prohibited areas
-                { name: 'DC FRZ (P-56)', type: 'P', center: [38.8977, -77.0365], radius: 15, color: '#a855f7' },
-                { name: 'Camp David (P-40)', type: 'P', center: [39.6479, -77.4649], radius: 5, color: '#a855f7' },
-            ];
+
+        _key(bounds) {
+            return 'faa-airspace-v1-' + [bounds.west, bounds.south, bounds.east, bounds.north].join('_');
         },
-        
-        createLayer(airspaces) {
-            this.layer = L.layerGroup();
-            
-            airspaces.forEach(a => {
-                const circle = L.circle(a.center, {
-                    radius: a.radius * 1852,
-                    color: a.color,
-                    fillColor: a.color,
-                    fillOpacity: 0.08,
-                    weight: 2,
-                    dashArray: a.type === 'R' || a.type === 'P' ? '8,4' : null
-                });
-                
-                circle.bindPopup(`<strong>${a.name}</strong><br>Class ${a.type} Airspace<br>Radius: ${a.radius} nm`);
-                this.layer.addLayer(circle);
-                
-                const label = L.marker(a.center, {
-                    icon: L.divIcon({
-                        className: 'airspace-label',
-                        html: `<div style="color:${a.color}">${a.type}</div>`,
-                        iconSize: [24, 24]
-                    })
-                });
-                this.layer.addLayer(label);
+
+        _url(bounds) {
+            const params = new URLSearchParams({
+                where: "TYPE_CODE = 'CLASS' AND CLASS IN ('B','C','D')",
+                geometry: [bounds.west, bounds.south, bounds.east, bounds.north].join(','),
+                geometryType: 'esriGeometryEnvelope',
+                inSR: '4326',
+                spatialRel: 'esriSpatialRelIntersects',
+                outFields: 'IDENT,NAME,TYPE_CODE,CLASS,LOCAL_TYPE,UPPER_DESC,UPPER_VAL,UPPER_UOM,UPPER_CODE,LOWER_DESC,LOWER_VAL,LOWER_UOM,LOWER_CODE,WKHR_CODE,WKHR_RMK,CITY,STATE',
+                returnGeometry: 'true',
+                outSR: '4326',
+                resultRecordCount: '2000',
+                f: 'geojson'
             });
-            
+            return this.endpoint + '?' + params.toString();
+        },
+
+        async _fetch(bounds, key) {
+            let cached = null;
+            try {
+                if (typeof skytrackDB === 'object') cached = await skytrackDB.loadDatabase(key);
+            } catch (_) {}
+            if (cached?.type === 'FeatureCollection') return cached;
+
+            const response = await fetch(this._url(bounds), {
+                cache: 'no-cache',
+                signal: AbortSignal.timeout(30000)
+            });
+            if (!response.ok) throw new Error('FAA airspace HTTP ' + response.status);
+            const geo = await response.json();
+            if (geo?.error) throw new Error(geo.error.message || 'FAA airspace query failed');
+            if (geo?.type !== 'FeatureCollection') throw new Error('FAA airspace returned an invalid payload');
+
+            try {
+                if (typeof skytrackDB === 'object') await skytrackDB.saveDatabase(key, geo, 60 * 60 * 1000);
+            } catch (_) {}
+            return geo;
+        },
+
+        async load() {
+            if (!this.enabled || !map) return false;
+            const bounds = this._bounds();
+            if (!bounds) return false;
+            const key = this._key(bounds);
+            if (this.layer && this.lastKey === key) {
+                this.layer.addTo(map);
+                return true;
+            }
+            if (this.pending) return this.pending;
+
+            const requestId = ++this.requestId;
+            toast('Loading FAA airspace polygons…');
+            this.pending = (async () => {
+                try {
+                    const geo = await this._fetch(bounds, key);
+                    if (!this.enabled || requestId !== this.requestId) return false;
+                    this.createLayer(geo, key);
+                    toast('FAA airspace loaded (' + (geo.features?.length || 0) + ' polygons)');
+                    return true;
+                } catch (error) {
+                    if (requestId === this.requestId) {
+                        try { errorHandler.log('FAA airspace', error?.message || error); } catch (_) {}
+                        toast('FAA airspace unavailable');
+                    }
+                    return false;
+                } finally {
+                    if (requestId === this.requestId) this.pending = null;
+                }
+            })();
+            return this.pending;
+        },
+
+        _color(feature) {
+            const type = String(feature?.properties?.CLASS || '').toUpperCase();
+            return type === 'B' ? '#3b82f6' : type === 'C' ? '#22d3ee' : '#a78bfa';
+        },
+
+        _limit(value, unit, code, desc) {
+            if (desc === 'SFC' || code === 'SFC') return 'surface';
+            if (!Number.isFinite(Number(value)) || Number(value) < 0) return 'unknown';
+            return Number(value).toLocaleString() + ' ' + (unit || 'ft') + (desc ? ' (' + desc + ')' : '');
+        },
+
+        _popup(properties) {
+            const p = properties || {};
+            const name = _escHtml(p.NAME || p.IDENT || 'Unnamed airspace');
+            const cls = _escHtml(p.CLASS || '?');
+            const floor = _escHtml(this._limit(p.LOWER_VAL, p.LOWER_UOM, p.LOWER_CODE, p.LOWER_DESC));
+            const ceiling = _escHtml(this._limit(p.UPPER_VAL, p.UPPER_UOM, p.UPPER_CODE, p.UPPER_DESC));
+            const hours = p.WKHR_RMK || p.WKHR_CODE || 'not published';
+            const location = [p.CITY, p.STATE].filter(Boolean).join(', ');
+            return '<strong>' + name + '</strong><br>' +
+                'Class ' + cls + ' · ' + (location ? _escHtml(location) + '<br>' : '') +
+                'Floor: ' + floor + '<br>Ceiling: ' + ceiling + '<br>' +
+                'Hours: ' + _escHtml(hours);
+        },
+
+        createLayer(geo, key) {
+            if (this.layer) map.removeLayer(this.layer);
+            this.layer = L.geoJSON(geo, {
+                style: feature => {
+                    const color = this._color(feature);
+                    return { color, fillColor: color, fillOpacity: 0.08, weight: 1.5, opacity: 0.9 };
+                },
+                onEachFeature: (feature, layer) => {
+                    layer.bindPopup(this._popup(feature.properties));
+                }
+            });
+            this.lastKey = key;
             this.layer.addTo(map);
         },
-        
+
         remove() {
-            if (this.layer) map.removeLayer(this.layer);
+            ++this.requestId;
+            if (this.layer && map) map.removeLayer(this.layer);
         }
     };
 
