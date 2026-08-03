@@ -134,6 +134,7 @@ step is only needed when you want to ship a fresh single-file `index.html`.
 | Multiple Map Styles | Dark CartoDB, satellite, OpenStreetMap, and more |
 | Traffic Heatmap | Density visualization of aircraft positions |
 | Airspace Overlays | FAA Class B/C/D polygon boundaries, ARTCC and terminal areas, V/J airways, restricted areas, TFRs, and MOAs |
+| Fires & Hurricanes | NIFC active-fire incidents, NHC forecast cones/tracks, firefighting aircraft, and NOAA hurricane hunters |
 | Weather Radar | Precipitation overlay from RainViewer |
 | Mini-Map | Picture-in-picture overview map |
 | Distance Measurement | Click-to-measure great-circle distances |

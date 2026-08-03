@@ -3982,7 +3982,8 @@
                     const fc = firesHurricanes.fireLayer?.getLayers()?.length || 0;
                     const sc = firesHurricanes.stormLayer?.getLayers()?.length || 0;
                     const tc = firesHurricanes.firefighterAircraft?.length || 0;
-                    toast('Fires: ' + fc + ' · Tankers: ' + tc + ' · Storms: ' + sc);
+                    const hc = firesHurricanes.hurricaneHunters?.length || 0;
+                    toast('Fires: ' + fc + ' · Tankers: ' + tc + ' · Storms: ' + sc + ' · Hunters: ' + hc);
                 } else {
                     toast('Overlay off');
                 }

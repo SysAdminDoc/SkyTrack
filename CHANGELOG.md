@@ -17,6 +17,10 @@ All notable changes to SkyTrack will be documented in this file.
   active non-prescribed incidents and highlights airborne fire-service and
   air-tanker aircraft within 80 km of the nearest incident, including a
   nearest-fire connector and aircraft details.
+- **NHC storm geometry and hurricane hunters.** Fires & Hurricanes now loads
+  the NHC forecast-track and cone KMZ products directly, renders their actual
+  KML geometry, and highlights airborne NOAA N42RF/N43RF/N49RF aircraft within
+  220 km of the nearest named storm with a storm connector and details.
 
 ## [v0.24.3] - 2026-05-01
 
