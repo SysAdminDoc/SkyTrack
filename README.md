@@ -88,6 +88,7 @@ step is only needed when you want to ship a fresh single-file `index.html`.
 | Procedural 3D Models | Runtime-generated GLB airplane models with tubular fuselage, swept wings, tail, and engine nacelles |
 | Smooth Interpolation | Aircraft glide between position updates using Cesium's SampledPositionProperty |
 | 3D Trails | Flight history rendered as altitude-accurate polylines on the globe |
+| Satellite Constellations | Live ISS and sampled Starlink OMM orbits propagated with satellite.js in Cesium 3D |
 | Type-Based Scaling | Heavy (A380, B747): large, Medium (A320, B737): mid, GA: small |
 | Altitude Coloring | Ground through cruise altitude mapped to a color gradient |
 | Click Selection | Click any 3D aircraft to select and view details |

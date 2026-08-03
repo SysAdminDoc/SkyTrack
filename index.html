@@ -3326,6 +3326,7 @@ if ('serviceWorker' in navigator) {
                 <div class="hv2-item" data-btn="traconBtn"><div class="hv2-item-icon"><button class="header-btn" id="traconBtn" title="FAA TRACON and CTA Areas" aria-label="Toggle FAA TRACON and CTA Areas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3v18"/><circle cx="12" cy="12" r="8"/></svg></button></div><div class="hv2-item-label">FAA TRACON / CTA</div></div>
                 <div class="hv2-item" data-btn="airwaysBtn"><div class="hv2-item-icon"><button class="header-btn" id="airwaysBtn" title="FAA V and J Airways" aria-label="Toggle FAA V and J Airways"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5l8 7 8-7M4 19l8-7 8 7"/><path d="M12 12v7"/></svg></button></div><div class="hv2-item-label">FAA V/J Airways</div></div>
                 <div class="hv2-item" data-btn="issBtn"><div class="hv2-item-icon"><button class="header-btn" id="issBtn" title="International Space Station" aria-label="Toggle ISS Live Position"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="4" rx="1"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="8" y1="6" x2="8" y2="10"/><line x1="16" y1="6" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="18"/><line x1="16" y1="14" x2="16" y2="18"/></svg></button></div><div class="hv2-item-label">ISS Tracker</div></div>
+                <div class="hv2-item" data-btn="satellites3dBtn"><div class="hv2-item-icon"><button class="header-btn" id="satellites3dBtn" title="ISS and Starlink in 3D" aria-label="Toggle ISS and Starlink satellites in 3D" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="4" ry="10"/></svg></button></div><div class="hv2-item-label">ISS + Starlink 3D</div></div>
                 <div class="hv2-item" data-btn="logbookBtn"><div class="hv2-item-icon"><button class="header-btn" id="logbookBtn" title="My Logbook" aria-label="Show personal aircraft logbook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="17" y2="7"/><line x1="9" y1="11" x2="17" y2="11"/></svg></button></div><div class="hv2-item-label">Logbook</div></div>
                 <div class="hv2-item" data-btn="flightCardBtn"><div class="hv2-item-icon"><button class="header-btn" id="flightCardBtn" title="Copy Flight Card" aria-label="Copy flight card image of selected aircraft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M7 15h4"/></svg></button></div><div class="hv2-item-label">Flight Card</div></div>
                 <div class="hv2-item" data-btn="sceneUrlBtn"><div class="hv2-item-icon"><button class="header-btn" id="sceneUrlBtn" title="Copy Scene URL" aria-label="Copy link that restores this exact view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button></div><div class="hv2-item-label">Scene URL</div></div>
@@ -3375,6 +3376,7 @@ if ('serviceWorker' in navigator) {
         <div class="hud-3d-row"><span class="hud-3d-key">Scroll</span> Zoom in/out</div>
         <div class="hud-3d-row"><span class="hud-3d-key">R-Drag</span> Tilt camera</div>
         <div class="hud-3d-row"><span class="hud-3d-key">Click</span> Select aircraft</div>
+        <div class="hud-3d-row"><span class="hud-3d-key">🛰</span> <span id="satellite3dStatus">Satellites loading…</span></div>
     </div>
     
     <!-- Onboarding Overlay -->
@@ -10360,7 +10362,7 @@ if ('serviceWorker' in navigator) {
                 'connectionMonitor','offlineManager','dataSourceManager','autoRetry','errorRecovery','circuitBreakers',
                 'skytrackDB','weatherSystem','weatherOverlay','alertSystem',
                 'rangeRings','phaseClassifier','countryFlag','emergencyPulse','surveillanceOrbit','firesHurricanes','planeOverHome',
-                'callsignLore','whyHere','logbook','faaOverlays','issTracker',
+                'callsignLore','whyHere','logbook','faaOverlays','issTracker','satellite3D',
                 'measureTool','playbackController','geofences','routePredictor','miniMap',
                 'flightCard','sceneUrl','diagnostics'
             ];
@@ -10433,6 +10435,7 @@ if ('serviceWorker' in navigator) {
             try { out.firesHurricanes = !!firesHurricanes?.enabled; } catch (_) {}
             try { out.planeOverHome = !!planeOverHome?.enabled; } catch (_) {}
             try { out.issTracker = !!issTracker?.enabled; } catch (_) {}
+            try { out.satellite3D = satellite3D?.stats?.() || null; } catch (_) {}
             try { out.faaArtcc = !!faaOverlays?.layers?.artcc?.enabled; } catch (_) {}
             try { out.faaTracon = !!faaOverlays?.layers?.tracon?.enabled; } catch (_) {}
             try { out.faaAirways = !!faaOverlays?.layers?.airways?.enabled; } catch (_) {}
@@ -10915,6 +10918,285 @@ if ('serviceWorker' in navigator) {
         const map = e?.detail?.map;
         if (map) issTracker.init(map);
     });
+    // ─── module: modules/A2-satellite-3d.js ───────────────────────────────────────────
+
+    // ============ CELESTRAK SATELLITES IN CESIUM 3D ============
+    // CelesTrak publishes OMM JSON for the ISS and the Starlink constellation.
+    // satellite.js performs the SGP4 propagation in the browser; Cesium only
+    // receives the resulting Earth-fixed positions. Starlink is intentionally
+    // sampled to keep the 3D scene responsive while still showing the orbital
+    // shell rather than an arbitrary geographic subset.
+    const satellite3D = {
+        enabled: false,
+        viewer: null,
+        satelliteLib: null,
+        _satelliteLoad: null,
+        _positionTimer: null,
+        _catalogTimer: null,
+        catalog: [],
+        entities: new Map(),
+        starlinkLimit: 600,
+        positionRefreshMs: 5000,
+        catalogRefreshMs: 6 * 60 * 60 * 1000,
+        ISS_URL: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=json',
+        STARLINK_URL: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=json',
+        SATELLITE_JS_URL: 'https://cdn.jsdelivr.net/npm/satellite.js@7.0.1/dist/index.js',
+
+        async toggle(viewer) {
+            if (this.enabled) {
+                this.disable();
+                return false;
+            }
+            return this.enable(viewer);
+        },
+
+        async enable(viewer) {
+            if (!viewer) return false;
+            this.viewer = viewer;
+            this.enabled = true;
+            this._setUi(true, 'Loading satellite catalog…');
+            try {
+                await this._ensureSatelliteLibrary();
+                if (!this.enabled) return false;
+                await this._refreshCatalog();
+                if (!this.enabled) return false;
+                this._startTimers();
+                this._setUi(true, this._statusText());
+                return true;
+            } catch (error) {
+                this.enabled = false;
+                this._stopTimers();
+                this._clearEntities();
+                this._setUi(false, 'Satellites unavailable');
+                try { errorHandler.log('3D satellites', error?.message || error); } catch (_) {}
+                return false;
+            }
+        },
+
+        disable() {
+            this.enabled = false;
+            this._stopTimers();
+            this._clearEntities();
+            this.catalog = [];
+            this._setUi(false, 'Satellites off');
+        },
+
+        _setUi(enabled, status) {
+            const button = document.getElementById('satellites3dBtn');
+            if (button) {
+                button.classList.toggle('active', !!enabled);
+                button.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+            }
+            const statusEl = document.getElementById('satellite3dStatus');
+            if (statusEl && status) statusEl.textContent = status;
+        },
+
+        _startTimers() {
+            this._stopTimers();
+            this._positionTimer = setInterval(() => this._updatePositions(), this.positionRefreshMs);
+            this._catalogTimer = setInterval(() => this._refreshCatalog(), this.catalogRefreshMs);
+        },
+
+        _stopTimers() {
+            if (this._positionTimer) { clearInterval(this._positionTimer); this._positionTimer = null; }
+            if (this._catalogTimer) { clearInterval(this._catalogTimer); this._catalogTimer = null; }
+        },
+
+        async _ensureSatelliteLibrary() {
+            if (this.satelliteLib) return this.satelliteLib;
+            if (this._satelliteLoad) return this._satelliteLoad;
+            this._satelliteLoad = import(this.SATELLITE_JS_URL).then(module => {
+                this.satelliteLib = module;
+                return module;
+            }).catch(error => {
+                this._satelliteLoad = null;
+                throw error;
+            });
+            return this._satelliteLoad;
+        },
+
+        async _fetchOmm(url) {
+            const resp = await fetch(url, { signal: AbortSignal.timeout(15000) });
+            if (!resp.ok) throw new Error('CelesTrak ' + resp.status);
+            const data = await resp.json();
+            return Array.isArray(data) ? data : [];
+        },
+
+        _sampleEvenly(records, limit) {
+            if (records.length <= limit) return records.slice();
+            const selected = [];
+            for (let i = 0; i < limit; i++) {
+                selected.push(records[Math.floor(i * records.length / limit)]);
+            }
+            return selected;
+        },
+
+        _makeRecord(raw, kind) {
+            if (!raw || !this.satelliteLib || typeof this.satelliteLib.json2satrec !== 'function') return null;
+            try {
+                const name = String(raw.OBJECT_NAME || raw.objectName || 'Satellite').trim();
+                const norad = String(raw.NORAD_CAT_ID || raw.noradCatId || name).trim();
+                return {
+                    key: kind + ':' + norad,
+                    kind,
+                    name,
+                    norad,
+                    satrec: this.satelliteLib.json2satrec(raw)
+                };
+            } catch (_) {
+                return null;
+            }
+        },
+
+        _buildCatalog(stations, starlink) {
+            const iss = stations.find(record =>
+                Number(record?.NORAD_CAT_ID) === 25544 ||
+                /^ISS\s*\(/i.test(String(record?.OBJECT_NAME || ''))
+            );
+            const starlinkSample = this._sampleEvenly(
+                starlink.filter(record => /^STARLINK/i.test(String(record?.OBJECT_NAME || ''))),
+                this.starlinkLimit
+            );
+            const records = [];
+            const issRecord = this._makeRecord(iss, 'iss');
+            if (issRecord) records.push(issRecord);
+            for (const raw of starlinkSample) {
+                const record = this._makeRecord(raw, 'starlink');
+                if (record) records.push(record);
+            }
+            return records;
+        },
+
+        async _refreshCatalog() {
+            if (!this.enabled) return;
+            const [stationsResult, starlinkResult] = await Promise.allSettled([
+                this._fetchOmm(this.ISS_URL),
+                this._fetchOmm(this.STARLINK_URL)
+            ]);
+            if (!this.enabled) return;
+            const stations = stationsResult.status === 'fulfilled' ? stationsResult.value : [];
+            const starlink = starlinkResult.status === 'fulfilled' ? starlinkResult.value : [];
+            const catalog = this._buildCatalog(stations, starlink);
+            if (!catalog.length) {
+                const reason = stationsResult.reason || starlinkResult.reason || new Error('No satellite records');
+                throw reason;
+            }
+            this._clearEntities();
+            this.catalog = catalog;
+            this._updatePositions();
+            this._setUi(true, this._statusText());
+        },
+
+        _positionFor(satrec, date = new Date()) {
+            if (!this.satelliteLib || !satrec || typeof Cesium === 'undefined') return null;
+            try {
+                const propagated = this.satelliteLib.propagate(satrec, date);
+                if (!propagated?.position) return null;
+                const gmst = this.satelliteLib.gstime(date);
+                const geodetic = this.satelliteLib.eciToGeodetic(propagated.position, gmst);
+                const toDegrees = (value, helper) => typeof this.satelliteLib[helper] === 'function'
+                    ? this.satelliteLib[helper](value)
+                    : value * 180 / Math.PI;
+                const lon = toDegrees(geodetic.longitude, 'degreesLong');
+                const lat = toDegrees(geodetic.latitude, 'degreesLat');
+                const height = Number(geodetic.height) * 1000;
+                if (![lat, lon, height].every(Number.isFinite)) return null;
+                return Cesium.Cartesian3.fromDegrees(lon, lat, Math.max(0, height));
+            } catch (_) {
+                return null;
+            }
+        },
+
+        _entityFor(record, position) {
+            const iss = record.kind === 'iss';
+            const color = Cesium.Color.fromCssColorString(iss ? '#22d3ee' : '#facc15');
+            const entity = {
+                name: iss ? 'International Space Station (ISS)' : record.name,
+                position,
+                point: {
+                    pixelSize: iss ? 11 : 4,
+                    color,
+                    outlineColor: iss ? Cesium.Color.WHITE : Cesium.Color.fromCssColorString('#fff7ae'),
+                    outlineWidth: iss ? 2 : 1,
+                    scaleByDistance: new Cesium.NearFarScalar(5e4, 1.5, 2e7, 0.65)
+                },
+                description: '<div class="sigmet-popup"><strong>' +
+                    (iss ? '🛰 International Space Station' : '✦ Starlink') +
+                    '</strong><br>' + _escHtml(record.name) + '<br>NORAD ' +
+                    _escHtml(record.norad) + '</div>'
+            };
+            if (iss) {
+                entity.label = {
+                    text: 'ISS',
+                    font: '12px "Segoe UI",sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                    showBackground: true,
+                    backgroundColor: Cesium.Color.fromCssColorString('#081525dd'),
+                    backgroundPadding: new Cesium.Cartesian2(5, 3),
+                    distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 3e7)
+                };
+            }
+            return entity;
+        },
+
+        _updatePositions() {
+            if (!this.enabled || !this.viewer || !this.catalog.length) return 0;
+            const active = new Set();
+            const now = new Date();
+            for (const record of this.catalog) {
+                const position = this._positionFor(record.satrec, now);
+                if (!position) continue;
+                active.add(record.key);
+                let entity = this.entities.get(record.key);
+                if (!entity) {
+                    entity = this.viewer.entities.add(this._entityFor(record, position));
+                    entity._skytrackSatelliteKey = record.key;
+                    this.entities.set(record.key, entity);
+                } else {
+                    entity.position = position;
+                    entity.show = true;
+                }
+            }
+            for (const [key, entity] of this.entities) {
+                if (!active.has(key)) entity.show = false;
+            }
+            return active.size;
+        },
+
+        _clearEntities() {
+            if (this.viewer?.entities) {
+                for (const entity of this.entities.values()) {
+                    try { this.viewer.entities.remove(entity); } catch (_) {}
+                }
+            }
+            this.entities.clear();
+        },
+
+        select(key) {
+            const entity = this.entities.get(key);
+            if (entity && this.viewer) this.viewer.selectedEntity = entity;
+        },
+
+        _statusText() {
+            const iss = this.catalog.filter(record => record.kind === 'iss').length;
+            const starlink = this.catalog.filter(record => record.kind === 'starlink').length;
+            return 'Satellites: ISS ' + iss + ' · Starlink ' + starlink;
+        },
+
+        stats() {
+            return {
+                enabled: this.enabled,
+                catalog: this.catalog.length,
+                iss: this.catalog.filter(record => record.kind === 'iss').length,
+                starlink: this.catalog.filter(record => record.kind === 'starlink').length,
+                entities: this.entities.size
+            };
+        }
+    };
     // ─── module: modules/AA-flight-analytics.js ───────────────────────────────────────────
 
     // ============ FLIGHT ANALYTICS ============
@@ -15049,6 +15331,20 @@ if ('serviceWorker' in navigator) {
                 toast(on ? 'ISS tracker on' : 'ISS tracker off');
             });
         }
+        // Cesium satellite constellation overlay (module A2-satellite-3d.js)
+        const satellites3dBtn = document.getElementById('satellites3dBtn');
+        if (satellites3dBtn) {
+            satellites3dBtn.classList.toggle('active', !!satellite3D?.enabled);
+            satellites3dBtn.addEventListener('click', async () => {
+                if (!view3D.enabled) {
+                    toast('Enable 3D Globe to show satellites');
+                    return;
+                }
+                const on = await satellite3D.toggle(view3D.cesiumViewer);
+                satellites3dBtn.classList.toggle('active', on);
+                toast(on ? 'ISS + Starlink satellites on' : '3D satellites off');
+            });
+        }
         // Personal logbook summary (v0.23.0 — module 99-aircraft-logbook.js)
         const logbookBtn = document.getElementById('logbookBtn');
         if (logbookBtn) {
@@ -17184,7 +17480,9 @@ ${trailData.map(p => {
                 const handler=new Cesium.ScreenSpaceEventHandler(scene.canvas);
                 handler.setInputAction((click)=>{
                     const picked=scene.pick(click.position);
-                    if(Cesium.defined(picked)&&picked.id&&picked.id._skytrackHex){selectAircraft(picked.id._skytrackHex);this.updateAircraft();}
+                    if(!Cesium.defined(picked)||!picked.id)return;
+                    if(picked.id._skytrackHex){selectAircraft(picked.id._skytrackHex);this.updateAircraft();}
+                    else if(picked.id._skytrackSatelliteKey&&typeof satellite3D!=='undefined') satellite3D.select(picked.id._skytrackSatelliteKey);
                 },Cesium.ScreenSpaceEventType.LEFT_CLICK);
             }
             
@@ -17193,6 +17491,9 @@ ${trailData.map(p => {
             this.cesiumViewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(center.lng,center.lat,alt),duration:0});
             
             this.updateAircraft();
+            if (typeof satellite3D !== 'undefined') {
+                satellite3D.enable(this.cesiumViewer).catch(() => {});
+            }
             if(this.updateTimer)clearInterval(this.updateTimer);
             this.updateTimer=setInterval(()=>this.updateAircraft(),2000);
             toast('3D Globe active');
@@ -17201,6 +17502,7 @@ ${trailData.map(p => {
         disable() {
             this.enabled=false;
             document.getElementById('view3DBtn')?.classList.remove('active');
+            if (typeof satellite3D !== 'undefined') satellite3D.disable();
             if(this.updateTimer){clearInterval(this.updateTimer);this.updateTimer=null;}
             if(this.cesiumViewer){try{
                 const carto=this.cesiumViewer.scene.globe.ellipsoid.cartesianToCartographic(this.cesiumViewer.camera.position);

@@ -4023,6 +4023,20 @@
                 toast(on ? 'ISS tracker on' : 'ISS tracker off');
             });
         }
+        // Cesium satellite constellation overlay (module A2-satellite-3d.js)
+        const satellites3dBtn = document.getElementById('satellites3dBtn');
+        if (satellites3dBtn) {
+            satellites3dBtn.classList.toggle('active', !!satellite3D?.enabled);
+            satellites3dBtn.addEventListener('click', async () => {
+                if (!view3D.enabled) {
+                    toast('Enable 3D Globe to show satellites');
+                    return;
+                }
+                const on = await satellite3D.toggle(view3D.cesiumViewer);
+                satellites3dBtn.classList.toggle('active', on);
+                toast(on ? 'ISS + Starlink satellites on' : '3D satellites off');
+            });
+        }
         // Personal logbook summary (v0.23.0 — module 99-aircraft-logbook.js)
         const logbookBtn = document.getElementById('logbookBtn');
         if (logbookBtn) {
@@ -6158,7 +6172,9 @@ ${trailData.map(p => {
                 const handler=new Cesium.ScreenSpaceEventHandler(scene.canvas);
                 handler.setInputAction((click)=>{
                     const picked=scene.pick(click.position);
-                    if(Cesium.defined(picked)&&picked.id&&picked.id._skytrackHex){selectAircraft(picked.id._skytrackHex);this.updateAircraft();}
+                    if(!Cesium.defined(picked)||!picked.id)return;
+                    if(picked.id._skytrackHex){selectAircraft(picked.id._skytrackHex);this.updateAircraft();}
+                    else if(picked.id._skytrackSatelliteKey&&typeof satellite3D!=='undefined') satellite3D.select(picked.id._skytrackSatelliteKey);
                 },Cesium.ScreenSpaceEventType.LEFT_CLICK);
             }
             
@@ -6167,6 +6183,9 @@ ${trailData.map(p => {
             this.cesiumViewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(center.lng,center.lat,alt),duration:0});
             
             this.updateAircraft();
+            if (typeof satellite3D !== 'undefined') {
+                satellite3D.enable(this.cesiumViewer).catch(() => {});
+            }
             if(this.updateTimer)clearInterval(this.updateTimer);
             this.updateTimer=setInterval(()=>this.updateAircraft(),2000);
             toast('3D Globe active');
@@ -6175,6 +6194,7 @@ ${trailData.map(p => {
         disable() {
             this.enabled=false;
             document.getElementById('view3DBtn')?.classList.remove('active');
+            if (typeof satellite3D !== 'undefined') satellite3D.disable();
             if(this.updateTimer){clearInterval(this.updateTimer);this.updateTimer=null;}
             if(this.cesiumViewer){try{
                 const carto=this.cesiumViewer.scene.globe.ellipsoid.cartesianToCartographic(this.cesiumViewer.camera.position);

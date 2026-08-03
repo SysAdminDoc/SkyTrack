@@ -21,6 +21,10 @@ All notable changes to SkyTrack will be documented in this file.
   the NHC forecast-track and cone KMZ products directly, renders their actual
   KML geometry, and highlights airborne NOAA N42RF/N43RF/N49RF aircraft within
   220 km of the nearest named storm with a storm connector and details.
+- **3D satellite constellation layer.** Cesium 3D now lazy-loads satellite.js,
+  propagates the live ISS and an evenly sampled Starlink catalog from CelesTrak
+  OMM data, refreshes positions every five seconds, and exposes a dedicated
+  ISS + Starlink control with catalog status in the 3D HUD.
 
 ## [v0.24.3] - 2026-05-01
 

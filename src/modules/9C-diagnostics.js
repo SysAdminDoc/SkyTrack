@@ -54,7 +54,7 @@
                 'connectionMonitor','offlineManager','dataSourceManager','autoRetry','errorRecovery','circuitBreakers',
                 'skytrackDB','weatherSystem','weatherOverlay','alertSystem',
                 'rangeRings','phaseClassifier','countryFlag','emergencyPulse','surveillanceOrbit','firesHurricanes','planeOverHome',
-                'callsignLore','whyHere','logbook','faaOverlays','issTracker',
+                'callsignLore','whyHere','logbook','faaOverlays','issTracker','satellite3D',
                 'measureTool','playbackController','geofences','routePredictor','miniMap',
                 'flightCard','sceneUrl','diagnostics'
             ];
@@ -127,6 +127,7 @@
             try { out.firesHurricanes = !!firesHurricanes?.enabled; } catch (_) {}
             try { out.planeOverHome = !!planeOverHome?.enabled; } catch (_) {}
             try { out.issTracker = !!issTracker?.enabled; } catch (_) {}
+            try { out.satellite3D = satellite3D?.stats?.() || null; } catch (_) {}
             try { out.faaArtcc = !!faaOverlays?.layers?.artcc?.enabled; } catch (_) {}
             try { out.faaTracon = !!faaOverlays?.layers?.tracon?.enabled; } catch (_) {}
             try { out.faaAirways = !!faaOverlays?.layers?.airways?.enabled; } catch (_) {}
