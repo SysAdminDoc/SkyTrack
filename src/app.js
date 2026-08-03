@@ -4014,6 +4014,22 @@
         bindFaaOverlay('artccBtn', 'artcc', 'ARTCC');
         bindFaaOverlay('traconBtn', 'tracon', 'TRACON / CTA');
         bindFaaOverlay('airwaysBtn', 'airways', 'V/J airways');
+        // Oceanic FIR context (module A4-oceanic-firs.js)
+        const oceanicFirsBtn = document.getElementById('oceanicFirsBtn');
+        if (oceanicFirsBtn) {
+            oceanicFirsBtn.classList.toggle('active', !!oceanicFirs?.enabled);
+            oceanicFirsBtn.addEventListener('click', async () => {
+                toast('Loading oceanic FIRs…');
+                const on = await oceanicFirs.toggle();
+                oceanicFirsBtn.classList.toggle('active', on);
+                if (on) {
+                    const count = oceanicFirs.geojson?.features?.length || 0;
+                    toast('Oceanic FIRs on · ' + count + ' boundaries');
+                } else {
+                    toast('Oceanic FIRs off');
+                }
+            });
+        }
         // ISS live tracker (v0.23.0 — module A1-iss-tracker.js)
         const issBtn = document.getElementById('issBtn');
         if (issBtn) {

@@ -29,6 +29,10 @@ All notable changes to SkyTrack will be documented in this file.
   now use OpenSky trajectory data with optional OAuth credentials, normalize
   returned metres to SkyTrack feet, cache recent results, and fall back to the
   local position history when a track is unavailable.
+- **Oceanic FIR context.** A new Tools toggle renders the Shanwick, Gander,
+  New York, and Oakland oceanic FIR boundaries from the current Open Aviation
+  CC BY 4.0 dataset, with labeled popups, zoom-aware visibility, and IndexedDB
+  caching.
 
 ## [v0.24.3] - 2026-05-01
 

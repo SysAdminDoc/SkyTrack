@@ -134,7 +134,7 @@ step is only needed when you want to ship a fresh single-file `index.html`.
 |---------|-------------|
 | Multiple Map Styles | Dark CartoDB, satellite, OpenStreetMap, and more |
 | Traffic Heatmap | Density visualization of aircraft positions |
-| Airspace Overlays | FAA Class B/C/D polygon boundaries, ARTCC and terminal areas, V/J airways, restricted areas, TFRs, and MOAs |
+| Airspace Overlays | FAA Class B/C/D polygon boundaries, ARTCC and terminal areas, V/J airways, Shanwick/Gander/New York/Oakland oceanic FIRs, restricted areas, TFRs, and MOAs |
 | Fires & Hurricanes | NIFC active-fire incidents, NHC forecast cones/tracks, firefighting aircraft, and NOAA hurricane hunters |
 | Weather Radar | Precipitation overlay from RainViewer |
 | Mini-Map | Picture-in-picture overview map |
@@ -229,6 +229,7 @@ Additional on-demand enrichment APIs (called only for the selected aircraft):
 | [hexdb.io](https://hexdb.io) | Fallback callsign→route and aircraft/airport metadata |
 | [aviationweather.gov /api/data](https://aviationweather.gov/data/api/) | SIGMET, G-AIRMET, CWA, PIREP, METAR, TAF, NOTAM |
 | [OpenSky tracks API](https://openskynetwork.github.io/opensky-api/rest.html#track-by-aircraft) | Historical trajectory for the selected aircraft; optional OAuth credentials raise the daily quota |
+| [Open Aviation FIR dataset](https://observablehq.com/@openaviation/flight-information-regions) | CC BY 4.0 world FIR geometry; SkyTrack filters the four oceanic boundaries used by the overlay |
 
 The grid fetch system tiles the visible map area with overlapping 250nm radius API queries, distributing requests across sources at 1 req/sec per API. At global zoom, this covers the entire planet in ~16 seconds with progressive loading.
 
