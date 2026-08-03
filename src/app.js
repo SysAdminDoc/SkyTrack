@@ -3993,17 +3993,21 @@
                 homeWidgetBtn.classList.toggle('active', on);
             });
         }
-        // FAA ARTCC overlay (v0.23.0 — module A0-faa-overlays.js)
-        const artccBtn = document.getElementById('artccBtn');
-        if (artccBtn) {
-            artccBtn.classList.toggle('active', !!faaOverlays?.layers?.artcc?.enabled);
-            artccBtn.addEventListener('click', async () => {
-                toast('Loading FAA ARTCC…');
-                const on = await faaOverlays.toggle('artcc');
-                artccBtn.classList.toggle('active', on);
-                toast(on ? 'ARTCC boundaries on' : 'ARTCC off');
+        // FAA ARTCC / terminal / airway overlays (module A0-faa-overlays.js)
+        const bindFaaOverlay = (buttonId, layerKey, label) => {
+            const button = document.getElementById(buttonId);
+            if (!button) return;
+            button.classList.toggle('active', !!faaOverlays?.layers?.[layerKey]?.enabled);
+            button.addEventListener('click', async () => {
+                toast('Loading FAA ' + label + '…');
+                const on = await faaOverlays.toggle(layerKey);
+                button.classList.toggle('active', on);
+                toast(on ? label + ' on' : label + ' off');
             });
-        }
+        };
+        bindFaaOverlay('artccBtn', 'artcc', 'ARTCC');
+        bindFaaOverlay('traconBtn', 'tracon', 'TRACON / CTA');
+        bindFaaOverlay('airwaysBtn', 'airways', 'V/J airways');
         // ISS live tracker (v0.23.0 — module A1-iss-tracker.js)
         const issBtn = document.getElementById('issBtn');
         if (issBtn) {

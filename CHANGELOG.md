@@ -9,6 +9,10 @@ All notable changes to SkyTrack will be documented in this file.
   Class Airspace feature service for viewport-scoped Class B/C/D polygons,
   displays floor/ceiling metadata in each popup, and caches responses in
   IndexedDB for one hour. The previous guessed airport circles are gone.
+- **FAA navigation overlays repaired and expanded.** ARTCC, terminal-area
+  (`TRSA`/`CTA`) and V/J airway layers now use live FAA Feature Services,
+  refresh for the visible map bounds, cache by viewport, and each has its own
+  Tools toggle. Retired ArcGIS Hub download URLs are no longer used.
 
 ## [v0.24.3] - 2026-05-01
 

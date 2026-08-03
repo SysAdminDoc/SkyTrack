@@ -1,61 +1,59 @@
 
-    // ============ FAA ARTCC + AIRWAY OVERLAYS ============
-    // Static GeoJSON overlays served CORS-enabled by the FAA open-data
-    // ArcGIS hub:
-    //   * ARTCC (Air Route Traffic Control Center) boundaries
-    //   * Low-altitude Victor airways
-    //   * High-altitude Jet airways
-    //
-    // Each overlay toggles independently; the whole subsystem fits under
-    // one "FAA" tool button with a lightweight dropdown of the three
-    // layers. Data is fetched once per session and cached in IndexedDB
-    // (via skytrackDB.saveDatabase/loadDatabase) so repeat page-loads
-    // don't re-pay the transfer.
-    //
-    // Footprint: ARTCC polygon file is ~40 KB; low-altitude airways
-    // are ~2 MB — we paint them only when toggled on.
+    // ============ FAA ARTCC / TERMINAL / AIRWAY OVERLAYS ============
+    // FAA's ArcGIS Feature Services are the authoritative public source for
+    // these layers.  The old implementation used retired ArcGIS Hub download
+    // URLs and exposed only the ARTCC toggle even though it carried three
+    // unused layer definitions.  Query the live services by viewport instead
+    // so a global map never downloads every airway in the NAS.
     const faaOverlays = {
         _inited: false,
+        _moveTimer: null,
         map: null,
-        // Per-layer state: fetching promise, leaflet layer, enabled flag.
         layers: {
             artcc: {
                 label: 'ARTCC',
-                url: 'https://opendata.arcgis.com/api/v3/datasets/57f8221881ff4272a3ce8fbed4ed7a05_0/downloads/data?format=geojson&spatialRefId=4326',
-                dbKey: 'faa-artcc',
+                endpoint: 'https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/arcgis/rest/services/Boundary_Airspace/FeatureServer/0/query',
+                where: "TYPE_CODE = 'ARTCC'",
+                fields: 'IDENT,NAME,TYPE_CODE,CLASS,LOCAL_TYPE,UPPER_VAL,UPPER_UOM,UPPER_CODE,LOWER_VAL,LOWER_UOM,LOWER_CODE,CITY,STATE',
+                dbKey: 'faa-artcc-v2',
                 style: { color: '#38bdf8', weight: 1, fillOpacity: 0.05, opacity: 0.8 },
                 labelProp: 'NAME',
-                enabled: false, layer: null, pending: null
+                enabled: false, layer: null, pending: null, cacheKey: null
             },
-            lowAirways: {
-                label: 'V-airways',
-                url: 'https://opendata.arcgis.com/api/v3/datasets/d13a6a4d9a7a4e6cb5e99a4d5f65d2b0_0/downloads/data?format=geojson&spatialRefId=4326',
-                dbKey: 'faa-low-airways',
-                style: { color: '#c084fc', weight: 0.7, opacity: 0.6 },
-                labelProp: 'IDENT',
-                enabled: false, layer: null, pending: null
+            tracon: {
+                label: 'TRACON / CTA',
+                endpoint: 'https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/arcgis/rest/services/Boundary_Airspace/FeatureServer/0/query',
+                where: "TYPE_CODE IN ('TRSA','CTA','CTA-P')",
+                fields: 'IDENT,NAME,TYPE_CODE,CLASS,LOCAL_TYPE,UPPER_VAL,UPPER_UOM,UPPER_CODE,LOWER_VAL,LOWER_UOM,LOWER_CODE,CITY,STATE',
+                dbKey: 'faa-tracon-v1',
+                style: { color: '#34d399', weight: 1, fillOpacity: 0.04, opacity: 0.75 },
+                labelProp: 'NAME',
+                enabled: false, layer: null, pending: null, cacheKey: null
             },
-            highAirways: {
-                label: 'J-airways',
-                url: 'https://opendata.arcgis.com/api/v3/datasets/c4d5d6a3c1404a01b5f6e78f4e10b1e0_0/downloads/data?format=geojson&spatialRefId=4326',
-                dbKey: 'faa-high-airways',
-                style: { color: '#fbbf24', weight: 0.7, opacity: 0.6 },
+            airways: {
+                label: 'V/J airways',
+                endpoint: 'https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/arcgis/rest/services/ATS_Route/FeatureServer/0/query',
+                where: "TYPE_CODE = 'CONV' AND (IDENT LIKE 'V%' OR IDENT LIKE 'J%')",
+                fields: 'IDENT,TYPE_CODE,LEVEL_,WKHR_CODE,MEA_E_VAL,MEA_W_VAL,MAA_VAL',
+                dbKey: 'faa-airways-v2',
+                style: null,
                 labelProp: 'IDENT',
-                enabled: false, layer: null, pending: null
+                enabled: false, layer: null, pending: null, cacheKey: null
             }
         },
 
-        async init(map) {
+        init(map) {
             if (this._inited) return;
             this._inited = true;
             this.map = map;
-            // Restore any previously-enabled overlays from localStorage
-            // (we persist enabled-state there rather than in IDB because
-            // it's a tiny boolean tuple; the heavy GeoJSON blobs go to IDB).
+            map.on('moveend', () => {
+                clearTimeout(this._moveTimer);
+                this._moveTimer = setTimeout(() => this.refreshEnabled(), 700);
+            });
             try {
                 const saved = JSON.parse(localStorage.getItem('skytrack_faa_overlays') || '{}');
-                for (const k of Object.keys(this.layers)) {
-                    if (saved[k] === true) this.toggle(k).catch(() => {});
+                for (const key of Object.keys(this.layers)) {
+                    if (saved[key] === true) this.toggle(key).catch(() => {});
                 }
             } catch (_) { /* corrupt storage */ }
         },
@@ -63,17 +61,139 @@
         save() {
             try {
                 const out = {};
-                for (const k of Object.keys(this.layers)) out[k] = !!this.layers[k].enabled;
+                for (const key of Object.keys(this.layers)) out[key] = !!this.layers[key].enabled;
                 localStorage.setItem('skytrack_faa_overlays', JSON.stringify(out));
             } catch (_) {}
+        },
+
+        _bounds() {
+            if (!this.map || this.map.getZoom() < 4) return null;
+            const b = this.map.getBounds();
+            const south = Math.max(-60, b.getSouth());
+            const north = Math.min(75, b.getNorth());
+            if (!(north > south)) return null;
+            let west = b.getWest();
+            let east = b.getEast();
+            while (west < -180) { west += 360; east += 360; }
+            while (east > 180) { west -= 360; east -= 360; }
+            if (east <= west) { west = -180; east = 180; }
+            const round = value => Math.round(value * 4) / 4;
+            return {
+                west: Math.max(-180, round(west)),
+                south: Math.max(-60, round(south)),
+                east: Math.min(180, round(east)),
+                north: Math.min(75, round(north))
+            };
+        },
+
+        _url(slot, bounds) {
+            const params = new URLSearchParams({
+                where: slot.where,
+                geometry: [bounds.west, bounds.south, bounds.east, bounds.north].join(','),
+                geometryType: 'esriGeometryEnvelope',
+                inSR: '4326',
+                spatialRel: 'esriSpatialRelIntersects',
+                outFields: slot.fields,
+                returnGeometry: 'true',
+                outSR: '4326',
+                resultRecordCount: '2000',
+                f: 'geojson'
+            });
+            return slot.endpoint + '?' + params.toString();
+        },
+
+        _cacheKey(slot, bounds) {
+            return slot.dbKey + '-' + [bounds.west, bounds.south, bounds.east, bounds.north].join('_');
+        },
+
+        async _fetch(slot, bounds, cacheKey) {
+            let cached = null;
+            try {
+                if (typeof skytrackDB === 'object') cached = await skytrackDB.loadDatabase(cacheKey);
+            } catch (_) {}
+            if (cached?.type === 'FeatureCollection') return cached;
+
+            const response = await fetch(this._url(slot, bounds), {
+                cache: 'no-cache',
+                signal: AbortSignal.timeout(30000)
+            });
+            if (!response.ok) throw new Error(slot.label + ' HTTP ' + response.status);
+            const geo = await response.json();
+            if (geo?.error) throw new Error(geo.error.message || slot.label + ' query failed');
+            if (geo?.type !== 'FeatureCollection') throw new Error(slot.label + ' returned invalid GeoJSON');
+            try {
+                if (typeof skytrackDB === 'object') await skytrackDB.saveDatabase(cacheKey, geo, 7 * 86400000);
+            } catch (_) {}
+            return geo;
+        },
+
+        _style(slot, feature) {
+            if (slot !== this.layers.airways) return slot.style;
+            const ident = String(feature?.properties?.IDENT || '').toUpperCase();
+            return {
+                color: ident.startsWith('V') ? '#c084fc' : '#fbbf24',
+                weight: 0.8,
+                opacity: 0.65,
+                interactive: true
+            };
+        },
+
+        _popup(slot, properties) {
+            const p = properties || {};
+            const name = _escHtml(p[slot.labelProp] || slot.label || 'FAA overlay');
+            const kind = _escHtml(p.TYPE_CODE || p.LOCAL_TYPE || '');
+            const location = [p.CITY, p.STATE].filter(Boolean).join(', ');
+            const detail = [kind, location].filter(Boolean).map(_escHtml).join(' · ');
+            const routeLimits = p.LEVEL_ ? '<br>Level: ' + _escHtml(p.LEVEL_) : '';
+            return '<strong>' + name + '</strong>' +
+                (detail ? '<br>' + detail : '') + routeLimits;
+        },
+
+        _createLayer(slot, geo, cacheKey) {
+            if (slot.layer && this.map) this.map.removeLayer(slot.layer);
+            slot.layer = L.geoJSON(geo, {
+                style: feature => this._style(slot, feature),
+                interactive: true,
+                onEachFeature: (feature, layer) => {
+                    layer.bindPopup(this._popup(slot, feature.properties));
+                    const label = feature?.properties?.[slot.labelProp];
+                    if (label && slot !== this.layers.airways) {
+                        layer.bindTooltip(String(label), { sticky: true, direction: 'center' });
+                    }
+                }
+            });
+            slot.cacheKey = cacheKey;
+            if (slot.enabled) slot.layer.addTo(this.map);
+            _dbg('FAA overlay loaded:', slot.label, geo.features?.length || 0);
+        },
+
+        async _ensureLayer(slot) {
+            const bounds = this._bounds();
+            if (!bounds) return false;
+            const cacheKey = this._cacheKey(slot, bounds);
+            if (slot.layer && slot.cacheKey === cacheKey) {
+                if (slot.enabled && !this.map.hasLayer(slot.layer)) slot.layer.addTo(this.map);
+                return true;
+            }
+            if (slot.pending) return slot.pending;
+            slot.pending = (async () => {
+                try {
+                    const geo = await this._fetch(slot, bounds, cacheKey);
+                    this._createLayer(slot, geo, cacheKey);
+                    return true;
+                } finally {
+                    slot.pending = null;
+                }
+            })();
+            return slot.pending;
         },
 
         async toggle(key) {
             const slot = this.layers[key];
             if (!slot || !this.map) return false;
             if (slot.enabled) {
-                this._remove(slot);
                 slot.enabled = false;
+                if (slot.layer && this.map.hasLayer(slot.layer)) this.map.removeLayer(slot.layer);
                 this.save();
                 return false;
             }
@@ -81,58 +201,18 @@
             this.save();
             try {
                 await this._ensureLayer(slot);
-                if (slot.layer && !this.map.hasLayer(slot.layer)) {
-                    slot.layer.addTo(this.map);
-                }
-            } catch (e) {
+                return !!slot.layer;
+            } catch (error) {
                 slot.enabled = false;
                 this.save();
-                try { errorHandler.log('FAA ' + slot.label, e?.message || e); } catch (_) {}
+                try { errorHandler.log('FAA ' + slot.label, error?.message || error); } catch (_) {}
                 return false;
             }
-            return true;
         },
 
-        _remove(slot) {
-            if (slot.layer && this.map.hasLayer(slot.layer)) {
-                try { this.map.removeLayer(slot.layer); } catch (_) {}
-            }
-        },
-
-        async _ensureLayer(slot) {
-            if (slot.layer) return;
-            if (slot.pending) return slot.pending;
-            slot.pending = (async () => {
-                // IDB cache first — these blobs are static, a weekly TTL is plenty.
-                let geo = null;
-                try {
-                    if (typeof skytrackDB === 'object') {
-                        geo = await skytrackDB.loadDatabase(slot.dbKey);
-                    }
-                } catch (_) {}
-                if (!geo) {
-                    const resp = await fetch(slot.url, { signal: AbortSignal.timeout(30000) });
-                    if (!resp.ok) throw new Error(slot.label + ' HTTP ' + resp.status);
-                    geo = await resp.json();
-                    try {
-                        if (typeof skytrackDB === 'object') {
-                            // 7-day TTL; these datasets change rarely.
-                            await skytrackDB.saveDatabase(slot.dbKey, geo, 7 * 86400000);
-                        }
-                    } catch (_) {}
-                }
-                slot.layer = L.geoJSON(geo, {
-                    style: slot.style,
-                    interactive: true,
-                    onEachFeature: (feature, layer) => {
-                        const name = feature?.properties?.[slot.labelProp];
-                        if (name) layer.bindTooltip(String(name), { sticky: true, direction: 'center' });
-                    }
-                });
-                _dbg('FAA overlay loaded:', slot.label, geo?.features?.length);
-            })();
-            try { await slot.pending; }
-            finally { slot.pending = null; }
+        async refreshEnabled() {
+            const active = Object.values(this.layers).filter(slot => slot.enabled);
+            await Promise.allSettled(active.map(slot => this._ensureLayer(slot)));
         }
     };
 

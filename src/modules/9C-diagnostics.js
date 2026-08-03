@@ -128,6 +128,8 @@
             try { out.planeOverHome = !!planeOverHome?.enabled; } catch (_) {}
             try { out.issTracker = !!issTracker?.enabled; } catch (_) {}
             try { out.faaArtcc = !!faaOverlays?.layers?.artcc?.enabled; } catch (_) {}
+            try { out.faaTracon = !!faaOverlays?.layers?.tracon?.enabled; } catch (_) {}
+            try { out.faaAirways = !!faaOverlays?.layers?.airways?.enabled; } catch (_) {}
             return out;
         },
 
