@@ -12,6 +12,6 @@
   "scripts": {
     "build": "node build.mjs",
     "check": "node build.mjs --check",
-    "test": "node --test tests/fire-correlation.test.mjs tests/satellite-3d.test.mjs"
+    "test": "node --test tests/fire-correlation.test.mjs tests/satellite-3d.test.mjs tests/opensky-tracks.test.mjs"
   }
 }

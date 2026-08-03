@@ -25,6 +25,10 @@ All notable changes to SkyTrack will be documented in this file.
   propagates the live ISS and an evenly sampled Starlink catalog from CelesTrak
   OMM data, refreshes positions every five seconds, and exposes a dedicated
   ISS + Starlink control with catalog status in the 3D HUD.
+- **OpenSky historical tracks.** Selected-aircraft trails, exports, and playback
+  now use OpenSky trajectory data with optional OAuth credentials, normalize
+  returned metres to SkyTrack feet, cache recent results, and fall back to the
+  local position history when a track is unavailable.
 
 ## [v0.24.3] - 2026-05-01
 

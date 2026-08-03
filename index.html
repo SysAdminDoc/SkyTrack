@@ -3136,8 +3136,7 @@ if ('serviceWorker' in navigator) {
                         url.hostname.includes('adsbexchange') ||
                         url.hostname.includes('rainviewer') ||
                         url.hostname.includes('planespotters') ||
-                        url.hostname.includes('wikipedia.org') ||
-                        url.pathname.includes('/traces/')) {
+                        url.hostname.includes('wikipedia.org')) {
                         event.respondWith(
                             fetch(event.request).then(response => {
                                 if (response.ok) {
@@ -4159,12 +4158,6 @@ if ('serviceWorker' in navigator) {
         airlineBannerUrl: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/airlines/',
         flagUrl: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/assets/flags/',
         // External APIs (cannot self-host)
-        // Trace host: globe.airplanes.live died (DNS unreachable), adsb.fi
-        // returns 403 to browsers. globe.adsb.lol 302-redirects to adsb.lol
-        // which serves the same tar1090 trace JSON shape and works through
-        // the codetabs CORS proxy. If a future host outage hits adsb.lol,
-        // try globe.adsb.fi or globe.adsbexchange.com next.
-        traceUrl: 'https://globe.adsb.lol/data/traces/',
         planespottersApi: 'https://api.planespotters.net/pub/photos/hex/'
     };
     const DATA_URLS = {
@@ -10362,7 +10355,7 @@ if ('serviceWorker' in navigator) {
                 'connectionMonitor','offlineManager','dataSourceManager','autoRetry','errorRecovery','circuitBreakers',
                 'skytrackDB','weatherSystem','weatherOverlay','alertSystem',
                 'rangeRings','phaseClassifier','countryFlag','emergencyPulse','surveillanceOrbit','firesHurricanes','planeOverHome',
-                'callsignLore','whyHere','logbook','faaOverlays','issTracker','satellite3D',
+                'callsignLore','whyHere','logbook','faaOverlays','issTracker','satellite3D','openSkyTracks',
                 'measureTool','playbackController','geofences','routePredictor','miniMap',
                 'flightCard','sceneUrl','diagnostics'
             ];
@@ -10436,6 +10429,7 @@ if ('serviceWorker' in navigator) {
             try { out.planeOverHome = !!planeOverHome?.enabled; } catch (_) {}
             try { out.issTracker = !!issTracker?.enabled; } catch (_) {}
             try { out.satellite3D = satellite3D?.stats?.() || null; } catch (_) {}
+            try { out.openSkyTracks = openSkyTracks?.stats?.() || null; } catch (_) {}
             try { out.faaArtcc = !!faaOverlays?.layers?.artcc?.enabled; } catch (_) {}
             try { out.faaTracon = !!faaOverlays?.layers?.tracon?.enabled; } catch (_) {}
             try { out.faaAirways = !!faaOverlays?.layers?.airways?.enabled; } catch (_) {}
@@ -11194,6 +11188,216 @@ if ('serviceWorker' in navigator) {
                 iss: this.catalog.filter(record => record.kind === 'iss').length,
                 starlink: this.catalog.filter(record => record.kind === 'starlink').length,
                 entities: this.entities.size
+            };
+        }
+    };
+    // ─── module: modules/A3-opensky-tracks.js ───────────────────────────────────────────
+
+    // ============ OPENSKY HISTORICAL TRACKS ============
+    // OpenSky's track endpoint returns a compact path in metres. Keep the
+    // browser-facing shape compatible with the existing trail renderer:
+    // [unixSeconds, latitude, longitude, altitudeFeet, trueTrack, onGround].
+    const openSkyTracks = {
+        API_URL: 'https://opensky-network.org/api/tracks/all',
+        AUTH_URL: 'https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token',
+        cache: new Map(),
+        cacheTtlMs: 10 * 60 * 1000,
+        historicalCacheTtlMs: 24 * 60 * 60 * 1000,
+        accessToken: null,
+        tokenExpiresAt: 0,
+        requestCount: 0,
+        lastSource: '',
+        lastError: '',
+
+        _credentials() {
+            try {
+                if (typeof apiCredentials === 'object' && apiCredentials?.clientId && apiCredentials?.clientSecret) {
+                    return apiCredentials;
+                }
+            } catch (_) {}
+            try {
+                const stored = JSON.parse(localStorage.getItem('skytrack_api_credentials') || 'null');
+                if (stored?.clientId && stored?.clientSecret) return stored;
+            } catch (_) {}
+            return null;
+        },
+
+        _requestTimeout(url, options = {}, timeout = 12000) {
+            if (typeof errorHandler === 'object' && typeof errorHandler?.fetchWithTimeout === 'function') {
+                return errorHandler.fetchWithTimeout(url, options, timeout);
+            }
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeout);
+            return fetch(url, { ...options, signal: controller.signal })
+                .finally(() => clearTimeout(timer));
+        },
+
+        async _getAccessToken() {
+            const credentials = this._credentials();
+            if (!credentials) return null;
+            if (this.accessToken && Date.now() < this.tokenExpiresAt - 30000) return this.accessToken;
+
+            const body = new URLSearchParams({
+                grant_type: 'client_credentials',
+                client_id: credentials.clientId,
+                client_secret: credentials.clientSecret
+            });
+            const response = await this._requestTimeout(this.AUTH_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            });
+            if (!response.ok) throw new Error('OpenSky authentication ' + response.status);
+            const payload = await response.json();
+            if (!payload?.access_token) throw new Error('OpenSky authentication returned no token');
+            this.accessToken = payload.access_token;
+            this.tokenExpiresAt = Date.now() + Math.max(60000, Number(payload.expires_in || 300) * 1000);
+            return this.accessToken;
+        },
+
+        async _requestTrack(url, token) {
+            const headers = token ? { Authorization: 'Bearer ' + token } : {};
+            let directResponse = null;
+            let directError = null;
+            try {
+                directResponse = await this._requestTimeout(url, { headers });
+                if (directResponse.ok || directResponse.status === 404) {
+                    this.lastSource = 'direct';
+                    return directResponse;
+                }
+            } catch (error) {
+                directError = error;
+            }
+
+            // OpenSky's API has historically varied its browser CORS policy.
+            // Anonymous requests may use the configured public proxy chain;
+            // never send a user's OAuth bearer token through a third party.
+            if (!token && typeof fetchWithProxy === 'function') {
+                try {
+                    const proxied = await fetchWithProxy(url);
+                    if (proxied) {
+                        this.lastSource = 'proxy';
+                        return proxied;
+                    }
+                } catch (_) {}
+            }
+            if (directResponse) return directResponse;
+            throw directError || new Error('OpenSky request failed');
+        },
+
+        _cacheKey(hex, time) {
+            return String(hex).toLowerCase() + ':' + String(time || 0);
+        },
+
+        _cacheTtl(time) {
+            return time ? this.historicalCacheTtlMs : this.cacheTtlMs;
+        },
+
+        async _readCache(key, time) {
+            const memory = this.cache.get(key);
+            if (memory && Date.now() - memory.timestamp < this._cacheTtl(time)) return memory.data;
+            if (memory) this.cache.delete(key);
+            try {
+                if (typeof skytrackDB === 'object' && typeof skytrackDB.loadDatabase === 'function') {
+                    const stored = await skytrackDB.loadDatabase('opensky-track-' + key.replace(':', '-'));
+                    if (stored) {
+                        this.cache.set(key, { data: stored, timestamp: Date.now() });
+                        return stored;
+                    }
+                }
+            } catch (_) {}
+            return null;
+        },
+
+        async _writeCache(key, time, data) {
+            const record = { data, timestamp: Date.now() };
+            this.cache.set(key, record);
+            try {
+                if (typeof skytrackDB === 'object' && typeof skytrackDB.saveDatabase === 'function') {
+                    await skytrackDB.saveDatabase('opensky-track-' + key.replace(':', '-'), data, this._cacheTtl(time));
+                }
+            } catch (_) {}
+        },
+
+        _normalize(payload) {
+            if (!payload || !Array.isArray(payload.path)) return null;
+            const path = payload.path.map(point => {
+                if (!Array.isArray(point) || point.length < 3) return null;
+                if (point[0] === null || point[0] === undefined || point[1] === null || point[1] === undefined || point[2] === null || point[2] === undefined) return null;
+                const time = Number(point[0]);
+                const lat = Number(point[1]);
+                const lon = Number(point[2]);
+                if (![time, lat, lon].every(Number.isFinite) || lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+                const metres = Number(point[3]);
+                const altitude = Number.isFinite(metres) ? Math.max(0, metres / 0.3048) : 0;
+                const track = Number(point[4]);
+                return [time, lat, lon, altitude, Number.isFinite(track) ? track : 0, point[5] === true];
+            }).filter(Boolean);
+            if (path.length < 2) return null;
+            return {
+                source: 'opensky',
+                icao24: String(payload.icao24 || '').toLowerCase(),
+                callsign: String(payload.callsign || '').trim(),
+                startTime: Number(payload.startTime) || path[0][0],
+                endTime: Number(payload.endTime) || path[path.length - 1][0],
+                path
+            };
+        },
+
+        async _fetchTrack(hex, time) {
+            const url = this.API_URL + '?icao24=' + encodeURIComponent(hex) + '&time=' + encodeURIComponent(String(time));
+            this.requestCount++;
+            let token = null;
+            try { token = await this._getAccessToken(); } catch (error) {
+                this.lastError = error?.message || String(error);
+            }
+            let response = await this._requestTrack(url, token);
+            if (token && (response?.status === 401 || response?.status === 403)) {
+                this.accessToken = null;
+                this.tokenExpiresAt = 0;
+                response = await this._requestTrack(url, null);
+            }
+            if (response?.status === 404) return null;
+            if (!response?.ok) throw new Error('OpenSky tracks ' + (response?.status || 'unavailable'));
+            const normalized = this._normalize(await response.json());
+            if (!normalized) return null;
+            return normalized;
+        },
+
+        async getTrack(hex, options = {}) {
+            const normalizedHex = String(hex || '').trim().toLowerCase();
+            if (!/^[0-9a-f]{6}$/.test(normalizedHex)) return null;
+            const requestedTime = Math.max(0, Math.floor(Number(options.time) || 0));
+            const fallbackTime = Math.max(0, Math.floor(Number(options.fallbackTime) || 0));
+            const candidates = [...new Set([requestedTime, fallbackTime])];
+            let lastError = null;
+            for (const time of candidates) {
+                const key = this._cacheKey(normalizedHex, time);
+                const cached = await this._readCache(key, time);
+                if (cached) return cached;
+                try {
+                    const track = await this._fetchTrack(normalizedHex, time);
+                    if (track) {
+                        await this._writeCache(key, time, track);
+                        this.lastError = '';
+                        return track;
+                    }
+                } catch (error) {
+                    lastError = error;
+                    this.lastError = error?.message || String(error);
+                }
+            }
+            if (lastError) throw lastError;
+            return null;
+        },
+
+        stats() {
+            return {
+                cachedTracks: this.cache.size,
+                requests: this.requestCount,
+                lastSource: this.lastSource || null,
+                lastError: this.lastError || null,
+                authenticated: !!this.accessToken
             };
         }
     };
@@ -14495,49 +14699,50 @@ if ('serviceWorker' in navigator) {
         const status = document.getElementById('trailStatus'); status.textContent = 'Loading trail...';
         if (trailLine) { if (trailLine._originMarker) map.removeLayer(trailLine._originMarker); if (trailLine._group) map.removeLayer(trailLine._group); else map.removeLayer(trailLine); trailLine = null; }
         const ac = aircraftCache[hex]; if (!ac) return;
-        const hexSuffix = hex.slice(-2).toLowerCase(), hexLower = hex.toLowerCase();
-        const endpoints = [{ url: CONFIG.traceUrl + hexSuffix + '/trace_full_' + hexLower + '.json', name: 'full' }, { url: CONFIG.traceUrl + hexSuffix + '/trace_recent_' + hexLower + '.json', name: 'recent' }];
-        for (const ep of endpoints) {
-            status.textContent = 'Loading ' + ep.name + ' trail...'; const resp = await fetchWithProxy(ep.url); if (!resp) continue;
-            try { 
-                const data = await resp.json(); 
-                if (data?.trace?.length > 1) { 
-                    const filtered = filterToCurrentFlight(data.trace);
-                    // Detect origin airport from trace data
-                    const originAirport = flightTracker.detectOriginFromTrace(filtered);
-                    if (originAirport && !ac.detectedOrigin) {
-                        ac.detectedOrigin = originAirport;
-                        ac.from = originAirport.icao || originAirport.ident;
-                        _dbg('Detected origin:', ac.from, originAirport.name);
-                        // Try to infer destination
-                        if (ac.flight && routesDB.loaded) {
-                            const airlineCode = getAirlineCode(ac.flight);
-                            if (airlineCode) {
-                                const possibleDest = flightTracker.inferDestination(airlineCode, ac.from);
-                                if (possibleDest) {
-                                    if (Array.isArray(possibleDest)) {
-                                        ac.possibleDestinations = possibleDest;
-                                        ac.to = possibleDest[0];
-                                        ac.destinationInferred = true;
-                                    } else {
-                                        ac.to = possibleDest;
-                                        ac.destinationInferred = true;
-                                    }
-                                    _dbg('Inferred destination:', ac.to);
+        const lastHistoryPoint = ac.history?.[ac.history.length - 1];
+        const historyTimestamp = Number(lastHistoryPoint?.[3] || ac.lastSeen || 0);
+        const fallbackTime = historyTimestamp > 1e11 ? Math.floor(historyTimestamp / 1000) : Math.floor(historyTimestamp);
+        status.textContent = 'Loading OpenSky track…';
+        try {
+            const track = await openSkyTracks.getTrack(hex, { time: 0, fallbackTime });
+            if (track?.path?.length > 1) {
+                const trace = track.path;
+                // Detect origin airport from the OpenSky trajectory.
+                const originAirport = flightTracker.detectOriginFromTrace(trace);
+                if (originAirport && !ac.detectedOrigin) {
+                    ac.detectedOrigin = originAirport;
+                    ac.from = originAirport.icao || originAirport.ident;
+                    _dbg('Detected origin:', ac.from, originAirport.name);
+                    // Try to infer destination.
+                    if (ac.flight && routesDB.loaded) {
+                        const airlineCode = getAirlineCode(ac.flight);
+                        if (airlineCode) {
+                            const possibleDest = flightTracker.inferDestination(airlineCode, ac.from);
+                            if (possibleDest) {
+                                if (Array.isArray(possibleDest)) {
+                                    ac.possibleDestinations = possibleDest;
+                                    ac.to = possibleDest[0];
+                                    ac.destinationInferred = true;
+                                } else {
+                                    ac.to = possibleDest;
+                                    ac.destinationInferred = true;
                                 }
+                                _dbg('Inferred destination:', ac.to);
                             }
                         }
-                        updateRouteDisplay(ac);
                     }
-                    if (settings.altitudeColors) drawAltitudeColoredTrail(filtered, ac); 
-                    else drawSimpleTrail(filtered, ac); 
-                    status.textContent = 'Trail: ' + filtered.length + ' pts'; 
-                    return; 
-                } 
-            } catch(e) { continue; }
+                    updateRouteDisplay(ac);
+                }
+                if (settings.altitudeColors) drawAltitudeColoredTrail(trace, ac);
+                else drawSimpleTrail(trace, ac);
+                status.textContent = 'OpenSky trail: ' + trace.length + ' pts';
+                return;
+            }
+        } catch (error) {
+            _dbg('OpenSky track unavailable:', error?.message || error);
         }
         if (ac.history?.length > 1) { 
-            const trace = ac.history.map(p => [0, p[0], p[1], p[2] || 0, 0]); 
+            const trace = ac.history.map(p => [p[3] ? (p[3] > 1e11 ? p[3] / 1000 : p[3]) : 0, p[0], p[1], p[2] || 0, 0]);
             // Try to detect origin from local history
             const originAirport = flightTracker.detectOrigin(ac);
             if (originAirport && !ac.detectedOrigin) {
@@ -14547,8 +14752,8 @@ if ('serviceWorker' in navigator) {
             }
             if (settings.altitudeColors) drawAltitudeColoredTrail(trace, ac); 
             else drawSimpleTrail(trace, ac); 
-            status.textContent = 'Trail: ' + ac.history.length + ' pts (local)'; 
-        } else status.textContent = 'Trail: Building...';
+            status.textContent = 'Local trail: ' + ac.history.length + ' pts';
+        } else status.textContent = 'OpenSky: no track yet';
     }
     function drawAltitudeColoredTrail(trace, ac) {
         const group = L.layerGroup().addTo(map); let lastSeg = null;
@@ -16237,24 +16442,21 @@ ${trailData.map(p => {
             
             const ac = aircraftCache[hex];
             if (!ac) return null;
-            
-            const hexSuffix = hex.slice(-2).toLowerCase();
-            const hexLower = hex.toLowerCase();
-            
+
+            const lastHistoryPoint = ac.history?.[ac.history.length - 1];
+            const historyTimestamp = Number(lastHistoryPoint?.[3] || ac.lastSeen || 0);
+            const fallbackTime = historyTimestamp > 1e11 ? Math.floor(historyTimestamp / 1000) : Math.floor(historyTimestamp);
             try {
-                const resp = await fetchWithProxy(CONFIG.traceUrl + hexSuffix + '/trace_full_' + hexLower + '.json');
-                if (resp) {
-                    const data = await resp.json();
-                    if (data?.trace) {
-                        return data.trace.map(t => ({
-                            lat: t[1],
-                            lon: t[2],
-                            alt: t[3] || 0,
-                            time: t[0]
-                        }));
-                    }
+                const track = await openSkyTracks.getTrack(hex, { time: 0, fallbackTime });
+                if (track?.path?.length) {
+                    return track.path.map(point => ({
+                        lat: point[1],
+                        lon: point[2],
+                        alt: point[3] || 0,
+                        time: point[0]
+                    }));
                 }
-            } catch (e) {}
+            } catch (_) {}
             
             return null;
         },

@@ -71,7 +71,7 @@ step is only needed when you want to ship a fresh single-file `index.html`.
 | Multi-Source ADS-B | Parallel data from Airplanes.live, ADSB One, and ADSB.lol with automatic failover |
 | Grid Fetch | Viewport-tiled API requests for global coverage — see every plane in the sky |
 | Smooth Animation | Interpolated movement on 2D map via `requestAnimationFrame`, SampledPositionProperty on 3D globe |
-| History Trails | Altitude-colored flight paths with local + API trace data |
+| History Trails | Altitude-colored flight paths with local history and OpenSky trajectory data |
 | Aircraft Photos | Auto-fetched from planespotters.net with preloaded image database |
 | Trail Export | Export flight paths as KML or GeoJSON |
 | Share Flight | Generate shareable links for specific aircraft |
@@ -228,6 +228,7 @@ Additional on-demand enrichment APIs (called only for the selected aircraft):
 | [adsbdb.com v2](https://www.adsbdb.com) | Callsign → origin/destination airport lookup (400k+ routes) |
 | [hexdb.io](https://hexdb.io) | Fallback callsign→route and aircraft/airport metadata |
 | [aviationweather.gov /api/data](https://aviationweather.gov/data/api/) | SIGMET, G-AIRMET, CWA, PIREP, METAR, TAF, NOTAM |
+| [OpenSky tracks API](https://openskynetwork.github.io/opensky-api/rest.html#track-by-aircraft) | Historical trajectory for the selected aircraft; optional OAuth credentials raise the daily quota |
 
 The grid fetch system tiles the visible map area with overlapping 250nm radius API queries, distributing requests across sources at 1 req/sec per API. At global zoom, this covers the entire planet in ~16 seconds with progressive loading.
 

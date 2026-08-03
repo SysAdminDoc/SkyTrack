@@ -132,8 +132,7 @@ if ('serviceWorker' in navigator) {
                         url.hostname.includes('adsbexchange') ||
                         url.hostname.includes('rainviewer') ||
                         url.hostname.includes('planespotters') ||
-                        url.hostname.includes('wikipedia.org') ||
-                        url.pathname.includes('/traces/')) {
+                        url.hostname.includes('wikipedia.org')) {
                         event.respondWith(
                             fetch(event.request).then(response => {
                                 if (response.ok) {

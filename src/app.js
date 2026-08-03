@@ -3187,49 +3187,50 @@
         const status = document.getElementById('trailStatus'); status.textContent = 'Loading trail...';
         if (trailLine) { if (trailLine._originMarker) map.removeLayer(trailLine._originMarker); if (trailLine._group) map.removeLayer(trailLine._group); else map.removeLayer(trailLine); trailLine = null; }
         const ac = aircraftCache[hex]; if (!ac) return;
-        const hexSuffix = hex.slice(-2).toLowerCase(), hexLower = hex.toLowerCase();
-        const endpoints = [{ url: CONFIG.traceUrl + hexSuffix + '/trace_full_' + hexLower + '.json', name: 'full' }, { url: CONFIG.traceUrl + hexSuffix + '/trace_recent_' + hexLower + '.json', name: 'recent' }];
-        for (const ep of endpoints) {
-            status.textContent = 'Loading ' + ep.name + ' trail...'; const resp = await fetchWithProxy(ep.url); if (!resp) continue;
-            try { 
-                const data = await resp.json(); 
-                if (data?.trace?.length > 1) { 
-                    const filtered = filterToCurrentFlight(data.trace);
-                    // Detect origin airport from trace data
-                    const originAirport = flightTracker.detectOriginFromTrace(filtered);
-                    if (originAirport && !ac.detectedOrigin) {
-                        ac.detectedOrigin = originAirport;
-                        ac.from = originAirport.icao || originAirport.ident;
-                        _dbg('Detected origin:', ac.from, originAirport.name);
-                        // Try to infer destination
-                        if (ac.flight && routesDB.loaded) {
-                            const airlineCode = getAirlineCode(ac.flight);
-                            if (airlineCode) {
-                                const possibleDest = flightTracker.inferDestination(airlineCode, ac.from);
-                                if (possibleDest) {
-                                    if (Array.isArray(possibleDest)) {
-                                        ac.possibleDestinations = possibleDest;
-                                        ac.to = possibleDest[0];
-                                        ac.destinationInferred = true;
-                                    } else {
-                                        ac.to = possibleDest;
-                                        ac.destinationInferred = true;
-                                    }
-                                    _dbg('Inferred destination:', ac.to);
+        const lastHistoryPoint = ac.history?.[ac.history.length - 1];
+        const historyTimestamp = Number(lastHistoryPoint?.[3] || ac.lastSeen || 0);
+        const fallbackTime = historyTimestamp > 1e11 ? Math.floor(historyTimestamp / 1000) : Math.floor(historyTimestamp);
+        status.textContent = 'Loading OpenSky track…';
+        try {
+            const track = await openSkyTracks.getTrack(hex, { time: 0, fallbackTime });
+            if (track?.path?.length > 1) {
+                const trace = track.path;
+                // Detect origin airport from the OpenSky trajectory.
+                const originAirport = flightTracker.detectOriginFromTrace(trace);
+                if (originAirport && !ac.detectedOrigin) {
+                    ac.detectedOrigin = originAirport;
+                    ac.from = originAirport.icao || originAirport.ident;
+                    _dbg('Detected origin:', ac.from, originAirport.name);
+                    // Try to infer destination.
+                    if (ac.flight && routesDB.loaded) {
+                        const airlineCode = getAirlineCode(ac.flight);
+                        if (airlineCode) {
+                            const possibleDest = flightTracker.inferDestination(airlineCode, ac.from);
+                            if (possibleDest) {
+                                if (Array.isArray(possibleDest)) {
+                                    ac.possibleDestinations = possibleDest;
+                                    ac.to = possibleDest[0];
+                                    ac.destinationInferred = true;
+                                } else {
+                                    ac.to = possibleDest;
+                                    ac.destinationInferred = true;
                                 }
+                                _dbg('Inferred destination:', ac.to);
                             }
                         }
-                        updateRouteDisplay(ac);
                     }
-                    if (settings.altitudeColors) drawAltitudeColoredTrail(filtered, ac); 
-                    else drawSimpleTrail(filtered, ac); 
-                    status.textContent = 'Trail: ' + filtered.length + ' pts'; 
-                    return; 
-                } 
-            } catch(e) { continue; }
+                    updateRouteDisplay(ac);
+                }
+                if (settings.altitudeColors) drawAltitudeColoredTrail(trace, ac);
+                else drawSimpleTrail(trace, ac);
+                status.textContent = 'OpenSky trail: ' + trace.length + ' pts';
+                return;
+            }
+        } catch (error) {
+            _dbg('OpenSky track unavailable:', error?.message || error);
         }
         if (ac.history?.length > 1) { 
-            const trace = ac.history.map(p => [0, p[0], p[1], p[2] || 0, 0]); 
+            const trace = ac.history.map(p => [p[3] ? (p[3] > 1e11 ? p[3] / 1000 : p[3]) : 0, p[0], p[1], p[2] || 0, 0]);
             // Try to detect origin from local history
             const originAirport = flightTracker.detectOrigin(ac);
             if (originAirport && !ac.detectedOrigin) {
@@ -3239,8 +3240,8 @@
             }
             if (settings.altitudeColors) drawAltitudeColoredTrail(trace, ac); 
             else drawSimpleTrail(trace, ac); 
-            status.textContent = 'Trail: ' + ac.history.length + ' pts (local)'; 
-        } else status.textContent = 'Trail: Building...';
+            status.textContent = 'Local trail: ' + ac.history.length + ' pts';
+        } else status.textContent = 'OpenSky: no track yet';
     }
     function drawAltitudeColoredTrail(trace, ac) {
         const group = L.layerGroup().addTo(map); let lastSeg = null;
@@ -4929,24 +4930,21 @@ ${trailData.map(p => {
             
             const ac = aircraftCache[hex];
             if (!ac) return null;
-            
-            const hexSuffix = hex.slice(-2).toLowerCase();
-            const hexLower = hex.toLowerCase();
-            
+
+            const lastHistoryPoint = ac.history?.[ac.history.length - 1];
+            const historyTimestamp = Number(lastHistoryPoint?.[3] || ac.lastSeen || 0);
+            const fallbackTime = historyTimestamp > 1e11 ? Math.floor(historyTimestamp / 1000) : Math.floor(historyTimestamp);
             try {
-                const resp = await fetchWithProxy(CONFIG.traceUrl + hexSuffix + '/trace_full_' + hexLower + '.json');
-                if (resp) {
-                    const data = await resp.json();
-                    if (data?.trace) {
-                        return data.trace.map(t => ({
-                            lat: t[1],
-                            lon: t[2],
-                            alt: t[3] || 0,
-                            time: t[0]
-                        }));
-                    }
+                const track = await openSkyTracks.getTrack(hex, { time: 0, fallbackTime });
+                if (track?.path?.length) {
+                    return track.path.map(point => ({
+                        lat: point[1],
+                        lon: point[2],
+                        alt: point[3] || 0,
+                        time: point[0]
+                    }));
                 }
-            } catch (e) {}
+            } catch (_) {}
             
             return null;
         },
