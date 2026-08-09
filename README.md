@@ -75,6 +75,7 @@ step is only needed when you want to ship a fresh single-file `index.html`.
 | Aircraft Photos | Auto-fetched from planespotters.net with preloaded image database |
 | Category SVG Sprites | Inline top-down silhouettes distinguish light, small, large, heavy, rotorcraft, glider, balloon, UAV, and space categories |
 | High-Volume Rendering | Canvas-backed points for ordinary traffic at 800+ aircraft; selected and priority aircraft keep detailed icons |
+| Privacy Markers | PIA/LADD aircraft use a dashed magenta outline and `?` badge to make anonymized addresses explicit |
 | Trail Export | Export flight paths as KML or GeoJSON |
 | Share Flight | Generate shareable links for specific aircraft |
 | Historical Playback | Scrub through recorded flight paths with playback controls |
@@ -144,6 +145,7 @@ step is only needed when you want to ship a fresh single-file `index.html`.
 | Aircraft Clustering | Group dense traffic into expandable clusters |
 | Fast Clustering | Supercluster viewport index keeps dense global views responsive |
 | Virtualized List | Mobile aircraft list keeps the full sortable set without mounting every row |
+| Privacy Aircraft | PIA/LADD traffic is visibly marked without relying on the randomized ICAO24 value alone |
 
 ### Monitoring & Alerts
 

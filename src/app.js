@@ -1987,7 +1987,7 @@
         } catch (e) { /* corrupt storage */ }
         return false;
     }
-    function saveAircraftCache() { try { const d = { ts: Date.now(), ac: {} }; const keys = Object.keys(aircraftCache); for (let i = 0; i < keys.length; i++) { const h = keys[i], a = aircraftCache[h]; d.ac[h] = { hex: a.hex, flight: a.flight, r: a.r, t: a.t, desc: a.desc, ownOp: a.ownOp, lat: a.lat, lon: a.lon, alt_baro: a.alt_baro, gs: a.gs, track: a.track, baro_rate: a.baro_rate, squawk: a.squawk, category: a.category, dbFlags: a.dbFlags, from: a.from, to: a.to, lastSeen: a.lastSeen, history: a.history?.slice(-50) || [] }; } localStorage.setItem('skytrack_aircraft', JSON.stringify(d)); } catch(e){} }
+    function saveAircraftCache() { try { const d = { ts: Date.now(), ac: {} }; const keys = Object.keys(aircraftCache); for (let i = 0; i < keys.length; i++) { const h = keys[i], a = aircraftCache[h]; d.ac[h] = { hex: a.hex, flight: a.flight, r: a.r, t: a.t, desc: a.desc, ownOp: a.ownOp, lat: a.lat, lon: a.lon, alt_baro: a.alt_baro, gs: a.gs, track: a.track, baro_rate: a.baro_rate, squawk: a.squawk, category: a.category, dbFlags: a.dbFlags, ladd: a.ladd, isLadd: a.isLadd, privacyIcaoAddress: a.privacyIcaoAddress, privacy: a.privacy, from: a.from, to: a.to, lastSeen: a.lastSeen, history: a.history?.slice(-50) || [] }; } localStorage.setItem('skytrack_aircraft', JSON.stringify(d)); } catch(e){} }
     function loadAircraftCache() { try { const s = localStorage.getItem('skytrack_aircraft'); if (s) { const d = JSON.parse(s); if (Date.now() - d.ts < CONFIG.cacheExpiry) { aircraftCache = d.ac; return true; } } } catch(e){} return false; }
     function saveSettings() { localStorage.setItem('skytrack_settings_v3', JSON.stringify(settings)); }
     function normalizeUiText(text) { return String(text ?? '').replace(/\.{3}/g, '…'); }
@@ -2746,6 +2746,10 @@
                 if (ac.squawk) existing.squawk = ac.squawk;
                 if (ac.category) existing.category = ac.category;
                 if (ac.dbFlags !== undefined) existing.dbFlags = ac.dbFlags;
+                if (ac.ladd !== undefined) existing.ladd = ac.ladd;
+                if (ac.isLadd !== undefined) existing.isLadd = ac.isLadd;
+                if (ac.privacyIcaoAddress !== undefined) existing.privacyIcaoAddress = ac.privacyIcaoAddress;
+                if (ac.privacy !== undefined) existing.privacy = ac.privacy;
                 if (ac.from) existing.from = ac.from;
                 if (ac.to) existing.to = ac.to;
                 existing.lastSeen = now;
@@ -2776,7 +2780,7 @@
                 if (ac.lat !== undefined && ac.lon !== undefined) history.push([ac.lat, ac.lon, ac.alt_baro || 0, now]);
                 const cached = { hex, flight: (ac.flight?.trim()) || '', r: ac.r || '', t: ac.t || '', desc: ac.desc || '', ownOp: ac.ownOp || ac.operator || '',
                     lat: ac.lat, lon: ac.lon, alt_baro: ac.alt_baro, gs: ac.gs, track: ac.track, baro_rate: ac.baro_rate,
-                    squawk: ac.squawk || '', category: ac.category || '', dbFlags: ac.dbFlags, from: ac.from || '', to: ac.to || '',
+                    squawk: ac.squawk || '', category: ac.category || '', dbFlags: ac.dbFlags, ladd: ac.ladd, isLadd: ac.isLadd, privacyIcaoAddress: ac.privacyIcaoAddress, privacy: ac.privacy, from: ac.from || '', to: ac.to || '',
                     lastSeen: now, history, category_type: null, interesting: null, airlineName: null, militaryInfo: null, piaInfo: null, alliance: null, militaryRangeInfo: null, year: null, isVIP: false, civilianInteresting: null, _enriched: false };
                 aircraftCache[hex] = cached;
                 
@@ -2928,7 +2932,7 @@
     // Synchronous version for processAircraftData (needs immediate update after new data)
     function updateMarkersSync() { if (_updateMarkersRaf) { cancelAnimationFrame(_updateMarkersRaf); _updateMarkersRaf = 0; } _updateMarkersCore(); }
 
-    function isPriorityAircraft(ac) { return ac?.hex === selectedHex || !!(ac?.isVIP || ac?.interesting || ac?.militaryInfo || ac?.piaInfo); }
+    function isPriorityAircraft(ac) { return ac?.hex === selectedHex || !!(ac?.isVIP || ac?.interesting || ac?.militaryInfo || isPrivacyAircraft(ac)); }
     function handleAircraftSelection(hex, event) {
         if (event?.originalEvent?.ctrlKey || event?.originalEvent?.metaKey) {
             if (!multiSelect.enabled) {
@@ -2974,7 +2978,8 @@
         const dim = (selectedHex && !sel) ? 1 : 0;
         const lbl = settings.showLabels ? 1 : 0;
         const bdg = settings.showInterestingBadges ? 1 : 0;
-        return ac.hex + '|' + altBand + '|' + rot + '|' + sel + dim + lbl + bdg + '|' + (ac.flight || '') + '|' + (ac.t || '') + '|' + (ac.category || '') + '|' + (ac.desc || '');
+        const privacy = isPrivacyAircraft(ac) ? 1 : 0;
+        return ac.hex + '|' + altBand + '|' + rot + '|' + sel + dim + lbl + bdg + privacy + '|' + (ac.flight || '') + '|' + (ac.t || '') + '|' + (ac.category || '') + '|' + (ac.desc || '');
     }
 
     function createIcon(ac) {
@@ -2985,10 +2990,12 @@
         const rot = ac.track || 0;
         const sel = ac.hex === selectedHex;
         const size = sel ? 36 : 28;
-        const isInteresting = ac.interesting || ac.militaryInfo || ac.piaInfo;
+        const privacyInfo = privacyMarkerInfo(ac);
+        const isPrivacy = !!privacyInfo;
+        const isInteresting = ac.interesting || ac.militaryInfo || isPrivacy;
         const isVIP = ac.isVIP || badgersBestDB.isVIP(ac.hex);
         const isDimmed = selectedHex && ac.hex !== selectedHex;
-        const interestingCategory = ac.piaInfo ? 'PIA' : (ac.interesting?.category || ac.militaryInfo?.category);
+        const interestingCategory = isPrivacy ? 'PIA' : (ac.interesting?.category || ac.militaryInfo?.category);
         
         let label = '';
         if (settings.showLabels && (ac.flight || ac.hex)) {
@@ -2998,8 +3005,8 @@
         
         let badge = '';
         if (isInteresting && !sel && settings.showInterestingBadges) {
-            const badgeColor = interestingDB.getCategoryColor(interestingCategory);
-            const badgeIcon = interestingDB.getCategoryIcon(interestingCategory);
+            const badgeColor = privacyInfo?.color || interestingDB.getCategoryColor(interestingCategory);
+            const badgeIcon = privacyInfo?.badge || interestingDB.getCategoryIcon(interestingCategory);
             badge = '<div class="interesting-badge" style="background:' + badgeColor + '">' + badgeIcon + '</div>';
         }
         
@@ -3009,6 +3016,7 @@
         const className = 'aircraft-marker' + 
             (sel ? ' selected' : '') + 
             (isInteresting ? ' interesting' : '') + 
+            (isPrivacy ? ' pia' : '') +
             (isVIP ? ' vip' : '') + 
             (isDimmed ? ' dimmed' : '');
         

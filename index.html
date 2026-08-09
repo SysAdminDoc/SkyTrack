@@ -88,6 +88,8 @@
         .aircraft-marker.selected { z-index: 10000 !important; }
         .aircraft-marker .sprite-icon { display: block; image-rendering: auto; overflow: visible; pointer-events: none; }
         .aircraft-marker.interesting { z-index: 5000 !important; }
+        .aircraft-marker.pia::after { content: ''; position: absolute; top: 50%; left: 50%; width: calc(100% + 12px); height: calc(100% + 12px); transform: translate(-50%, -50%); border: 2px dashed var(--pia); border-radius: 50%; pointer-events: none; opacity: 0.95; }
+        .aircraft-marker.pia .sprite-icon { filter: drop-shadow(0 0 4px var(--pia)); }
         .aircraft-marker.vip { z-index: 6000 !important; }
         .aircraft-marker.vip .sprite-icon { filter: brightness(0) invert(1) sepia(1) saturate(10) hue-rotate(35deg) brightness(1.3) drop-shadow(0 0 8px #ffd700) drop-shadow(0 0 4px #ffd700) !important; }
         .aircraft-marker.dimmed .sprite-icon { opacity: 0.3; }
@@ -11933,6 +11935,21 @@ if ('serviceWorker' in navigator) {
         const end = Math.max(start, Math.min(count, Math.ceil((top + viewport) / rowHeight) + extra));
         return { start, end, totalHeight: count * rowHeight };
     }
+    // ─── module: modules/A8-privacy-markers.js ───────────────────────────────────────────
+
+    // ============ PIA / LADD MARKER METADATA ============
+    // PIA aircraft are known from the bundled database. Some tar1090-style
+    // feeds also expose a LADD/privacy flag directly; accept those optional
+    // fields without interpreting the broader dbFlags military bit.
+    function isPrivacyAircraft(ac = {}) {
+        const truthyFlag = value => value === true || value === 1 || value === '1' || value === 'true';
+        return !!ac.piaInfo || truthyFlag(ac.ladd) || truthyFlag(ac.isLadd) || truthyFlag(ac.privacyIcaoAddress) || truthyFlag(ac.privacy);
+    }
+
+    function privacyMarkerInfo(ac = {}) {
+        if (!isPrivacyAircraft(ac)) return null;
+        return { label: 'Privacy ICAO address', badge: '?', color: '#ec4899' };
+    }
     // ─── module: modules/AA-flight-analytics.js ───────────────────────────────────────────
 
     // ============ FLIGHT ANALYTICS ============
@@ -14031,7 +14048,7 @@ if ('serviceWorker' in navigator) {
         } catch (e) { /* corrupt storage */ }
         return false;
     }
-    function saveAircraftCache() { try { const d = { ts: Date.now(), ac: {} }; const keys = Object.keys(aircraftCache); for (let i = 0; i < keys.length; i++) { const h = keys[i], a = aircraftCache[h]; d.ac[h] = { hex: a.hex, flight: a.flight, r: a.r, t: a.t, desc: a.desc, ownOp: a.ownOp, lat: a.lat, lon: a.lon, alt_baro: a.alt_baro, gs: a.gs, track: a.track, baro_rate: a.baro_rate, squawk: a.squawk, category: a.category, dbFlags: a.dbFlags, from: a.from, to: a.to, lastSeen: a.lastSeen, history: a.history?.slice(-50) || [] }; } localStorage.setItem('skytrack_aircraft', JSON.stringify(d)); } catch(e){} }
+    function saveAircraftCache() { try { const d = { ts: Date.now(), ac: {} }; const keys = Object.keys(aircraftCache); for (let i = 0; i < keys.length; i++) { const h = keys[i], a = aircraftCache[h]; d.ac[h] = { hex: a.hex, flight: a.flight, r: a.r, t: a.t, desc: a.desc, ownOp: a.ownOp, lat: a.lat, lon: a.lon, alt_baro: a.alt_baro, gs: a.gs, track: a.track, baro_rate: a.baro_rate, squawk: a.squawk, category: a.category, dbFlags: a.dbFlags, ladd: a.ladd, isLadd: a.isLadd, privacyIcaoAddress: a.privacyIcaoAddress, privacy: a.privacy, from: a.from, to: a.to, lastSeen: a.lastSeen, history: a.history?.slice(-50) || [] }; } localStorage.setItem('skytrack_aircraft', JSON.stringify(d)); } catch(e){} }
     function loadAircraftCache() { try { const s = localStorage.getItem('skytrack_aircraft'); if (s) { const d = JSON.parse(s); if (Date.now() - d.ts < CONFIG.cacheExpiry) { aircraftCache = d.ac; return true; } } } catch(e){} return false; }
     function saveSettings() { localStorage.setItem('skytrack_settings_v3', JSON.stringify(settings)); }
     function normalizeUiText(text) { return String(text ?? '').replace(/\.{3}/g, '…'); }
@@ -14790,6 +14807,10 @@ if ('serviceWorker' in navigator) {
                 if (ac.squawk) existing.squawk = ac.squawk;
                 if (ac.category) existing.category = ac.category;
                 if (ac.dbFlags !== undefined) existing.dbFlags = ac.dbFlags;
+                if (ac.ladd !== undefined) existing.ladd = ac.ladd;
+                if (ac.isLadd !== undefined) existing.isLadd = ac.isLadd;
+                if (ac.privacyIcaoAddress !== undefined) existing.privacyIcaoAddress = ac.privacyIcaoAddress;
+                if (ac.privacy !== undefined) existing.privacy = ac.privacy;
                 if (ac.from) existing.from = ac.from;
                 if (ac.to) existing.to = ac.to;
                 existing.lastSeen = now;
@@ -14820,7 +14841,7 @@ if ('serviceWorker' in navigator) {
                 if (ac.lat !== undefined && ac.lon !== undefined) history.push([ac.lat, ac.lon, ac.alt_baro || 0, now]);
                 const cached = { hex, flight: (ac.flight?.trim()) || '', r: ac.r || '', t: ac.t || '', desc: ac.desc || '', ownOp: ac.ownOp || ac.operator || '',
                     lat: ac.lat, lon: ac.lon, alt_baro: ac.alt_baro, gs: ac.gs, track: ac.track, baro_rate: ac.baro_rate,
-                    squawk: ac.squawk || '', category: ac.category || '', dbFlags: ac.dbFlags, from: ac.from || '', to: ac.to || '',
+                    squawk: ac.squawk || '', category: ac.category || '', dbFlags: ac.dbFlags, ladd: ac.ladd, isLadd: ac.isLadd, privacyIcaoAddress: ac.privacyIcaoAddress, privacy: ac.privacy, from: ac.from || '', to: ac.to || '',
                     lastSeen: now, history, category_type: null, interesting: null, airlineName: null, militaryInfo: null, piaInfo: null, alliance: null, militaryRangeInfo: null, year: null, isVIP: false, civilianInteresting: null, _enriched: false };
                 aircraftCache[hex] = cached;
                 
@@ -14972,7 +14993,7 @@ if ('serviceWorker' in navigator) {
     // Synchronous version for processAircraftData (needs immediate update after new data)
     function updateMarkersSync() { if (_updateMarkersRaf) { cancelAnimationFrame(_updateMarkersRaf); _updateMarkersRaf = 0; } _updateMarkersCore(); }
 
-    function isPriorityAircraft(ac) { return ac?.hex === selectedHex || !!(ac?.isVIP || ac?.interesting || ac?.militaryInfo || ac?.piaInfo); }
+    function isPriorityAircraft(ac) { return ac?.hex === selectedHex || !!(ac?.isVIP || ac?.interesting || ac?.militaryInfo || isPrivacyAircraft(ac)); }
     function handleAircraftSelection(hex, event) {
         if (event?.originalEvent?.ctrlKey || event?.originalEvent?.metaKey) {
             if (!multiSelect.enabled) {
@@ -15018,7 +15039,8 @@ if ('serviceWorker' in navigator) {
         const dim = (selectedHex && !sel) ? 1 : 0;
         const lbl = settings.showLabels ? 1 : 0;
         const bdg = settings.showInterestingBadges ? 1 : 0;
-        return ac.hex + '|' + altBand + '|' + rot + '|' + sel + dim + lbl + bdg + '|' + (ac.flight || '') + '|' + (ac.t || '') + '|' + (ac.category || '') + '|' + (ac.desc || '');
+        const privacy = isPrivacyAircraft(ac) ? 1 : 0;
+        return ac.hex + '|' + altBand + '|' + rot + '|' + sel + dim + lbl + bdg + privacy + '|' + (ac.flight || '') + '|' + (ac.t || '') + '|' + (ac.category || '') + '|' + (ac.desc || '');
     }
 
     function createIcon(ac) {
@@ -15029,10 +15051,12 @@ if ('serviceWorker' in navigator) {
         const rot = ac.track || 0;
         const sel = ac.hex === selectedHex;
         const size = sel ? 36 : 28;
-        const isInteresting = ac.interesting || ac.militaryInfo || ac.piaInfo;
+        const privacyInfo = privacyMarkerInfo(ac);
+        const isPrivacy = !!privacyInfo;
+        const isInteresting = ac.interesting || ac.militaryInfo || isPrivacy;
         const isVIP = ac.isVIP || badgersBestDB.isVIP(ac.hex);
         const isDimmed = selectedHex && ac.hex !== selectedHex;
-        const interestingCategory = ac.piaInfo ? 'PIA' : (ac.interesting?.category || ac.militaryInfo?.category);
+        const interestingCategory = isPrivacy ? 'PIA' : (ac.interesting?.category || ac.militaryInfo?.category);
         
         let label = '';
         if (settings.showLabels && (ac.flight || ac.hex)) {
@@ -15042,8 +15066,8 @@ if ('serviceWorker' in navigator) {
         
         let badge = '';
         if (isInteresting && !sel && settings.showInterestingBadges) {
-            const badgeColor = interestingDB.getCategoryColor(interestingCategory);
-            const badgeIcon = interestingDB.getCategoryIcon(interestingCategory);
+            const badgeColor = privacyInfo?.color || interestingDB.getCategoryColor(interestingCategory);
+            const badgeIcon = privacyInfo?.badge || interestingDB.getCategoryIcon(interestingCategory);
             badge = '<div class="interesting-badge" style="background:' + badgeColor + '">' + badgeIcon + '</div>';
         }
         
@@ -15053,6 +15077,7 @@ if ('serviceWorker' in navigator) {
         const className = 'aircraft-marker' + 
             (sel ? ' selected' : '') + 
             (isInteresting ? ' interesting' : '') + 
+            (isPrivacy ? ' pia' : '') +
             (isVIP ? ' vip' : '') + 
             (isDimmed ? ' dimmed' : '');
         

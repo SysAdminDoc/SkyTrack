@@ -46,6 +46,9 @@ All notable changes to SkyTrack will be documented in this file.
 - **Virtualized aircraft list.** The mobile aircraft sheet now sorts the full
   live set but mounts only the visible rows plus overscan, removing the former
   100-aircraft cap and avoiding large DOM rebuilds.
+- **PIA/LADD privacy markers.** Aircraft carrying privacy-address metadata now
+  receive a dashed magenta outline and `?` badge, with privacy fields retained
+  in the offline aircraft cache.
 
 ## [v0.24.3] - 2026-05-01
 

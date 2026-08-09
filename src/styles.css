@@ -41,6 +41,8 @@
         .aircraft-marker.selected { z-index: 10000 !important; }
         .aircraft-marker .sprite-icon { display: block; image-rendering: auto; overflow: visible; pointer-events: none; }
         .aircraft-marker.interesting { z-index: 5000 !important; }
+        .aircraft-marker.pia::after { content: ''; position: absolute; top: 50%; left: 50%; width: calc(100% + 12px); height: calc(100% + 12px); transform: translate(-50%, -50%); border: 2px dashed var(--pia); border-radius: 50%; pointer-events: none; opacity: 0.95; }
+        .aircraft-marker.pia .sprite-icon { filter: drop-shadow(0 0 4px var(--pia)); }
         .aircraft-marker.vip { z-index: 6000 !important; }
         .aircraft-marker.vip .sprite-icon { filter: brightness(0) invert(1) sepia(1) saturate(10) hue-rotate(35deg) brightness(1.3) drop-shadow(0 0 8px #ffd700) drop-shadow(0 0 4px #ffd700) !important; }
         .aircraft-marker.dimmed .sprite-icon { opacity: 0.3; }
