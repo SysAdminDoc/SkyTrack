@@ -5,6 +5,10 @@ All notable changes to SkyTrack will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Storytelling and local analysis tools.** Added plain-English METAR and
+  ATC phrase explanations, an alert event ticker, pattern-work detection,
+  Flight-of-the-Day cards, printable aircraft dossiers, and annotated trail
+  GeoJSON export.
 - **Viewport traffic analytics.** Added flow-vector and average-altitude mesh
   overlays plus a stats dashboard for visible airline flight levels, observed
   arrival hours, and route-divergence anomalies.

@@ -231,6 +231,7 @@
         
         showAlert(alert) {
             this.showInAppNotification(alert);
+            try { eventTicker.record(alert); } catch (_) {}
             if (this.soundEnabled) this.playSound(alert.alertType.sound);
             if (this.notificationsEnabled) this.showBrowserNotification(alert);
         },

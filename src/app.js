@@ -2777,8 +2777,23 @@
                     if (metar.weather) {
                         weatherHtml += '<div class="weather-alert">Weather: ' + _escHtml(metar.weather) + '</div>';
                     }
-                    weatherHtml += '<div class="weather-raw">' + _escHtml(metar.raw) + '</div>';
+                    weatherHtml += '<div class="weather-raw">' + _escHtml(metar.raw) + '</div><button class="weather-decode-btn" id="decodeMetarBtn" type="button">Read METAR</button><div class="weather-decoded" id="decodedMetar" hidden></div><div class="weather-atc-decoder"><input class="weather-atc-input" id="atcPhraseInput" placeholder="Paste ATC phrase…" aria-label="ATC phrase to explain"><button class="weather-decode-btn" id="decodeAtcBtn" type="button">Explain ATC</button><div class="weather-decoded" id="decodedAtc" hidden></div></div>';
                     weatherDiv.innerHTML = weatherHtml;
+                    weatherDiv.querySelector('#decodeMetarBtn')?.addEventListener('click', event => {
+                        const decoded = weatherDiv.querySelector('#decodedMetar');
+                        if (!decoded) return;
+                        decoded.hidden = !decoded.hidden;
+                        decoded.textContent = decoded.hidden ? '' : metarDecoder.explain(metar.raw, metar);
+                        event.currentTarget.textContent = decoded.hidden ? 'Read METAR' : 'Hide explanation';
+                    });
+                    weatherDiv.querySelector('#decodeAtcBtn')?.addEventListener('click', event => {
+                        const input = weatherDiv.querySelector('#atcPhraseInput');
+                        const decoded = weatherDiv.querySelector('#decodedAtc');
+                        if (!input || !decoded) return;
+                        decoded.hidden = false;
+                        decoded.textContent = metarDecoder.explainClearance(input.value);
+                        event.currentTarget.textContent = 'Explain again';
+                    });
                 } else {
                     weatherDiv.innerHTML = '<div class="weather-loading">Weather unavailable</div>';
                 }
@@ -3019,7 +3034,7 @@
         try { flowMap.update(aircraftCache); } catch (_) {}
         try { cpaPrediction.update(aircraftCache); } catch (_) {}
         if (selectedHex && aircraftCache[selectedHex]) {
-            try { holdingPattern.annotate(aircraftCache[selectedHex]); holdingPattern.refresh(aircraftCache[selectedHex]); } catch (_) {}
+            try { holdingPattern.annotate(aircraftCache[selectedHex]); holdingPattern.refresh(aircraftCache[selectedHex]); patternWork.annotate(aircraftCache[selectedHex]); patternWork.refreshSelected(); } catch (_) {}
         }
         // Refresh the fires overlay's nearby firefighting-aircraft correlation
         // on the same cadence as live aircraft positions.
@@ -3590,12 +3605,14 @@
     function selectAircraft(hex) {
         if (trailLine) { if (trailLine._originMarker) map.removeLayer(trailLine._originMarker); if (trailLine._group) map.removeLayer(trailLine._group); else map.removeLayer(trailLine); trailLine = null; }
         selectedHex = hex; const ac = aircraftCache[hex]; if (!ac) return;
+        try { if (trailAnnotations.enabled) trailAnnotations.stop(); trailAnnotations.load(hex); } catch (_) {}
         // Callsign + phase-of-flight chip + surveillance-orbit chip +
         // flight-analytics chips (go-around / speed anomaly).
         // (v0.19.0/v0.20.0/v0.24.0 — modules 91, 94, AA).
         phaseClassifier.annotate(ac);
         surveillanceOrbit.annotate(ac);
         holdingPattern.annotate(ac);
+        patternWork.annotate(ac);
         try { flightAnalytics.annotate(ac); } catch (_) {}
         const callsignEl = document.getElementById('infoCallsign');
         if (callsignEl) {
@@ -3605,6 +3622,7 @@
                 holdingPattern.chipHtml(ac) +
                 timeAirborne.chipHtml(ac) +
                 cpaPrediction.chipHtml(ac) +
+                patternWork.chipHtml(ac) +
                 (flightAnalytics.chipHtml ? flightAnalytics.chipHtml(ac) : '');
         }
         // Hex + country flag badge (v0.19.0 — module 92-country-flag.js)
@@ -4242,12 +4260,20 @@
             });
         }
         document.getElementById('exportKMLBtn')?.addEventListener('click', () => { if (selectedHex) exportTrail(selectedHex, 'kml'); });
+        document.getElementById('annotateTrailBtn')?.addEventListener('click', () => {
+            if (!selectedHex) { toast('Select an aircraft first', 'warning'); return; }
+            const enabled = trailAnnotations.toggle(selectedHex);
+            toast(enabled ? 'Annotation mode ON · click the map' : 'Annotation mode OFF');
+        });
+        document.getElementById('exportTrailGeoJSONBtn')?.addEventListener('click', () => { if (selectedHex) trailAnnotations.exportGeoJSON(selectedHex); });
         document.getElementById('shareFlightBtn')?.addEventListener('click', () => { if (selectedHex) shareManager.share(selectedHex); });
         document.getElementById('playbackBtn')?.addEventListener('click', () => { if (selectedHex) playbackController.start(selectedHex); });
         // Flight card (v0.24.0 — module 9A-flight-card.js): copy PNG to clipboard.
         document.getElementById('flightCardBtn')?.addEventListener('click', () => {
             if (selectedHex) flightCard.copy(selectedHex);
         });
+        document.getElementById('flightOfDayBtn')?.addEventListener('click', () => flightOfDay.share());
+        document.getElementById('dossierBtn')?.addEventListener('click', () => { if (selectedHex) aircraftDossier.export(selectedHex); else toast('Select an aircraft first', 'warning'); });
         // Scene URL (v0.24.0 — module 9B-scene-url.js): copy view-state link.
         document.getElementById('sceneUrlBtn')?.addEventListener('click', () => sceneUrl.copy());
         // Diagnostic copy-report (v0.24.0 — module 9C-diagnostics.js).

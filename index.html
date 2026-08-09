@@ -1310,6 +1310,23 @@
         .analytics-histogram-bar { flex: 1; min-height: 3px; border-radius: 2px 2px 0 0; background: linear-gradient(180deg, #22d3ee, #2563eb); }
         .analytics-hour-labels { margin-top: 2px; }
         .analytics-route-note { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); color: var(--text-dim); font-size: 10px; }
+        .weather-decode-btn { margin-top: 8px; padding: 5px 9px; border: 1px solid var(--border); border-radius: 5px; color: var(--text-dim); background: var(--bg-darker); font-size: 10px; cursor: pointer; }
+        .weather-decode-btn:hover { color: var(--text); border-color: var(--accent); }
+        .weather-decoded { margin-top: 8px; padding: 8px; color: var(--text-dim); background: rgba(0, 0, 0, 0.14); border-left: 2px solid var(--accent); font-size: 10px; line-height: 1.55; }
+        .weather-atc-decoder { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
+        .weather-atc-input { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid var(--border); border-radius: 5px; color: var(--text); background: var(--bg-darker); font-size: 10px; }
+        .pattern-work-chip { display: inline-block; padding: 1px 6px; margin-left: 6px; border-radius: 3px; color: #fff; background: #f97316; box-shadow: 0 0 8px rgba(249, 115, 22, 0.45); font-size: 10px; font-weight: 800; letter-spacing: 0.04em; cursor: help; }
+        .event-ticker { position: fixed; left: 50%; bottom: 18px; z-index: 3050; display: flex; align-items: center; width: min(920px, calc(100vw - 32px)); padding: 8px 10px; gap: 10px; border: 1px solid rgba(251, 191, 36, 0.5); border-radius: 999px; color: #fef3c7; background: rgba(30, 25, 8, 0.92); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35); opacity: 0; pointer-events: none; transform: translate(-50%, 16px); transition: opacity 0.2s ease, transform 0.2s ease; }
+        .event-ticker.show { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+        .event-ticker-label { color: #fbbf24; font-size: 9px; font-weight: 900; letter-spacing: 0.14em; }
+        .event-ticker-viewport { min-width: 0; flex: 1; overflow: hidden; white-space: nowrap; }
+        .event-ticker-track { display: inline-block; min-width: 100%; animation: eventTickerScroll 28s linear infinite; font-size: 11px; }
+        .event-ticker-close { border: 0; color: #fef3c7; background: transparent; cursor: pointer; font-size: 18px; line-height: 1; }
+        @keyframes eventTickerScroll { from { transform: translateX(0); } to { transform: translateX(-18%); } }
+        @media (prefers-reduced-motion: reduce) { .event-ticker-track { animation: none; } }
+        @media (max-width: 600px) { .event-ticker { bottom: 68px; width: calc(100vw - 16px); } }
+        .annotation-marker { display: flex; align-items: center; justify-content: center; border: 2px solid #fbbf24; border-radius: 50%; color: #111827; background: #fef3c7; box-shadow: 0 0 10px rgba(251, 191, 36, 0.75); font-size: 14px; }
+        body.annotation-mode #map { cursor: crosshair; }
         
         /* Tablet adjustments */
         @media (min-width: 768px) and (max-width: 1024px) {
@@ -3498,11 +3515,14 @@ if ('serviceWorker' in navigator) {
                 <div class="hv2-item" data-btn="satellites3dBtn"><div class="hv2-item-icon"><button class="header-btn" id="satellites3dBtn" title="ISS and Starlink in 3D" aria-label="Toggle ISS and Starlink satellites in 3D" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="4" ry="10"/></svg></button></div><div class="hv2-item-label">ISS + Starlink 3D</div></div>
                 <div class="hv2-item" data-btn="logbookBtn"><div class="hv2-item-icon"><button class="header-btn" id="logbookBtn" title="My Logbook" aria-label="Show personal aircraft logbook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="17" y2="7"/><line x1="9" y1="11" x2="17" y2="11"/></svg></button></div><div class="hv2-item-label">Logbook</div></div>
                 <div class="hv2-item" data-btn="flightCardBtn"><div class="hv2-item-icon"><button class="header-btn" id="flightCardBtn" title="Copy Flight Card" aria-label="Copy flight card image of selected aircraft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M7 15h4"/></svg></button></div><div class="hv2-item-label">Flight Card</div></div>
+                <div class="hv2-item" data-btn="flightOfDayBtn"><div class="hv2-item-icon"><button class="header-btn" id="flightOfDayBtn" title="Share Flight of the Day" aria-label="Copy the flight of the day card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3z"/></svg></button></div><div class="hv2-item-label">Flight of Day</div></div>
+                <div class="hv2-item" data-btn="dossierBtn"><div class="hv2-item-icon"><button class="header-btn" id="dossierBtn" title="Download aircraft dossier" aria-label="Download printable aircraft dossier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h10l4 4v14H5z"/><path d="M15 3v5h5M8 13h8M8 17h6"/></svg></button></div><div class="hv2-item-label">Dossier</div></div>
                 <div class="hv2-item" data-btn="sceneUrlBtn"><div class="hv2-item-icon"><button class="header-btn" id="sceneUrlBtn" title="Copy Scene URL" aria-label="Copy link that restores this exact view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button></div><div class="hv2-item-label">Scene URL</div></div>
                 <div class="hv2-item" data-btn="diagnosticsBtn"><div class="hv2-item-icon"><button class="header-btn" id="diagnosticsBtn" title="Copy Diagnostics" aria-label="Copy diagnostic report to clipboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7 7 1-5 4 2 8-7-4-7 4 2-8-5-4 7-1z"/></svg></button></div><div class="hv2-item-label">Diagnostics</div></div>
                 <div class="hv2-item" data-btn="followBtn"><div class="hv2-item-icon"><button class="header-btn" id="followBtn" title="Follow" aria-label="Follow Aircraft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><path d="M12 8v8M8 12h8" stroke-dasharray="2 2"/></svg></button></div><div class="hv2-item-label">Follow Aircraft</div></div>
                 <div class="hv2-item" data-btn="randomFollowBtn"><div class="hv2-item-icon"><button class="header-btn" id="randomFollowBtn" title="Cycle through random aircraft" aria-label="Toggle Random Follow mode" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h4c4 0 5 10 10 10h4"/><path d="M17 14l4 3-4 3"/><path d="M3 17h4c1.5 0 2.6-1.3 3.6-2.8M17 4l4 3-4 3"/><path d="M7 7c1.4 0 2.4 1.1 3.4 2.6"/></svg></button></div><div class="hv2-item-label">Random Follow</div></div>
                 <div class="hv2-item" data-btn="broadcastBtn"><div class="hv2-item-icon"><button class="header-btn" id="broadcastBtn" title="Broadcast mode" aria-label="Toggle broadcast mode" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 9h8M8 13h5"/><path d="M8 3v2M16 3v2"/></svg></button></div><div class="hv2-item-label">Broadcast Mode</div></div>
+                <div class="hv2-item" data-btn="eventTickerToggleBtn"><div class="hv2-item-icon"><button class="header-btn" id="eventTickerToggleBtn" title="Event ticker" aria-label="Toggle alert event ticker" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h10M4 17h16"/><circle cx="18" cy="12" r="2"/></svg></button></div><div class="hv2-item-label">Event Ticker</div></div>
                 <div class="hv2-item" data-btn="cpaBtn"><div class="hv2-item-icon"><button class="header-btn active" id="cpaBtn" title="Toggle closest point of approach warnings" aria-label="Toggle CPA conflict warnings" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><path d="M9 12h6" stroke-dasharray="2 2"/><path d="M12 4v4m0 8v4"/></svg></button></div><div class="hv2-item-label">CPA Warnings</div></div>
                 <div class="hv2-item" data-btn="multiSelectBtn"><div class="hv2-item-icon"><button class="header-btn" id="multiSelectBtn" title="Multi-Select" aria-label="Multi-Select Mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button></div><div class="hv2-item-label">Multi-Select</div></div>
             <div class="hv2-item" data-btn="geofenceBtn"><div class="hv2-item-icon"><button class="header-btn" id="geofenceBtn" title="Geofence" aria-label="Open Geofencing Tools" aria-expanded="false" aria-controls="geofenceList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><circle cx="12" cy="12" r="3"/></svg></button></div><div class="hv2-item-label">Geofencing</div></div>
@@ -3856,6 +3876,8 @@ if ('serviceWorker' in navigator) {
             <button class="action-btn prediction" id="showPredictionBtn" title="Show 30-min Flight Prediction (P)"><span>P</span> Predict</button>
             <button class="action-btn route" id="showRouteBtn" title="Show Route to Destination (R)"><span>R</span> Route</button>
             <button class="action-btn" id="exportKMLBtn" title="Export to Google Earth (E)"><span>KML</span></button>
+            <button class="action-btn" id="annotateTrailBtn" title="Add annotations to the trail" aria-pressed="false"><span>✎</span> Annotate</button>
+            <button class="action-btn" id="exportTrailGeoJSONBtn" title="Export annotated trail GeoJSON"><span>JSON</span></button>
             <button class="action-btn" id="shareFlightBtn" title="Share Flight Link"><span>Share</span></button>
             <button class="action-btn" id="playbackBtn" title="Playback History"><span>Play</span></button>
         </div>
@@ -4335,6 +4357,7 @@ if ('serviceWorker' in navigator) {
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite" data-tone="info"></div>
     <div class="broadcast-overlay" id="broadcastOverlay" role="dialog" aria-label="SkyTrack broadcast mode" aria-live="polite"></div>
+    <div class="event-ticker" id="eventTicker" role="status" aria-live="polite"><div class="event-ticker-label">EVENTS</div><div class="event-ticker-viewport"><div class="event-ticker-track" id="eventTickerTrack"></div></div><button class="event-ticker-close" id="eventTickerClose" aria-label="Close event ticker">×</button></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.js" integrity="sha384-FON5fTjCTtPuBgUS1r2H/PGXstH0Rk23YKjZmB6qITkbFqBcqtey/rPo9eXwOWpx" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet-polylineoffset@1.1.1/leaflet.polylineoffset.js" integrity="sha384-aawDUKQFc9RzgelO2A124IvVZeJgYhuhw80CtD84NiVOUWyiXGY31u2LozNQVJtM" crossorigin="anonymous"></script>
@@ -6547,6 +6570,7 @@ if ('serviceWorker' in navigator) {
         
         showAlert(alert) {
             this.showInAppNotification(alert);
+            try { eventTicker.record(alert); } catch (_) {}
             if (this.soundEnabled) this.playSound(alert.alertType.sound);
             if (this.notificationsEnabled) this.showBrowserNotification(alert);
         },
@@ -13048,6 +13072,414 @@ if ('serviceWorker' in navigator) {
             altitudeMesh.init(event.detail?.map);
         }, { once: true });
     }
+    // ─── module: modules/A24-metar-decoder.js ───────────────────────────────────────────
+    // ============ METAR / ATC-SPEAK DECODER ============
+    const METAR_WEATHER_WORDS = {
+        RA: 'rain', SN: 'snow', DZ: 'drizzle', TS: 'thunderstorm', FG: 'fog',
+        BR: 'mist', HZ: 'haze', FU: 'smoke', SA: 'sand', DU: 'dust', SQ: 'squall',
+        FC: 'funnel cloud', GR: 'hail', GS: 'small hail', PL: 'ice pellets', IC: 'ice crystals'
+    };
+
+    function metarTemperature(value) {
+        if (!value) return null;
+        const match = String(value).match(/^(M?)(\d{2})$/);
+        return match ? (match[1] ? -1 : 1) * Number(match[2]) : null;
+    }
+
+    function metarDecode(raw = '', parsed = {}) {
+        const text = String(raw || '').trim().toUpperCase();
+        const tokens = text.split(/\s+/).filter(Boolean);
+        const lines = [];
+        const station = tokens.find(token => /^[A-Z]{4}$/.test(token));
+        if (station) lines.push(station + ' observation');
+        const time = tokens.find(token => /^\d{6}Z$/.test(token));
+        if (time) lines.push('Observed on day ' + time.slice(0, 2) + ' at ' + time.slice(2, 4) + ':' + time.slice(4, 6) + ' UTC');
+
+        let sawWind = false, sawVisibility = false, sawClouds = false, sawPressure = false, sawTemperature = false;
+        for (const token of tokens) {
+            const wind = token.match(/^(\d{3}|VRB)(\d{2})(?:G(\d{2}))?KT$/);
+            if (wind) {
+                const direction = wind[1] === 'VRB' ? 'variable direction' : wind[1] + '°';
+                lines.push('Wind ' + direction + ' at ' + Number(wind[2]) + ' kt' + (wind[3] ? ', gusting ' + Number(wind[3]) + ' kt' : ''));
+                sawWind = true;
+                continue;
+            }
+            const visibility = token.match(/^(P?\d+(?:\/\d+)?)SM$/);
+            if (visibility) {
+                lines.push('Visibility ' + (visibility[1].startsWith('P') ? 'greater than ' + visibility[1].slice(1) : visibility[1]) + ' statute miles');
+                sawVisibility = true;
+                continue;
+            }
+            const cloud = token.match(/^(FEW|SCT|BKN|OVC|VV)(\d{3}|\/\/\/)(?:CB|TCU)?$/);
+            if (cloud) {
+                const cover = { FEW: 'few', SCT: 'scattered', BKN: 'broken', OVC: 'overcast', VV: 'vertical visibility' }[cloud[1]];
+                const base = cloud[2] === '///' ? 'unknown' : Number(cloud[2]) * 100 + ' ft';
+                lines.push(cover[0].toUpperCase() + cover.slice(1) + ' cloud layer at ' + base);
+                sawClouds = true;
+                continue;
+            }
+            const temperature = token.match(/^(M?\d{2})\/(M?\d{2})$/);
+            if (temperature) {
+                lines.push('Temperature ' + metarTemperature(temperature[1]) + '°C, dew point ' + metarTemperature(temperature[2]) + '°C');
+                sawTemperature = true;
+                continue;
+            }
+            const pressure = token.match(/^(A|Q)(\d{4})$/);
+            if (pressure) {
+                const value = pressure[1] === 'A' ? (Number(pressure[2]) / 100).toFixed(2) + ' inHg' : pressure[2] + ' hPa';
+                lines.push('Altimeter ' + value);
+                sawPressure = true;
+                continue;
+            }
+            const weather = token.match(/^([+-]?)(VC)?(MI|PR|BC|DR|BL|SH|FZ)?(TS|RA|SN|DZ|FG|BR|HZ|FU|SA|DU|SQ|FC|GR|GS|PL|IC)$/);
+            if (weather) {
+                const intensity = weather[1] === '+' ? 'heavy ' : weather[1] === '-' ? 'light ' : '';
+                const vicinity = weather[2] === 'VC' ? 'nearby ' : '';
+                lines.push(vicinity + intensity + (METAR_WEATHER_WORDS[weather[4]] || weather[4].toLowerCase()));
+            }
+        }
+        if (!sawWind && parsed.wind?.speed) lines.push('Wind ' + (parsed.wind.variable ? 'variable direction' : (parsed.wind.direction || 'unknown direction') + '°') + ' at ' + parsed.wind.speed + ' kt');
+        if (!sawVisibility && parsed.visibility !== null && parsed.visibility !== undefined) lines.push('Visibility ' + parsed.visibility + ' statute miles');
+        if (!sawClouds && parsed.clouds?.length) lines.push('Clouds: ' + parsed.clouds.map(cloud => cloud.cover + ' at ' + (cloud.base || '?') + ' ft').join(', '));
+        if (!sawTemperature && parsed.temp !== null && parsed.temp !== undefined) lines.push('Temperature ' + parsed.temp + '°C, dew point ' + (parsed.dewpoint ?? '?') + '°C');
+        if (!sawPressure && parsed.altimeter) lines.push('Altimeter ' + (Number(parsed.altimeter) / 100).toFixed(2) + ' inHg');
+        if (parsed.flightCategory) lines.push('Flight category: ' + parsed.flightCategory + ' (' + ({ VFR: 'visual', MVFR: 'marginal visual', IFR: 'instrument', LIFR: 'low instrument' }[parsed.flightCategory] || 'unknown') + ')');
+        return { station: station || parsed.station || '', lines, summary: lines.join(' · ') };
+    }
+
+    function atcPhraseDecode(text = '') {
+        const phrase = String(text || '').trim();
+        if (!phrase) return 'Enter a clearance or controller phrase.';
+        const rules = [
+            [/cleared to land/i, 'You are authorized to land; continue to monitor the runway and go around if it is not safe.'],
+            [/line up and wait/i, 'Enter the runway, align with the centerline, and wait for takeoff clearance.'],
+            [/hold short(?: of)?\s+([A-Z0-9-]+)/i, match => 'Stop before ' + match[1].toUpperCase() + ' and do not cross it without clearance.'],
+            [/taxi via\s+(.+)/i, match => 'Taxi using the named route: ' + match[1] + '.'],
+            [/contact (?:departure|approach|tower|ground)/i, 'Change to the assigned ATC frequency and establish two-way communication.'],
+            [/squawk\s+(\d{4})/i, match => 'Set transponder code ' + match[1] + '.'],
+            [/(?:climb|descend)\s+(?:and maintain\s+)?(\d[\d,]*)/i, match => 'Change altitude to ' + match[1] + ' feet and maintain it.'],
+            [/direct\s+([A-Z0-9-]+)/i, match => 'Proceed directly to fix ' + match[1].toUpperCase() + '.']
+        ];
+        const match = rules.find(([pattern]) => pattern.test(phrase));
+        if (!match) return 'No common clearance phrase recognized; keep the original clearance and ask ATC if unsure.';
+        return typeof match[1] === 'function' ? match[1](phrase.match(match[0])) : match[1];
+    }
+
+    const metarDecoder = {
+        decode: metarDecode,
+        explain(raw, parsed) { return metarDecode(raw, parsed).summary || 'No decodable METAR groups found.'; },
+        explainClearance: atcPhraseDecode
+    };
+    // ─── module: modules/A25-event-ticker.js ───────────────────────────────────────────
+    // ============ ALERT EVENT TICKER ============
+    function eventTickerText(alert = {}) {
+        const type = String(alert.type || 'EVENT').toUpperCase();
+        const callsign = alert.callsign || alert.aircraft?.flight?.trim() || alert.aircraft?.hex || 'Traffic';
+        return type + ' · ' + callsign + ' · ' + (alert.message || 'Notable traffic event');
+    }
+
+    const eventTicker = {
+        enabled: true,
+        visible: false,
+        events: [],
+        maxEvents: 12,
+        _bound: false,
+        init() {
+            if (this._bound) return;
+            document.getElementById('eventTickerClose')?.addEventListener('click', () => this.close());
+            document.getElementById('eventTickerToggleBtn')?.addEventListener('click', () => this.toggle());
+            this._bound = true;
+        },
+        record(alert) {
+            if (!this.enabled) return;
+            const item = { text: eventTickerText(alert), time: Date.now() };
+            if (this.events[0]?.text === item.text && item.time - this.events[0].time < 5000) return;
+            this.events.unshift(item);
+            this.events = this.events.slice(0, this.maxEvents);
+            this.visible = true;
+            this.render();
+        },
+        close() {
+            this.visible = false;
+            this.render();
+        },
+        toggle() {
+            this.visible = !this.visible;
+            this.render();
+            return this.visible;
+        },
+        render() {
+            const ticker = document.getElementById('eventTicker');
+            if (!ticker) return;
+            ticker.classList.toggle('show', this.visible && this.events.length > 0);
+            document.getElementById('eventTickerTrack').textContent = this.events.map(item => item.text).join('   ·   ');
+            const button = document.getElementById('eventTickerToggleBtn');
+            button?.classList.toggle('active', this.visible);
+            button?.setAttribute('aria-pressed', String(this.visible));
+        }
+    };
+
+    if (typeof document !== 'undefined') {
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => eventTicker.init(), { once: true });
+        else eventTicker.init();
+    }
+    // ─── module: modules/A26-pattern-work.js ───────────────────────────────────────────
+    // ============ TOUCH-AND-GO / PATTERN-WORK DETECTOR ============
+    function patternDistanceNm(first, second) {
+        const radians = Math.PI / 180;
+        const lat1 = Number(first.lat) * radians, lat2 = Number(second.lat) * radians;
+        const dLat = lat2 - lat1, dLon = (Number(second.lon) - Number(first.lon)) * radians;
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+        return 3440.065 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(Math.max(0, 1 - a)));
+    }
+
+    function patternWorkSummary(ac, options = {}) {
+        const history = Array.isArray(ac?.history) ? ac.history : [];
+        const now = Number(options.now) || Date.now();
+        const windowMs = Number(options.windowMs) || 1800000;
+        const lowAltitude = Number(options.lowAltitude) || 1800;
+        const maxRadiusNm = Number(options.maxRadiusNm) || 3;
+        const minPasses = Math.max(2, Number(options.minPasses) || 3);
+        const samples = history.map(point => ({ lat: Number(point?.[0]), lon: Number(point?.[1]), altitude: Number(point?.[2]), time: Number(point?.[3]) }))
+            .filter(point => [point.lat, point.lon, point.altitude, point.time].every(Number.isFinite) && point.time >= now - windowMs && point.time <= now + 300000)
+            .sort((a, b) => a.time - b.time);
+        const lowPasses = [];
+        let current = [];
+        for (const sample of samples) {
+            if (sample.altitude <= lowAltitude) current.push(sample);
+            else if (current.length) { lowPasses.push(current); current = []; }
+        }
+        if (current.length) lowPasses.push(current);
+        if (lowPasses.length < minPasses) return null;
+        const lowSamples = lowPasses.flat();
+        const center = { lat: lowSamples.reduce((sum, point) => sum + point.lat, 0) / lowSamples.length, lon: lowSamples.reduce((sum, point) => sum + point.lon, 0) / lowSamples.length };
+        const radiusNm = Math.max(...lowSamples.map(point => patternDistanceNm(center, point)));
+        if (radiusNm > maxRadiusNm) return null;
+        return { passes: lowPasses.length, center, radiusNm, windowMinutes: Math.round(windowMs / 60000) };
+    }
+
+    const patternWork = {
+        summary: patternWorkSummary,
+        annotate(ac) {
+            if (!ac) return null;
+            ac.patternWork = patternWorkSummary(ac);
+            ac.patternWorkDetected = !!ac.patternWork;
+            return ac.patternWork;
+        },
+        chipHtml(ac) {
+            const summary = ac?.patternWork;
+            if (!summary) return '';
+            return '<span id="patternWorkChip" class="pattern-work-chip" title="Repeated low passes in a compact area">PATTERN WORK · ' + summary.passes + ' PASSES</span>';
+        },
+        refreshSelected() {
+            if (typeof selectedHex === 'undefined' || !selectedHex) return;
+            const callsign = document.getElementById('infoCallsign');
+            const ac = aircraftCache[selectedHex];
+            if (!callsign || !ac) return;
+            const chip = document.getElementById('patternWorkChip');
+            const html = this.chipHtml(ac);
+            if (chip) { if (html) chip.outerHTML = html; else chip.remove(); }
+            else if (html) callsign.insertAdjacentHTML('beforeend', html);
+        }
+    };
+    // ─── module: modules/A27-flight-of-day.js ───────────────────────────────────────────
+    // ============ FLIGHT OF THE DAY ============
+    function flightOfDayScore(ac = {}) {
+        const altitude = Math.max(0, Number(ac.alt_baro) || 0) / 1000;
+        const speed = Math.max(0, Number(ac.gs) || 0) / 100;
+        const history = Array.isArray(ac.history) ? Math.min(10, ac.history.length) : 0;
+        const notable = (ac.isVIP ? 8 : 0) + (ac.militaryInfo || ac.militaryRangeInfo ? 5 : 0) + (ac.interesting ? 3 : 0) + (['7500', '7600', '7700'].includes(String(ac.squawk)) ? 20 : 0);
+        const route = ac.from && ac.to ? 2 : 0;
+        return altitude + speed + history + notable + route;
+    }
+
+    function chooseFlightOfDay(aircraft) {
+        return Object.values(aircraft || {})
+            .filter(ac => ac?.hex && Number.isFinite(Number(ac.lat)) && Number.isFinite(Number(ac.lon)))
+            .map(ac => ({ ac, score: flightOfDayScore(ac) }))
+            .sort((a, b) => b.score - a.score || String(a.ac.flight || a.ac.hex).localeCompare(String(b.ac.flight || b.ac.hex)))[0]?.ac || null;
+    }
+
+    const flightOfDay = {
+        choose: chooseFlightOfDay,
+        share() {
+            const ac = chooseFlightOfDay(typeof aircraftCache !== 'undefined' ? aircraftCache : {});
+            if (!ac) { if (typeof toast === 'function') toast('No live aircraft available for Flight of the Day', 'warning'); return false; }
+            if (typeof flightCard?.copy !== 'function') return false;
+            if (typeof toast === 'function') toast('Flight of the Day: ' + (ac.flight?.trim() || ac.hex));
+            return flightCard.copy(ac.hex);
+        }
+    };
+    // ─── module: modules/A28-aircraft-dossier.js ───────────────────────────────────────────
+    // ============ AIRCRAFT DOSSIER ============
+    function dossierEscape(value) {
+        return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function aircraftDossierData(ac = {}, logbookRecord = null, now = Date.now()) {
+        const history = Array.isArray(ac.history) ? ac.history : [];
+        const times = history.map(point => Number(point?.[3])).filter(Number.isFinite);
+        const first = times[0] || ac.firstSeen, last = times.at(-1) || ac.lastSeen || now;
+        const hours = Number.isFinite(first) && Number.isFinite(last) && last >= first ? (last - first) / 3600000 : 0;
+        const squawk = String(ac.squawk || '');
+        return {
+            callsign: ac.flight?.trim() || ac.r || ac.hex || 'Unknown aircraft',
+            hex: String(ac.hex || '').toUpperCase(),
+            registration: ac.r || 'Not available',
+            type: ac.t || ac.desc || 'Unknown type',
+            operator: ac.ownOp || ac.airlineName || logbookRecord?.bestCallsign || 'Not available',
+            route: [ac.from || '---', ac.to || '---'].join(' → '),
+            altitude: ac.alt_baro === 'ground' ? 'GROUND' : (Number.isFinite(Number(ac.alt_baro)) ? Math.round(Number(ac.alt_baro)).toLocaleString() + ' ft' : 'Not available'),
+            speed: Number.isFinite(Number(ac.gs)) ? Math.round(Number(ac.gs)) + ' kt' : 'Not available',
+            hoursObserved: hours.toFixed(1),
+            firstSeen: first ? new Date(first).toISOString() : 'Not available',
+            lastSeen: last ? new Date(last).toISOString() : 'Not available',
+            notable: [
+                ac.isVIP ? 'VIP classification' : '',
+                ac.militaryInfo || ac.militaryRangeInfo ? 'Military classification' : '',
+                ['7500', '7600', '7700'].includes(squawk) ? 'Emergency squawk ' + squawk : '',
+                ac.patternWorkDetected ? 'Pattern-work activity' : ''
+            ].filter(Boolean),
+            logbookCount: logbookRecord?.count || 0
+        };
+    }
+
+    function dossierHtml(data) {
+        const rows = [
+            ['Registration', data.registration], ['ICAO24', data.hex], ['Type', data.type], ['Operator', data.operator],
+            ['Route', data.route], ['Current altitude', data.altitude], ['Current speed', data.speed],
+            ['Observed span', data.hoursObserved + ' hours'], ['First seen', data.firstSeen], ['Last seen', data.lastSeen],
+            ['Logbook observations', data.logbookCount]
+        ];
+        const notable = data.notable.length ? '<ul>' + data.notable.map(item => '<li>' + dossierEscape(item) + '</li>').join('') + '</ul>' : '<p>None recorded.</p>';
+        return '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>SkyTrack dossier · ' + dossierEscape(data.callsign) + '</title><style>body{font:15px system-ui,sans-serif;max-width:760px;margin:40px auto;color:#172033}h1{margin-bottom:4px}p,td{line-height:1.5}table{border-collapse:collapse;width:100%;margin:24px 0}td{border-bottom:1px solid #d8dee9;padding:9px 4px}td:first-child{font-weight:700;width:34%;color:#4b5563}.stamp{color:#64748b}.notable{padding:14px 18px;background:#f1f5f9;border-left:4px solid #2563eb}@media print{body{margin:0}.no-print{display:none}}</style></head><body><div class="stamp">SKYTRACK PRINTABLE AIRCRAFT DOSSIER</div><h1>' + dossierEscape(data.callsign) + '</h1><p class="stamp">Generated ' + dossierEscape(new Date().toISOString()) + '</p><table>' + rows.map(row => '<tr><td>' + dossierEscape(row[0]) + '</td><td>' + dossierEscape(row[1]) + '</td></tr>').join('') + '</table><section class="notable"><strong>Notable observations</strong>' + notable + '</section><p class="stamp">This local report describes observations available in the current SkyTrack session and personal logbook.</p></body></html>';
+    }
+
+    const aircraftDossier = {
+        data: aircraftDossierData,
+        html: dossierHtml,
+        export(hex) {
+            const ac = typeof aircraftCache !== 'undefined' ? aircraftCache[hex] : null;
+            if (!ac) { if (typeof toast === 'function') toast('Select an aircraft first', 'warning'); return false; }
+            const record = typeof logbook !== 'undefined' && typeof logbook.get === 'function' ? logbook.get(hex) : null;
+            const data = aircraftDossierData(ac, record);
+            const blob = new Blob([dossierHtml(data)], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob), link = document.createElement('a');
+            link.href = url;
+            link.download = 'skytrack-dossier-' + (data.hex || 'aircraft') + '.html';
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            if (typeof toast === 'function') toast('Printable aircraft dossier downloaded');
+            return true;
+        }
+    };
+    // ─── module: modules/A29-annotated-trails.js ───────────────────────────────────────────
+    // ============ ANNOTATED TRAILS ============
+    function annotationGeoJson(trail = [], annotations = [], properties = {}) {
+        const coordinates = (Array.isArray(trail) ? trail : []).filter(point => Number.isFinite(Number(point?.lat)) && Number.isFinite(Number(point?.lon))).map(point => [Number(point.lon), Number(point.lat), Number(point.alt) || 0]);
+        const points = (Array.isArray(annotations) ? annotations : []).filter(point => Number.isFinite(Number(point?.lat)) && Number.isFinite(Number(point?.lon)) && point.text).map(point => ({
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [Number(point.lon), Number(point.lat)] },
+            properties: { text: String(point.text), timestamp: point.timestamp || null }
+        }));
+        return {
+            type: 'FeatureCollection',
+            features: [
+                { type: 'Feature', geometry: { type: 'LineString', coordinates }, properties: { ...properties, annotations: annotations || [] } },
+                ...points
+            ]
+        };
+    }
+
+    const trailAnnotations = {
+        map: null,
+        layer: null,
+        enabled: false,
+        hex: null,
+        annotations: [],
+        init(mapInstance) {
+            if (this.map || !mapInstance || typeof L === 'undefined') return;
+            this.map = mapInstance;
+            this.layer = L.layerGroup();
+        },
+        _storageKey(hex) { return 'skytrack_trail_annotations_' + String(hex || '').toUpperCase(); },
+        load(hex) {
+            this.hex = hex;
+            try {
+                const raw = localStorage.getItem(this._storageKey(hex));
+                this.annotations = raw ? JSON.parse(raw) : [];
+                if (!Array.isArray(this.annotations)) this.annotations = [];
+            } catch (_) { this.annotations = []; }
+            this.render();
+        },
+        save() {
+            try { localStorage.setItem(this._storageKey(this.hex), JSON.stringify(this.annotations.slice(-100))); } catch (_) {}
+        },
+        _setButton() {
+            const button = document.getElementById('annotateTrailBtn');
+            button?.classList.toggle('active', this.enabled);
+            button?.setAttribute('aria-pressed', String(this.enabled));
+        },
+        toggle(hex) {
+            if (!this.map || !hex) return false;
+            if (this.enabled) { this.stop(); return false; }
+            this.enabled = true;
+            this.load(hex);
+            this.map.on('click', this._handleClick, this);
+            document.body.classList.add('annotation-mode');
+            this._setButton();
+            return true;
+        },
+        stop() {
+            this.enabled = false;
+            this.map?.off('click', this._handleClick, this);
+            document.body.classList.remove('annotation-mode');
+            this._setButton();
+        },
+        _handleClick(event) {
+            if (!this.enabled) return;
+            const text = window.prompt('Annotation for this trail point:');
+            if (!text?.trim()) return;
+            this.add({ lat: event.latlng.lat, lon: event.latlng.lng, text: text.trim(), timestamp: Date.now() });
+            if (event.originalEvent) event.originalEvent.stopPropagation();
+        },
+        add(annotation) {
+            if (!annotation?.text || !Number.isFinite(Number(annotation.lat)) || !Number.isFinite(Number(annotation.lon))) return false;
+            this.annotations.push({ lat: Number(annotation.lat), lon: Number(annotation.lon), text: String(annotation.text).slice(0, 240), timestamp: annotation.timestamp || Date.now() });
+            this.save();
+            this.render();
+            return true;
+        },
+        render() {
+            if (!this.layer) return;
+            this.layer.clearLayers();
+            const esc = value => typeof _escHtml === 'function' ? _escHtml(value) : String(value);
+            for (const annotation of this.annotations) {
+                const marker = L.marker([annotation.lat, annotation.lon], { icon: L.divIcon({ className: 'annotation-marker', html: '<span>✎</span>', iconSize: [24, 24], iconAnchor: [12, 12] }) });
+                marker.bindTooltip(esc(annotation.text), { direction: 'top' });
+                marker.addTo(this.layer);
+            }
+            if (this.map && this.annotations.length && !this.map.hasLayer(this.layer)) this.layer.addTo(this.map);
+            if (this.map && !this.annotations.length && this.map.hasLayer(this.layer)) this.map.removeLayer(this.layer);
+        },
+        exportGeoJSON(hex) {
+            const target = hex || this.hex;
+            if (!target) return false;
+            const ac = typeof aircraftCache !== 'undefined' ? aircraftCache[target] : null;
+            const trail = (ac?.history || []).map(point => ({ lat: point[0], lon: point[1], alt: point[2] }));
+            const data = annotationGeoJson(trail, this.annotations, { hex: target, callsign: ac?.flight?.trim() || target });
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/geo+json' });
+            const url = URL.createObjectURL(blob), link = document.createElement('a');
+            link.href = url; link.download = 'skytrack-trail-' + String(target).toUpperCase() + '.geojson'; link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            if (typeof toast === 'function') toast('Annotated trail exported');
+            return true;
+        }
+    };
+
+    if (typeof document !== 'undefined') {
+        document.addEventListener('skytrack:map-ready', event => trailAnnotations.init(event.detail?.map), { once: true });
+    }
     // ─── module: modules/A3-opensky-tracks.js ───────────────────────────────────────────
 
     // ============ OPENSKY HISTORICAL TRACKS ============
@@ -16723,8 +17155,23 @@ if ('serviceWorker' in navigator) {
                     if (metar.weather) {
                         weatherHtml += '<div class="weather-alert">Weather: ' + _escHtml(metar.weather) + '</div>';
                     }
-                    weatherHtml += '<div class="weather-raw">' + _escHtml(metar.raw) + '</div>';
+                    weatherHtml += '<div class="weather-raw">' + _escHtml(metar.raw) + '</div><button class="weather-decode-btn" id="decodeMetarBtn" type="button">Read METAR</button><div class="weather-decoded" id="decodedMetar" hidden></div><div class="weather-atc-decoder"><input class="weather-atc-input" id="atcPhraseInput" placeholder="Paste ATC phrase…" aria-label="ATC phrase to explain"><button class="weather-decode-btn" id="decodeAtcBtn" type="button">Explain ATC</button><div class="weather-decoded" id="decodedAtc" hidden></div></div>';
                     weatherDiv.innerHTML = weatherHtml;
+                    weatherDiv.querySelector('#decodeMetarBtn')?.addEventListener('click', event => {
+                        const decoded = weatherDiv.querySelector('#decodedMetar');
+                        if (!decoded) return;
+                        decoded.hidden = !decoded.hidden;
+                        decoded.textContent = decoded.hidden ? '' : metarDecoder.explain(metar.raw, metar);
+                        event.currentTarget.textContent = decoded.hidden ? 'Read METAR' : 'Hide explanation';
+                    });
+                    weatherDiv.querySelector('#decodeAtcBtn')?.addEventListener('click', event => {
+                        const input = weatherDiv.querySelector('#atcPhraseInput');
+                        const decoded = weatherDiv.querySelector('#decodedAtc');
+                        if (!input || !decoded) return;
+                        decoded.hidden = false;
+                        decoded.textContent = metarDecoder.explainClearance(input.value);
+                        event.currentTarget.textContent = 'Explain again';
+                    });
                 } else {
                     weatherDiv.innerHTML = '<div class="weather-loading">Weather unavailable</div>';
                 }
@@ -16965,7 +17412,7 @@ if ('serviceWorker' in navigator) {
         try { flowMap.update(aircraftCache); } catch (_) {}
         try { cpaPrediction.update(aircraftCache); } catch (_) {}
         if (selectedHex && aircraftCache[selectedHex]) {
-            try { holdingPattern.annotate(aircraftCache[selectedHex]); holdingPattern.refresh(aircraftCache[selectedHex]); } catch (_) {}
+            try { holdingPattern.annotate(aircraftCache[selectedHex]); holdingPattern.refresh(aircraftCache[selectedHex]); patternWork.annotate(aircraftCache[selectedHex]); patternWork.refreshSelected(); } catch (_) {}
         }
         // Refresh the fires overlay's nearby firefighting-aircraft correlation
         // on the same cadence as live aircraft positions.
@@ -17536,12 +17983,14 @@ if ('serviceWorker' in navigator) {
     function selectAircraft(hex) {
         if (trailLine) { if (trailLine._originMarker) map.removeLayer(trailLine._originMarker); if (trailLine._group) map.removeLayer(trailLine._group); else map.removeLayer(trailLine); trailLine = null; }
         selectedHex = hex; const ac = aircraftCache[hex]; if (!ac) return;
+        try { if (trailAnnotations.enabled) trailAnnotations.stop(); trailAnnotations.load(hex); } catch (_) {}
         // Callsign + phase-of-flight chip + surveillance-orbit chip +
         // flight-analytics chips (go-around / speed anomaly).
         // (v0.19.0/v0.20.0/v0.24.0 — modules 91, 94, AA).
         phaseClassifier.annotate(ac);
         surveillanceOrbit.annotate(ac);
         holdingPattern.annotate(ac);
+        patternWork.annotate(ac);
         try { flightAnalytics.annotate(ac); } catch (_) {}
         const callsignEl = document.getElementById('infoCallsign');
         if (callsignEl) {
@@ -17551,6 +18000,7 @@ if ('serviceWorker' in navigator) {
                 holdingPattern.chipHtml(ac) +
                 timeAirborne.chipHtml(ac) +
                 cpaPrediction.chipHtml(ac) +
+                patternWork.chipHtml(ac) +
                 (flightAnalytics.chipHtml ? flightAnalytics.chipHtml(ac) : '');
         }
         // Hex + country flag badge (v0.19.0 — module 92-country-flag.js)
@@ -18188,12 +18638,20 @@ if ('serviceWorker' in navigator) {
             });
         }
         document.getElementById('exportKMLBtn')?.addEventListener('click', () => { if (selectedHex) exportTrail(selectedHex, 'kml'); });
+        document.getElementById('annotateTrailBtn')?.addEventListener('click', () => {
+            if (!selectedHex) { toast('Select an aircraft first', 'warning'); return; }
+            const enabled = trailAnnotations.toggle(selectedHex);
+            toast(enabled ? 'Annotation mode ON · click the map' : 'Annotation mode OFF');
+        });
+        document.getElementById('exportTrailGeoJSONBtn')?.addEventListener('click', () => { if (selectedHex) trailAnnotations.exportGeoJSON(selectedHex); });
         document.getElementById('shareFlightBtn')?.addEventListener('click', () => { if (selectedHex) shareManager.share(selectedHex); });
         document.getElementById('playbackBtn')?.addEventListener('click', () => { if (selectedHex) playbackController.start(selectedHex); });
         // Flight card (v0.24.0 — module 9A-flight-card.js): copy PNG to clipboard.
         document.getElementById('flightCardBtn')?.addEventListener('click', () => {
             if (selectedHex) flightCard.copy(selectedHex);
         });
+        document.getElementById('flightOfDayBtn')?.addEventListener('click', () => flightOfDay.share());
+        document.getElementById('dossierBtn')?.addEventListener('click', () => { if (selectedHex) aircraftDossier.export(selectedHex); else toast('Select an aircraft first', 'warning'); });
         // Scene URL (v0.24.0 — module 9B-scene-url.js): copy view-state link.
         document.getElementById('sceneUrlBtn')?.addEventListener('click', () => sceneUrl.copy());
         // Diagnostic copy-report (v0.24.0 — module 9C-diagnostics.js).
