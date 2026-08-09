@@ -2810,6 +2810,9 @@
         try { logbook.ingest(aircraftCache); } catch (_) { /* never block refresh */ }
         updateCounts(); updateMarkersSync();
         try { cpaPrediction.update(aircraftCache); } catch (_) {}
+        if (selectedHex && aircraftCache[selectedHex]) {
+            try { holdingPattern.annotate(aircraftCache[selectedHex]); holdingPattern.refresh(aircraftCache[selectedHex]); } catch (_) {}
+        }
         // Refresh the fires overlay's nearby firefighting-aircraft correlation
         // on the same cadence as live aircraft positions.
         try { firesHurricanes.updateAircraft(aircraftCache); } catch (_) {}
@@ -3371,12 +3374,14 @@
         // (v0.19.0/v0.20.0/v0.24.0 — modules 91, 94, AA).
         phaseClassifier.annotate(ac);
         surveillanceOrbit.annotate(ac);
+        holdingPattern.annotate(ac);
         try { flightAnalytics.annotate(ac); } catch (_) {}
         const callsignEl = document.getElementById('infoCallsign');
         if (callsignEl) {
             callsignEl.innerHTML = _escHtml(ac.flight || 'N/A') +
                 phaseClassifier.chipHtml(ac) +
                 surveillanceOrbit.chipHtml(ac) +
+                holdingPattern.chipHtml(ac) +
                 timeAirborne.chipHtml(ac) +
                 cpaPrediction.chipHtml(ac) +
                 (flightAnalytics.chipHtml ? flightAnalytics.chipHtml(ac) : '');
