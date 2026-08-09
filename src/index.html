@@ -756,6 +756,7 @@ if ('serviceWorker' in navigator) {
             <button class="airport-action-btn" id="btnShowDepartures">Departures</button>
             <button class="airport-action-btn" id="btnShowArrivals">Arrivals</button>
             <button class="airport-action-btn" id="showBoardBtn">Flight Board</button>
+            <button class="airport-action-btn" id="approachConeBtn" aria-pressed="false">Approach Cone</button>
             <button class="airport-action-btn" id="btnZoomAirport">Zoom To</button>
         </div>
     </div>
@@ -858,6 +859,14 @@ if ('serviceWorker' in navigator) {
                         <div class="theme-preview-stripe" style="background:#56b4e9"></div>
                     </div>
                     <div class="theme-name">Color Blind</div>
+                </div>
+                <div class="theme-option" data-theme="crt">
+                    <div class="theme-preview">
+                        <div class="theme-preview-stripe" style="background:#03130a"></div>
+                        <div class="theme-preview-stripe" style="background:#42ff74"></div>
+                        <div class="theme-preview-stripe" style="background:#e7ff60"></div>
+                    </div>
+                    <div class="theme-name">CRT Radar</div>
                 </div>
             </div>
             <div class="setting-row"><span class="setting-label">Auto Day/Night</span><button type="button" class="toggle" id="toggleAutoTheme" role="switch" aria-label="Auto Day and Night Theme" aria-checked="false"></button></div>

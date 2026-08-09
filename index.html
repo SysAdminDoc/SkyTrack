@@ -1258,6 +1258,53 @@
             .broadcast-metrics small { font-size: 8px; letter-spacing: 0.05em; }
             .broadcast-footer { font-size: 10px; }
         }
+
+        /* Military targets keep an amber/olive identity and visibly pulse when
+           the CPA engine predicts a loss of separation. */
+        .aircraft-marker.military-ramp::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: calc(100% + 12px);
+            height: calc(100% + 12px);
+            transform: translate(-50%, -50%);
+            border: 1px solid rgba(212, 167, 44, 0.75);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .aircraft-marker.military-conflict::before {
+            border-color: #ff5533;
+            animation: militaryConflictPulse 0.9s ease-in-out infinite;
+        }
+        @keyframes militaryConflictPulse {
+            0%, 100% { opacity: 0.45; transform: translate(-50%, -50%) scale(0.9); box-shadow: 0 0 0 rgba(255, 85, 51, 0); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); box-shadow: 0 0 14px rgba(255, 85, 51, 0.8); }
+        }
+
+        /* Optional low-light CRT treatment. The scanlines remain subtle so
+           labels and controls stay readable during long monitoring sessions. */
+        body.crt-theme {
+            background: #03130a;
+            color: #c8ffd2;
+            text-shadow: 0 0 3px rgba(66, 255, 116, 0.18);
+        }
+        body.crt-theme #map { filter: saturate(0.78) sepia(0.12); }
+        body.crt-theme::before,
+        body.crt-theme::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9000;
+        }
+        body.crt-theme::before {
+            background: radial-gradient(ellipse at center, transparent 52%, rgba(0, 0, 0, 0.42) 100%);
+        }
+        body.crt-theme::after {
+            opacity: 0.1;
+            background: repeating-linear-gradient(0deg, rgba(66, 255, 116, 0.18) 0, rgba(66, 255, 116, 0.18) 1px, transparent 1px, transparent 4px);
+        }
         
         /* Tablet adjustments */
         @media (min-width: 768px) and (max-width: 1024px) {
@@ -3870,6 +3917,7 @@ if ('serviceWorker' in navigator) {
             <button class="airport-action-btn" id="btnShowDepartures">Departures</button>
             <button class="airport-action-btn" id="btnShowArrivals">Arrivals</button>
             <button class="airport-action-btn" id="showBoardBtn">Flight Board</button>
+            <button class="airport-action-btn" id="approachConeBtn" aria-pressed="false">Approach Cone</button>
             <button class="airport-action-btn" id="btnZoomAirport">Zoom To</button>
         </div>
     </div>
@@ -3972,6 +4020,14 @@ if ('serviceWorker' in navigator) {
                         <div class="theme-preview-stripe" style="background:#56b4e9"></div>
                     </div>
                     <div class="theme-name">Color Blind</div>
+                </div>
+                <div class="theme-option" data-theme="crt">
+                    <div class="theme-preview">
+                        <div class="theme-preview-stripe" style="background:#03130a"></div>
+                        <div class="theme-preview-stripe" style="background:#42ff74"></div>
+                        <div class="theme-preview-stripe" style="background:#e7ff60"></div>
+                    </div>
+                    <div class="theme-name">CRT Radar</div>
                 </div>
             </div>
             <div class="setting-row"><span class="setting-label">Auto Day/Night</span><button type="button" class="toggle" id="toggleAutoTheme" role="switch" aria-label="Auto Day and Night Theme" aria-checked="false"></button></div>
@@ -12602,6 +12658,136 @@ if ('serviceWorker' in navigator) {
             if (event.key === 'ArrowRight' || event.key === ' ') { event.preventDefault(); broadcastMode.next(); }
         });
     }
+    // ─── module: modules/A21-military-ramp.js ───────────────────────────────────────────
+    // ============ MILITARY MARKER RAMP ============
+    // Keep military styling independent from the feed's raw category number:
+    // enrichment can identify a military target through several databases.
+    function isMilitaryAircraft(ac = {}) {
+        const category = String(ac.category_type || '').trim().toLowerCase();
+        return !!(ac.militaryInfo || ac.militaryRangeInfo || ac.isMilitary || ac.mil || ac.military || ac.is_military || category === 'military');
+    }
+
+    function militaryConflict(ac, conflicts = []) {
+        const hex = String(ac?.hex || '').toUpperCase();
+        if (!hex) return false;
+        return (Array.isArray(conflicts) ? conflicts : []).some(conflict =>
+            String(conflict?.firstHex || '').toUpperCase() === hex ||
+            String(conflict?.secondHex || '').toUpperCase() === hex
+        );
+    }
+
+    function militaryRampStyle(ac, conflicts = [], selected = false) {
+        if (!isMilitaryAircraft(ac)) return { isMilitary: false, conflict: false, filter: '', className: '' };
+        const conflict = militaryConflict(ac, conflicts);
+        return {
+            isMilitary: true,
+            conflict,
+            // Selected aircraft retain the high-contrast selection color.
+            filter: selected ? '' : (conflict
+                ? 'brightness(0) invert(0.68) sepia(1) saturate(7) hue-rotate(350deg) drop-shadow(0 0 8px #ff5533)'
+                : 'brightness(0) invert(0.64) sepia(1) saturate(4) hue-rotate(42deg) drop-shadow(0 0 4px #d4a72c)'),
+            className: ' military-ramp' + (conflict ? ' military-conflict' : '')
+        };
+    }
+    // ─── module: modules/A22-approach-cones.js ───────────────────────────────────────────
+    // ============ AIRPORT APPROACH CONE ============
+    // A lightweight final-approach sector. Airport datasets do not always
+    // carry runway headings, so the geometry accepts an optional heading and
+    // uses north as a clearly labelled fallback.
+    function approachDestination(airport, bearingDeg, distanceNm) {
+        const lat = Number(airport?.lat), lon = Number(airport?.lon);
+        const bearing = Number(bearingDeg), distance = Number(distanceNm);
+        if (![lat, lon, bearing, distance].every(Number.isFinite)) return null;
+        const radius = Math.PI / 180;
+        const angular = distance / 60 * radius;
+        const lat1 = lat * radius, lon1 = lon * radius, bearingRad = bearing * radius;
+        const lat2 = Math.asin(Math.sin(lat1) * Math.cos(angular) + Math.cos(lat1) * Math.sin(angular) * Math.cos(bearingRad));
+        const lon2 = lon1 + Math.atan2(Math.sin(bearingRad) * Math.sin(angular) * Math.cos(lat1), Math.cos(angular) - Math.sin(lat1) * Math.sin(lat2));
+        return [lat2 / radius, ((lon2 / radius + 540) % 360) - 180];
+    }
+
+    function approachConePoints(airport, headingDeg = 0, radiusNm = 10, halfAngleDeg = 12, segments = 16) {
+        const apex = approachDestination(airport, 0, 0);
+        const heading = Number(headingDeg), radius = Number(radiusNm), halfAngle = Number(halfAngleDeg);
+        const count = Math.max(2, Math.floor(Number(segments) || 16));
+        if (!apex || ![heading, radius, halfAngle].every(Number.isFinite) || radius <= 0 || halfAngle < 0) return [];
+        const points = [apex];
+        for (let index = 0; index <= count; index++) {
+            const angle = heading - halfAngle + (2 * halfAngle * index / count);
+            points.push(approachDestination(airport, angle, radius));
+        }
+        return points;
+    }
+
+    const approachCones = {
+        map: null,
+        layer: null,
+        airport: null,
+        enabled: false,
+
+        init(mapInstance) {
+            if (this.map || !mapInstance || typeof L === 'undefined') return;
+            this.map = mapInstance;
+            this.layer = L.layerGroup();
+        },
+
+        _setButton() {
+            const button = document.getElementById('approachConeBtn');
+            button?.classList.toggle('active', this.enabled);
+            button?.setAttribute('aria-pressed', String(this.enabled));
+        },
+
+        _heading() {
+            const value = Number(this.airport?.approachHeading ?? this.airport?.runwayHeading ?? this.airport?.heading ?? 0);
+            return Number.isFinite(value) ? ((value % 360) + 360) % 360 : 0;
+        },
+
+        show(airport) {
+            if (airport) this.airport = airport;
+            this.enabled = true;
+            this._setButton();
+            this.render();
+        },
+
+        toggle(airport) {
+            if (airport) this.airport = airport;
+            if (!this.airport) return false;
+            this.enabled = !this.enabled;
+            this._setButton();
+            if (this.enabled) this.render();
+            else this.layer?.clearLayers();
+            return this.enabled;
+        },
+
+        render() {
+            if (!this.enabled || !this.map || !this.layer || !this.airport) return;
+            const heading = this._heading();
+            const points = approachConePoints(this.airport, heading);
+            if (points.length < 3) return;
+            this.layer.clearLayers();
+            const code = this.airport.iata || this.airport.icao || 'airport';
+            const cone = L.polygon(points, {
+                color: '#a78bfa', fillColor: '#8b5cf6', fillOpacity: 0.14,
+                weight: 2, dashArray: '6 5', interactive: true
+            });
+            cone.bindTooltip(code + ' · 10 nm approach cone · centerline ' + Math.round(heading) + '°', { sticky: true });
+            cone.addTo(this.layer);
+            const faf = approachDestination(this.airport, heading, 8);
+            if (faf) {
+                L.circleMarker(faf, { radius: 6, color: '#fbbf24', fillColor: '#fbbf24', fillOpacity: 0.9, weight: 2 })
+                    .bindTooltip('FAF · 8 nm final approach fix', { direction: 'top' })
+                    .addTo(this.layer);
+            }
+            L.circleMarker([this.airport.lat, this.airport.lon], { radius: 4, color: '#fff', fillColor: '#8b5cf6', fillOpacity: 1, weight: 2 })
+                .bindTooltip(code + ' threshold · heading ' + Math.round(heading) + '°', { direction: 'top' })
+                .addTo(this.layer);
+            if (!this.map.hasLayer(this.layer)) this.layer.addTo(this.map);
+        }
+    };
+
+    if (typeof document !== 'undefined') {
+        document.addEventListener('skytrack:map-ready', event => approachCones.init(event.detail?.map), { once: true });
+    }
     // ─── module: modules/A3-opensky-tracks.js ───────────────────────────────────────────
 
     // ============ OPENSKY HISTORICAL TRACKS ============
@@ -16193,6 +16379,7 @@ if ('serviceWorker' in navigator) {
     function showAirportPanel(apt) {
         const panel = _el('airportPanel');
         panel._airport = apt; // Store for Flight Board access
+        if (typeof approachCones !== 'undefined' && approachCones.enabled) approachCones.show(apt);
         document.getElementById('airportHeader').className = 'airport-header' + (apt.isMilitary ? ' military' : '');
         document.getElementById('airportName').textContent = apt.name; document.getElementById('airportCodes').textContent = (apt.iata || '---') + ' / ' + apt.icao;
         document.getElementById('airportElev').textContent = apt.elevation ? apt.elevation + ' ft' : '---'; document.getElementById('airportCity').textContent = apt.city || '---'; document.getElementById('airportCountry').textContent = apt.country || '---';
@@ -16704,7 +16891,9 @@ if ('serviceWorker' in navigator) {
         const lbl = settings.showLabels ? 1 : 0;
         const bdg = settings.showInterestingBadges ? 1 : 0;
         const privacy = isPrivacyAircraft(ac) ? 1 : 0;
-        return ac.hex + '|' + altBand + '|' + rot + '|' + sel + dim + lbl + bdg + privacy + '|' + (ac.flight || '') + '|' + (ac.t || '') + '|' + (ac.category || '') + '|' + (ac.desc || '');
+        const military = isMilitaryAircraft(ac) ? 1 : 0;
+        const militaryCpa = military && typeof cpaPrediction !== 'undefined' && militaryConflict(ac, cpaPrediction.conflicts) ? 1 : 0;
+        return ac.hex + '|' + altBand + '|' + rot + '|' + sel + dim + lbl + bdg + privacy + military + militaryCpa + '|' + (ac.flight || '') + '|' + (ac.t || '') + '|' + (ac.category || '') + '|' + (ac.desc || '');
     }
 
     function createIcon(ac) {
@@ -16736,13 +16925,15 @@ if ('serviceWorker' in navigator) {
         }
         
         const cssFilter = getAltitudeCSSFilter(ac.alt_baro, sel);
-        const sprite = aircraftSpriteSvg(ac, { size, rotation: rot, filter: cssFilter });
+        const militaryStyle = militaryRampStyle(ac, typeof cpaPrediction !== 'undefined' ? cpaPrediction.conflicts : [], sel);
+        const sprite = aircraftSpriteSvg(ac, { size, rotation: rot, filter: militaryStyle.filter || cssFilter });
         
         const className = 'aircraft-marker' + 
             (sel ? ' selected' : '') + 
             (isInteresting ? ' interesting' : '') + 
             (isPrivacy ? ' pia' : '') +
             (isVIP ? ' vip' : '') + 
+            militaryStyle.className +
             (isDimmed ? ' dimmed' : '');
         
         const icon = L.divIcon({
@@ -17770,6 +17961,12 @@ if ('serviceWorker' in navigator) {
         document.getElementById('showBoardBtn')?.addEventListener('click', () => {
             const panel = _el('airportPanel');
             if (panel._airport) airportBoard.show(panel._airport);
+        });
+        document.getElementById('approachConeBtn')?.addEventListener('click', () => {
+            const panel = _el('airportPanel');
+            if (!panel._airport) { toast('Select an airport first', 'warning'); return; }
+            const enabled = approachCones.toggle(panel._airport);
+            toast(enabled ? 'Approach cone ON · 10 nm' : 'Approach cone OFF');
         });
     }
     function changeBasemap(style) { Object.values(baseMaps).forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); }); baseMaps[style].addTo(map); currentBaseMap = style; settings.mapStyle = style; document.getElementById('mapStyleSelect').value = style; saveSettings(); updateMarkers(); if (typeof miniMap !== 'undefined' && miniMap.updateMapStyle) miniMap.updateMapStyle(style); }
@@ -20227,6 +20424,15 @@ ${trailData.map(p => {
                 textDim: '#aaa',
                 accent: '#f0e442',
                 selected: '#56b4e9'
+            },
+            crt: {
+                name: 'CRT Radar',
+                bg: '#03130a',
+                bgPanel: 'rgba(2, 16, 8, 0.96)',
+                text: '#c8ffd2',
+                textDim: '#78bd85',
+                accent: '#42ff74',
+                selected: '#e7ff60'
             }
         },
         
@@ -20293,6 +20499,7 @@ ${trailData.map(p => {
             root.style.setProperty('--selected', this.customColors.selected || theme.selected);
             
             document.body.classList.toggle('day-mode', themeName === 'light');
+            document.body.classList.toggle('crt-theme', themeName === 'crt');
             
             // Update minimap theme
             const isDark = themeName !== 'light';

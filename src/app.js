@@ -2693,6 +2693,7 @@
     function showAirportPanel(apt) {
         const panel = _el('airportPanel');
         panel._airport = apt; // Store for Flight Board access
+        if (typeof approachCones !== 'undefined' && approachCones.enabled) approachCones.show(apt);
         document.getElementById('airportHeader').className = 'airport-header' + (apt.isMilitary ? ' military' : '');
         document.getElementById('airportName').textContent = apt.name; document.getElementById('airportCodes').textContent = (apt.iata || '---') + ' / ' + apt.icao;
         document.getElementById('airportElev').textContent = apt.elevation ? apt.elevation + ' ft' : '---'; document.getElementById('airportCity').textContent = apt.city || '---'; document.getElementById('airportCountry').textContent = apt.country || '---';
@@ -3204,7 +3205,9 @@
         const lbl = settings.showLabels ? 1 : 0;
         const bdg = settings.showInterestingBadges ? 1 : 0;
         const privacy = isPrivacyAircraft(ac) ? 1 : 0;
-        return ac.hex + '|' + altBand + '|' + rot + '|' + sel + dim + lbl + bdg + privacy + '|' + (ac.flight || '') + '|' + (ac.t || '') + '|' + (ac.category || '') + '|' + (ac.desc || '');
+        const military = isMilitaryAircraft(ac) ? 1 : 0;
+        const militaryCpa = military && typeof cpaPrediction !== 'undefined' && militaryConflict(ac, cpaPrediction.conflicts) ? 1 : 0;
+        return ac.hex + '|' + altBand + '|' + rot + '|' + sel + dim + lbl + bdg + privacy + military + militaryCpa + '|' + (ac.flight || '') + '|' + (ac.t || '') + '|' + (ac.category || '') + '|' + (ac.desc || '');
     }
 
     function createIcon(ac) {
@@ -3236,13 +3239,15 @@
         }
         
         const cssFilter = getAltitudeCSSFilter(ac.alt_baro, sel);
-        const sprite = aircraftSpriteSvg(ac, { size, rotation: rot, filter: cssFilter });
+        const militaryStyle = militaryRampStyle(ac, typeof cpaPrediction !== 'undefined' ? cpaPrediction.conflicts : [], sel);
+        const sprite = aircraftSpriteSvg(ac, { size, rotation: rot, filter: militaryStyle.filter || cssFilter });
         
         const className = 'aircraft-marker' + 
             (sel ? ' selected' : '') + 
             (isInteresting ? ' interesting' : '') + 
             (isPrivacy ? ' pia' : '') +
             (isVIP ? ' vip' : '') + 
+            militaryStyle.className +
             (isDimmed ? ' dimmed' : '');
         
         const icon = L.divIcon({
@@ -4270,6 +4275,12 @@
         document.getElementById('showBoardBtn')?.addEventListener('click', () => {
             const panel = _el('airportPanel');
             if (panel._airport) airportBoard.show(panel._airport);
+        });
+        document.getElementById('approachConeBtn')?.addEventListener('click', () => {
+            const panel = _el('airportPanel');
+            if (!panel._airport) { toast('Select an airport first', 'warning'); return; }
+            const enabled = approachCones.toggle(panel._airport);
+            toast(enabled ? 'Approach cone ON · 10 nm' : 'Approach cone OFF');
         });
     }
     function changeBasemap(style) { Object.values(baseMaps).forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); }); baseMaps[style].addTo(map); currentBaseMap = style; settings.mapStyle = style; document.getElementById('mapStyleSelect').value = style; saveSettings(); updateMarkers(); if (typeof miniMap !== 'undefined' && miniMap.updateMapStyle) miniMap.updateMapStyle(style); }
@@ -6727,6 +6738,15 @@ ${trailData.map(p => {
                 textDim: '#aaa',
                 accent: '#f0e442',
                 selected: '#56b4e9'
+            },
+            crt: {
+                name: 'CRT Radar',
+                bg: '#03130a',
+                bgPanel: 'rgba(2, 16, 8, 0.96)',
+                text: '#c8ffd2',
+                textDim: '#78bd85',
+                accent: '#42ff74',
+                selected: '#e7ff60'
             }
         },
         
@@ -6793,6 +6813,7 @@ ${trailData.map(p => {
             root.style.setProperty('--selected', this.customColors.selected || theme.selected);
             
             document.body.classList.toggle('day-mode', themeName === 'light');
+            document.body.classList.toggle('crt-theme', themeName === 'crt');
             
             // Update minimap theme
             const isDark = themeName !== 'light';

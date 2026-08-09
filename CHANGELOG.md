@@ -5,6 +5,9 @@ All notable changes to SkyTrack will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Operational map context.** Airport panels can render a 10 nm approach
+  cone with an FAF marker, military targets use an amber/olive ramp with CPA
+  conflict pulses, and an optional CRT Radar theme adds phosphor scanlines.
 - **Presentation overlays.** Added zero-dependency low-zoom hex density bins,
   curved route-flow arcs, and a fullscreen broadcast mode that cycles through
   emergency, VIP, military, flagged, and CPA-conflict traffic.
