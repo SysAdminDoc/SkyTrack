@@ -2108,7 +2108,34 @@
         } catch (e) { /* corrupt storage */ }
         return false;
     }
-    function saveAircraftCache() { try { const d = { ts: Date.now(), ac: {} }; const keys = Object.keys(aircraftCache); for (let i = 0; i < keys.length; i++) { const h = keys[i], a = aircraftCache[h]; d.ac[h] = { hex: a.hex, flight: a.flight, r: a.r, t: a.t, desc: a.desc, ownOp: a.ownOp, lat: a.lat, lon: a.lon, alt_baro: a.alt_baro, gs: a.gs, track: a.track, baro_rate: a.baro_rate, squawk: a.squawk, category: a.category, dbFlags: a.dbFlags, ladd: a.ladd, isLadd: a.isLadd, privacyIcaoAddress: a.privacyIcaoAddress, privacy: a.privacy, firstSeen: a.firstSeen, from: a.from, to: a.to, lastSeen: a.lastSeen, history: a.history?.slice(-50) || [] }; } localStorage.setItem('skytrack_aircraft', JSON.stringify(d)); } catch(e){} }
+    function serializeAircraftCache() {
+        const out = {};
+        const keys = Object.keys(aircraftCache);
+        for (let i = 0; i < keys.length; i++) {
+            const h = keys[i], a = aircraftCache[h];
+            out[h] = {
+                hex: a.hex, flight: a.flight, r: a.r, t: a.t, desc: a.desc, ownOp: a.ownOp,
+                lat: a.lat, lon: a.lon, alt_baro: a.alt_baro, gs: a.gs, track: a.track,
+                baro_rate: a.baro_rate, squawk: a.squawk, category: a.category, dbFlags: a.dbFlags,
+                ladd: a.ladd, isLadd: a.isLadd, privacyIcaoAddress: a.privacyIcaoAddress,
+                privacy: a.privacy, firstSeen: a.firstSeen, from: a.from, to: a.to,
+                lastSeen: a.lastSeen, history: a.history?.slice(-50) || []
+            };
+        }
+        return out;
+    }
+    function applySharedAircraftSnapshot(payload) {
+        if (!payload?.ac || typeof payload.ac !== 'object') return;
+        Object.keys(markers).forEach(hex => { if (markers[hex] && map) map.removeLayer(markers[hex]); delete markers[hex]; });
+        Object.keys(aircraftAnimation).forEach(hex => delete aircraftAnimation[hex]);
+        highVolumeRenderer?.clear?.();
+        aircraftCache = payload.ac;
+        Object.values(aircraftCache).forEach(ac => { ac._enriched = false; _enrichAircraft(ac, ac.hex); });
+        updateCounts();
+        if (map) updateMarkersSync();
+        if (typeof updateQuickGlance === 'function' && selectedHex) updateQuickGlance(selectedHex);
+    }
+    function saveAircraftCache() { try { localStorage.setItem('skytrack_aircraft', JSON.stringify({ ts: Date.now(), ac: serializeAircraftCache() })); } catch(e){} }
     function loadAircraftCache() { try { const s = localStorage.getItem('skytrack_aircraft'); if (s) { const d = JSON.parse(s); if (Date.now() - d.ts < CONFIG.cacheExpiry) { aircraftCache = d.ac; return true; } } } catch(e){} return false; }
     function saveSettings() { localStorage.setItem('skytrack_settings_v3', JSON.stringify(settings)); }
     function normalizeUiText(text) { return String(text ?? '').replace(/\.{3}/g, '…'); }
@@ -2411,7 +2438,15 @@
         // don't each hit every ADS-B source. Non-leader tabs still render
         // from their own cache; they just don't initiate a fresh network
         // round. (v0.24.0 — module 10-utils.js `tabLeader`.)
-        try { tabLeader.init(); } catch (_) {}
+        try {
+            tabLeader.init({
+                onLeaderChange: isLeader => {
+                    if (isLeader) loadAircraft();
+                    else tabLeader.syncFromStore();
+                },
+                onSnapshot: applySharedAircraftSnapshot
+            });
+        } catch (_) {}
         // Initialize IndexedDB first
         try {
             await skytrackDB.init();
@@ -2422,6 +2457,7 @@
         } catch (e) {
             console.warn('IndexedDB not available, using localStorage fallback');
         }
+        if (!tabLeader.isLeader) await tabLeader.syncFromStore();
         
         uiDialogs.init();
         loadSettings(); loadApiCredentials(); loadBookmarks();
@@ -2659,7 +2695,7 @@
         if (apt.wiki && settings.showWiki) {
             getWikipediaSummary(apt.wiki).then(wiki => {
                 if (wiki) {
-                    if (wiki.thumbnail) photoDiv.innerHTML = '<img src="' + _escHtml(wiki.thumbnail) + '" alt="' + _escHtml(apt.name) + '">';
+                    if (wiki.thumbnail) photoDiv.innerHTML = '<img src="' + _escHtml(wiki.thumbnail) + '" alt="' + _escHtml(apt.name) + '" loading="lazy" decoding="async">';
                     document.getElementById('airportWikiSummary').textContent = wiki.extract ? wiki.extract.substring(0, 200) + '...' : '';
                     document.getElementById('airportWikiLink').href = wiki.url;
                     wikiSection.style.display = 'block';
@@ -2741,12 +2777,13 @@
         async fetchPoint(source, point, signal) {
             const url=source.buildUrl(point,250);
             try{let r;if(source.cors!==false){try{r=await fetch(url,{signal,cache:'no-cache'});}catch(e){if(e.name==='AbortError')throw e;r=null;}}
-                if(!r||!r.ok){r=await fetchWithProxy(url,{},true);}
+                if((!r||!r.ok) && source.cors === false){r=await fetchWithProxy(url,{},true);}
                 if(r?.ok){const d=await r.json();return source.parseResponse(d)||[];}}catch(e){if(e.name==='AbortError')throw e;}return[];
         }
     };
     async function loadAircraft() {
         if(!map)return; // Guard: map not yet initialized
+        if (!tabLeader.isLeader) { await tabLeader.syncFromStore(); return; }
         if(gridFetch.inProgress){if(gridFetch.abortController)gridFetch.abortController.abort();return;}
         if(Date.now()-lastFetchTime<2000)return;
         if(!offlineManager.isOnline){offlineManager.showCachedPositions();return;}
@@ -2777,6 +2814,7 @@
                         }catch(e){if(e.name!=='AbortError')dataSourceManager.recordFailure(src);resolve([]);}});}));
                 if(success){connectionMonitor.recordSuccess();offlineManager.cachePositions();}}
             if(!success){_el('dataSource').textContent='No sources';connectionMonitor.recordFailure();}
+            if (success && tabLeader.isLeader) tabLeader.publishSnapshot(serializeAircraftCache());
         }catch(e){if(e.name!=='AbortError')connectionMonitor.recordFailure();}
         finally{lastFetchTime=Date.now();gridFetch.inProgress=false;fetchInProgress=false;}
     }
@@ -3380,6 +3418,8 @@
             if (preloadedUrl) {
                 // Verify the image loads
                 const img = new Image();
+                img.loading = 'lazy';
+                img.decoding = 'async';
                 img.onload = () => {
                     photoCache[hex] = { url: preloadedUrl, source: 'preloaded' };
                     displayPhoto(photoCache[hex]);
@@ -3402,6 +3442,8 @@
         const selfHostedUrl = DATA_URLS.aircraftPhotos + hex.toUpperCase() + '.jpg';
         
         const img = new Image();
+        img.loading = 'lazy';
+        img.decoding = 'async';
         img.onload = () => {
             photoCache[hex] = { url: selfHostedUrl, source: 'self-hosted' };
             displayPhoto(photoCache[hex]);
@@ -3443,6 +3485,8 @@
             const selfHostedUrl = CONFIG.silhouetteUrl + typeUpper + '.png';
             const externalUrl = 'https://globe.airplanes.live/aircraft_sil/' + typeUpper + '.png';
             const img = document.createElement('img');
+            img.loading = 'lazy';
+            img.decoding = 'async';
             img.style.cssText = 'object-fit:contain;background:#1a1a2e;padding:20px;width:100%;height:100%;';
             img.onerror = function() {
                 if (this.src !== externalUrl) {
@@ -3464,6 +3508,8 @@
         div.innerHTML = '';
         const img = document.createElement('img');
         img.alt = '';
+        img.loading = 'lazy';
+        img.decoding = 'async';
         img.style.cssText = photo.isSilhouette ? 'object-fit:contain;background:#1a1a2e;padding:20px;' : 'object-fit:cover;';
         img.onerror = () => { div.innerHTML = '<div class="no-photo">No Photo Available</div>'; };
         img.src = photo.url;
@@ -7692,7 +7738,7 @@ ${trailData.map(p => {
 
         formatPhoto(value, ac) {
             if (ac.preloadedImage) {
-                return `<img class="comparison-photo" src="${_escHtml(ac.preloadedImage)}" alt="" loading="lazy">`;
+                return `<img class="comparison-photo" src="${_escHtml(ac.preloadedImage)}" alt="" loading="lazy" decoding="async">`;
             }
             return '<div class="comparison-photo"></div>';
         },

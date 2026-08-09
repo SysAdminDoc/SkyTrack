@@ -138,9 +138,12 @@
         _chan: null,
         _peers: new Map(),   // peerId → timeOrigin
         _onChange: null,
+        _onSnapshot: null,
+        _lastSnapshotAt: 0,
 
-        init(onChange) {
-            this._onChange = onChange || null;
+        init(options = {}) {
+            this._onChange = typeof options === 'function' ? options : options.onLeaderChange || options.onChange || null;
+            this._onSnapshot = typeof options === 'object' ? options.onSnapshot || null : null;
             if (typeof BroadcastChannel !== 'function') return;
             try {
                 this._chan = new BroadcastChannel(this.channelName);
@@ -152,15 +155,21 @@
                     this._peers.set(m.id, m.timeOrigin || 0);
                     this._chan.postMessage({ type: 'present', id: this.myId, timeOrigin: performance.timeOrigin || 0 });
                     this._recompute();
+                    if (this.isLeader && this._lastSnapshotAt) this._chan.postMessage({ type: 'data-updated', timestamp: this._lastSnapshotAt });
                 } else if (m.type === 'present' && m.id && m.id !== this.myId) {
                     this._peers.set(m.id, m.timeOrigin || 0);
                     this._recompute();
                 } else if (m.type === 'bye' && m.id) {
                     this._peers.delete(m.id);
                     this._recompute();
+                } else if (m.type === 'data-updated' && !this.isLeader) {
+                    this.syncFromStore(m.timestamp);
+                } else if (m.type === 'sync-request' && this.isLeader && this._lastSnapshotAt) {
+                    this._chan.postMessage({ type: 'data-updated', timestamp: this._lastSnapshotAt });
                 }
             };
             this._chan.postMessage({ type: 'hello', id: this.myId, timeOrigin: performance.timeOrigin || 0 });
+            this._chan.postMessage({ type: 'sync-request', id: this.myId });
             window.addEventListener('pagehide', () => {
                 try { this._chan?.postMessage({ type: 'bye', id: this.myId }); } catch (_) {}
                 try { this._chan?.close(); } catch (_) {}
@@ -180,6 +189,34 @@
                 if (typeof this._onChange === 'function') {
                     try { this._onChange(this.isLeader); } catch (_) {}
                 }
+            }
+        },
+
+        async publishSnapshot(snapshot) {
+            if (!this.isLeader || !snapshot) return false;
+            const payload = { timestamp: Date.now(), ac: snapshot };
+            try {
+                if (typeof skytrackDB === 'object' && skytrackDB?.saveDatabase) {
+                    await skytrackDB.saveDatabase('liveAircraft', payload, 15000);
+                }
+            } catch (_) {
+                return false;
+            }
+            this._lastSnapshotAt = payload.timestamp;
+            try { this._chan?.postMessage({ type: 'data-updated', timestamp: payload.timestamp }); } catch (_) {}
+            return true;
+        },
+
+        async syncFromStore(minTimestamp = 0) {
+            if (this.isLeader || typeof skytrackDB !== 'object' || !skytrackDB?.loadDatabase) return false;
+            try {
+                const payload = await skytrackDB.loadDatabase('liveAircraft');
+                if (!payload?.ac || !Number.isFinite(payload.timestamp) || payload.timestamp <= this._lastSnapshotAt || payload.timestamp < Number(minTimestamp || 0)) return false;
+                this._lastSnapshotAt = payload.timestamp;
+                if (typeof this._onSnapshot === 'function') this._onSnapshot(payload);
+                return true;
+            } catch (_) {
+                return false;
             }
         }
     };

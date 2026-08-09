@@ -131,6 +131,24 @@
                 localStorage.setItem('skytrack_watchlist', JSON.stringify(data));
             }
         },
+
+        async requestPersistentStorage() {
+            if (!navigator.storage?.persist || !navigator.storage?.persisted) return false;
+            try {
+                if (await navigator.storage.persisted()) return true;
+            } catch (_) {}
+            try {
+                if (localStorage.getItem('skytrack_persist_prompted') === '1') return false;
+                localStorage.setItem('skytrack_persist_prompted', '1');
+            } catch (_) {}
+            try {
+                const granted = await navigator.storage.persist();
+                if (granted) toast('Persistent storage enabled for your watchlist');
+                return granted;
+            } catch (_) {
+                return false;
+            }
+        },
         
         saveSettings() {
             localStorage.setItem('skytrack_alert_settings', JSON.stringify({
@@ -145,6 +163,7 @@
             const upperHex = hex.toUpperCase();
             const entry = { hex: upperHex, name: name || hex, notes, addedAt: Date.now() };
             this.watchlist.set(upperHex, entry);
+            if (this.watchlist.size === 1) this.requestPersistentStorage();
             this.saveWatchlist();
             this.updateWatchlistUI();
             toast('Added to watchlist: ' + entry.name);

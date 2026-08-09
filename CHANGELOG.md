@@ -5,6 +5,10 @@ All notable changes to SkyTrack will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Runtime hardening and multi-tab coordination.** Added a restrictive CSP,
+  SRI pins for external scripts, a debug HUD enabled by `?debug=1`, persistent
+  storage requests for watchlists, lazy image decoding, and leader/follower
+  coordination so only one tab refreshes live aircraft data.
 - **Worker-backed database startup.** Registration, airport, route, category,
   VIP, and civilian datasets now transfer fetched bytes to a blob worker for
   parsing, prefer the self-hosted compressed registration database, and cache

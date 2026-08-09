@@ -50,7 +50,7 @@
             // manual list rather than a reflection loop because script-scope
             // `const` bindings aren't enumerable on `window`.
             const known = [
-                'CONFIG','DATA_URLS','errorHandler','perfUtils',
+                'CONFIG','DATA_URLS','errorHandler','perfUtils','dbWorkerParser','tabLeader','debugHud',
                 'connectionMonitor','offlineManager','dataSourceManager','autoRetry','errorRecovery','circuitBreakers',
                 'skytrackDB','weatherSystem','weatherOverlay','alertSystem',
                 'rangeRings','phaseClassifier','countryFlag','emergencyPulse','surveillanceOrbit','firesHurricanes','planeOverHome',
@@ -89,8 +89,8 @@
                     if (!cb) continue;
                     out[key] = {
                         state: cb.state || null,
-                        failureCount: cb.failureCount || 0,
-                        lastFailTime: cb.lastFailTime || null
+                        failureCount: cb.failures ?? cb.failureCount ?? 0,
+                        lastFailTime: cb.lastFailure ?? cb.lastFailTime ?? null
                     };
                 }
                 return out;

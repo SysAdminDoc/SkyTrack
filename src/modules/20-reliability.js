@@ -249,7 +249,8 @@
             // return `aircraft`, while /mil /pia /ladd still return `ac`. Handle both.
             { key: 'adsbone', name: 'ADSB One', buildUrl: (c, r) => 'https://api.adsb.one/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => { const a = d?.aircraft || d?.ac; return a?.length ? a : null; }, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 1, cors: false },
             { key: 'adsblol', name: 'ADSB.lol', buildUrl: (c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => { const a = d?.aircraft || d?.ac; return a?.length ? a : null; }, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 2, cors: false },
-            { key: 'adsbfi', name: 'ADSB.fi', buildUrl: (c, r) => 'https://opendata.adsb.fi/api/v2/lat/' + c.lat.toFixed(4) + '/lon/' + c.lng.toFixed(4) + '/dist/' + r, parseResponse: d => { const a = d?.aircraft || d?.ac; return a?.length ? a : null; }, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 3, cors: true }
+            { key: 'adsbfi', name: 'ADSB.fi', buildUrl: (c, r) => 'https://opendata.adsb.fi/api/v2/lat/' + c.lat.toFixed(4) + '/lon/' + c.lng.toFixed(4) + '/dist/' + r, parseResponse: d => { const a = d?.aircraft || d?.ac; return a?.length ? a : null; }, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 3, cors: true },
+            { key: 'airplaneslive', name: 'Airplanes.live', buildUrl: (c, r) => 'https://api.airplanes.live/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => { const a = d?.aircraft || d?.ac; return a?.length ? a : null; }, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 4, cors: true }
         ],
         
         currentSource: null,
@@ -285,7 +286,11 @@
                 
                 let response;
                 if (source.cors !== false) { try { response = await fetch(testUrl, { method: 'GET', cache: 'no-cache', signal: AbortSignal.timeout(8000) }); } catch(e) { response = null; } }
-                if (!response || !response.ok) { response = await fetchWithProxy(testUrl); if (!response) throw new Error('No proxy'); }
+                if (!response || !response.ok) {
+                    if (source.cors !== false) throw new Error('CORS-native source unavailable');
+                    response = await fetchWithProxy(testUrl, {}, true);
+                    if (!response) throw new Error('No proxy fallback');
+                }
                 
                 source.latency = Date.now() - startTime;
                 

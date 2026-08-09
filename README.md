@@ -230,10 +230,14 @@ SkyTrack fetches live ADS-B data from multiple free APIs with automatic failover
 
 | Source | CORS | Priority | Coverage |
 |--------|------|----------|----------|
-| [ADSB One](https://adsb.one) | Yes | Primary | Global |
+| [ADSB One](https://adsb.one) | No (proxy) | Primary | Global |
 | [ADSB.lol](https://adsb.lol) | No (proxied) | Secondary | Global |
 | [ADSB.fi](https://adsb.fi) | Yes | Tertiary | Europe-strong |
 | [Airplanes.live](https://airplanes.live) | Yes | Quaternary | Global |
+
+ADSB.fi and Airplanes.live are queried directly from the browser. Public CORS
+proxies are reserved for feeds that cannot be queried directly, currently
+ADSB One and ADSB.lol.
 
 Additional on-demand enrichment APIs (called only for the selected aircraft):
 
