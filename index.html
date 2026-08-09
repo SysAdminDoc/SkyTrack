@@ -10,6 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SkyTrack">
     <meta name="description" content="Real-time aircraft tracking with military, VIP, and interesting aircraft alerts">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://cesium.com https://*.cesium.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src * blob:; worker-src 'self' blob:; manifest-src 'self' blob:; media-src 'self' blob: https:; frame-src 'self' https:">
     <meta http-equiv="Permissions-Policy" content="usb=(), serial=(), bluetooth=(), midi=(), camera=(), microphone=(), payment=(), interest-cohort=()">
     <script type="application/ld+json">
     {
@@ -37,7 +38,7 @@
     <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" as="style">
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" as="script">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" as="script" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous">
     <link rel="icon" href="data:image/x-icon;base64,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">
     <link rel="icon" type="image/png" sizes="16x16" href="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-16x16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-32x32.png">
@@ -1396,6 +1397,16 @@
         .hud-3d-title { font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
         .hud-3d-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 11px; color: var(--text-dim); }
         .hud-3d-key { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; padding: 1px 5px; background: rgba(255,255,255,0.08); border-radius: 4px; font-size: 10px; font-weight: 600; color: var(--text-muted); }
+        .debug-hud { position: fixed; top: 52px; right: 10px; z-index: 2100; width: min(340px, calc(100vw - 20px)); max-height: calc(100vh - 64px); overflow: auto; padding: 10px 12px; background: rgba(7, 10, 20, 0.94); border: 1px solid rgba(0, 212, 255, 0.35); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.35); color: var(--text-dim); font: 10px/1.35 ui-monospace, SFMono-Regular, Consolas, monospace; pointer-events: none; }
+        .debug-hud[hidden] { display: none; }
+        .debug-hud-title { margin-bottom: 6px; color: var(--accent); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+        .debug-hud-metrics { display: flex; gap: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); color: var(--text); }
+        .debug-hud-subtitle { margin-top: 7px; color: var(--text-muted); font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; }
+        .debug-hud-row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
+        .debug-hud-status { color: var(--text-muted); }
+        .debug-hud-status.healthy, .debug-hud-status.closed { color: #4ade80; }
+        .debug-hud-status.degraded, .debug-hud-status.half-open { color: #fbbf24; }
+        .debug-hud-status.unhealthy, .debug-hud-status.open { color: #fb7185; }
 
         /* ============ UI OVERHAUL: ONBOARDING ============ */
         .onboard-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9000; display: none; }
@@ -3296,7 +3307,7 @@ if ('serviceWorker' in navigator) {
 <body>
     <div class="loading-overlay" id="loading">
         <div class="loading-logo">
-            <img src="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-128x128.png" alt="SkyTrack">
+            <img src="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-128x128.png" alt="SkyTrack" loading="lazy" decoding="async">
             <span>SkyTrack<span class="version">v0.24.3</span></span>
         </div>
         <div class="spinner"></div>
@@ -3420,6 +3431,7 @@ if ('serviceWorker' in navigator) {
         <div class="hud-3d-row"><span class="hud-3d-key">Click</span> Select aircraft</div>
         <div class="hud-3d-row"><span class="hud-3d-key">🛰</span> <span id="satellite3dStatus">Satellites loading…</span></div>
     </div>
+    <div class="debug-hud" id="debugHud" hidden aria-live="polite" aria-label="Debug telemetry"></div>
     
     <!-- Onboarding Overlay -->
     <div class="onboard-overlay" id="onboardOverlay">
@@ -3443,7 +3455,7 @@ if ('serviceWorker' in navigator) {
         <div class="loading-text" id="loadingText" role="status" aria-live="polite">Scanning Live Airspace…</div>
     </div>
     <div class="filter-bar" id="filterBar" role="search" aria-label="Flight Search and Filters">
-        <div class="logo"><img src="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-32x32.png" alt="SkyTrack"><span>SkyTrack</span></div>
+        <div class="logo"><img src="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-32x32.png" alt="SkyTrack" loading="lazy" decoding="async"><span>SkyTrack</span></div>
         <div class="connectivity-indicator" id="connectivityIndicator" title="Online"><div class="connectivity-dot online"></div></div>
         <div class="search-container" id="searchContainer">
             <div class="search-input-wrapper">
@@ -3560,7 +3572,7 @@ if ('serviceWorker' in navigator) {
     </div><!-- /#filterBar -->
     <div class="info-panel" id="infoPanel" role="dialog" aria-label="Aircraft Details">
         <div class="aircraft-photo" id="aircraftPhoto"><div class="no-photo">Loading...</div></div>
-        <div class="airline-banner" id="airlineBanner" style="display:none;"><img src="" alt=""></div>
+        <div class="airline-banner" id="airlineBanner" style="display:none;"><img src="" alt="" loading="lazy" decoding="async"></div>
         <div class="info-quickglance" id="infoQuickGlance">
             <div class="info-qg-item"><div class="info-qg-val" id="qgCallsign">---</div><div class="info-qg-label">Flight</div></div>
             <div class="info-qg-item"><div class="info-qg-val" id="qgAlt">---</div><div class="info-qg-label">Altitude</div></div>
@@ -3751,7 +3763,7 @@ if ('serviceWorker' in navigator) {
     </div>
     <div class="airport-panel" id="airportPanel" role="dialog" aria-label="Airport Details">
         <div class="airport-header" id="airportHeader">
-            <div class="airport-flag" id="airportFlag"><img src="" alt=""></div>
+            <div class="airport-flag" id="airportFlag"><img src="" alt="" loading="lazy" decoding="async"></div>
             <div class="airport-title"><div class="airport-name" id="airportName">---</div><div class="airport-codes" id="airportCodes">--- / ---</div></div>
             <button class="info-close" id="airportClose" aria-label="Close airport details">&times;</button>
         </div>
@@ -4174,11 +4186,11 @@ if ('serviceWorker' in navigator) {
         </div>
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite" data-tone="info"></div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet-polylineoffset@1.1.1/leaflet.polylineoffset.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet-edgebuffer@1.0.7/src/leaflet.edgebuffer.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.js" integrity="sha384-FON5fTjCTtPuBgUS1r2H/PGXstH0Rk23YKjZmB6qITkbFqBcqtey/rPo9eXwOWpx" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-polylineoffset@1.1.1/leaflet.polylineoffset.js" integrity="sha384-aawDUKQFc9RzgelO2A124IvVZeJgYhuhw80CtD84NiVOUWyiXGY31u2LozNQVJtM" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-edgebuffer@1.0.7/src/leaflet.edgebuffer.min.js" integrity="sha384-4eQKAZkE+MMJfXHlkWU6rxdtNdYG7DCvWVYsrqiazdqAhROjBm02GsE/5GXYtLdG" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js" integrity="sha384-rNlaE5fs9dGIjmxWDALQh/RBAaGRYT5ChrzHo6tRfgrZ36iRFAiquP5g41Jsv+0j" crossorigin="anonymous"></script>
     <script>
     // ─── module: modules/00-config.js ───────────────────────────────────────────
 
@@ -4473,9 +4485,12 @@ if ('serviceWorker' in navigator) {
         _chan: null,
         _peers: new Map(),   // peerId → timeOrigin
         _onChange: null,
+        _onSnapshot: null,
+        _lastSnapshotAt: 0,
 
-        init(onChange) {
-            this._onChange = onChange || null;
+        init(options = {}) {
+            this._onChange = typeof options === 'function' ? options : options.onLeaderChange || options.onChange || null;
+            this._onSnapshot = typeof options === 'object' ? options.onSnapshot || null : null;
             if (typeof BroadcastChannel !== 'function') return;
             try {
                 this._chan = new BroadcastChannel(this.channelName);
@@ -4487,15 +4502,21 @@ if ('serviceWorker' in navigator) {
                     this._peers.set(m.id, m.timeOrigin || 0);
                     this._chan.postMessage({ type: 'present', id: this.myId, timeOrigin: performance.timeOrigin || 0 });
                     this._recompute();
+                    if (this.isLeader && this._lastSnapshotAt) this._chan.postMessage({ type: 'data-updated', timestamp: this._lastSnapshotAt });
                 } else if (m.type === 'present' && m.id && m.id !== this.myId) {
                     this._peers.set(m.id, m.timeOrigin || 0);
                     this._recompute();
                 } else if (m.type === 'bye' && m.id) {
                     this._peers.delete(m.id);
                     this._recompute();
+                } else if (m.type === 'data-updated' && !this.isLeader) {
+                    this.syncFromStore(m.timestamp);
+                } else if (m.type === 'sync-request' && this.isLeader && this._lastSnapshotAt) {
+                    this._chan.postMessage({ type: 'data-updated', timestamp: this._lastSnapshotAt });
                 }
             };
             this._chan.postMessage({ type: 'hello', id: this.myId, timeOrigin: performance.timeOrigin || 0 });
+            this._chan.postMessage({ type: 'sync-request', id: this.myId });
             window.addEventListener('pagehide', () => {
                 try { this._chan?.postMessage({ type: 'bye', id: this.myId }); } catch (_) {}
                 try { this._chan?.close(); } catch (_) {}
@@ -4515,6 +4536,34 @@ if ('serviceWorker' in navigator) {
                 if (typeof this._onChange === 'function') {
                     try { this._onChange(this.isLeader); } catch (_) {}
                 }
+            }
+        },
+
+        async publishSnapshot(snapshot) {
+            if (!this.isLeader || !snapshot) return false;
+            const payload = { timestamp: Date.now(), ac: snapshot };
+            try {
+                if (typeof skytrackDB === 'object' && skytrackDB?.saveDatabase) {
+                    await skytrackDB.saveDatabase('liveAircraft', payload, 15000);
+                }
+            } catch (_) {
+                return false;
+            }
+            this._lastSnapshotAt = payload.timestamp;
+            try { this._chan?.postMessage({ type: 'data-updated', timestamp: payload.timestamp }); } catch (_) {}
+            return true;
+        },
+
+        async syncFromStore(minTimestamp = 0) {
+            if (this.isLeader || typeof skytrackDB !== 'object' || !skytrackDB?.loadDatabase) return false;
+            try {
+                const payload = await skytrackDB.loadDatabase('liveAircraft');
+                if (!payload?.ac || !Number.isFinite(payload.timestamp) || payload.timestamp <= this._lastSnapshotAt || payload.timestamp < Number(minTimestamp || 0)) return false;
+                this._lastSnapshotAt = payload.timestamp;
+                if (typeof this._onSnapshot === 'function') this._onSnapshot(payload);
+                return true;
+            } catch (_) {
+                return false;
             }
         }
     };
@@ -5049,7 +5098,8 @@ if ('serviceWorker' in navigator) {
             // return `aircraft`, while /mil /pia /ladd still return `ac`. Handle both.
             { key: 'adsbone', name: 'ADSB One', buildUrl: (c, r) => 'https://api.adsb.one/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => { const a = d?.aircraft || d?.ac; return a?.length ? a : null; }, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 1, cors: false },
             { key: 'adsblol', name: 'ADSB.lol', buildUrl: (c, r) => 'https://api.adsb.lol/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => { const a = d?.aircraft || d?.ac; return a?.length ? a : null; }, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 2, cors: false },
-            { key: 'adsbfi', name: 'ADSB.fi', buildUrl: (c, r) => 'https://opendata.adsb.fi/api/v2/lat/' + c.lat.toFixed(4) + '/lon/' + c.lng.toFixed(4) + '/dist/' + r, parseResponse: d => { const a = d?.aircraft || d?.ac; return a?.length ? a : null; }, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 3, cors: true }
+            { key: 'adsbfi', name: 'ADSB.fi', buildUrl: (c, r) => 'https://opendata.adsb.fi/api/v2/lat/' + c.lat.toFixed(4) + '/lon/' + c.lng.toFixed(4) + '/dist/' + r, parseResponse: d => { const a = d?.aircraft || d?.ac; return a?.length ? a : null; }, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 3, cors: true },
+            { key: 'airplaneslive', name: 'Airplanes.live', buildUrl: (c, r) => 'https://api.airplanes.live/v2/point/' + c.lat.toFixed(4) + '/' + c.lng.toFixed(4) + '/' + r, parseResponse: d => { const a = d?.aircraft || d?.ac; return a?.length ? a : null; }, status: 'unknown', lastSuccess: 0, lastError: 0, errorCount: 0, latency: 0, priority: 4, cors: true }
         ],
         
         currentSource: null,
@@ -5085,7 +5135,11 @@ if ('serviceWorker' in navigator) {
                 
                 let response;
                 if (source.cors !== false) { try { response = await fetch(testUrl, { method: 'GET', cache: 'no-cache', signal: AbortSignal.timeout(8000) }); } catch(e) { response = null; } }
-                if (!response || !response.ok) { response = await fetchWithProxy(testUrl); if (!response) throw new Error('No proxy'); }
+                if (!response || !response.ok) {
+                    if (source.cors !== false) throw new Error('CORS-native source unavailable');
+                    response = await fetchWithProxy(testUrl, {}, true);
+                    if (!response) throw new Error('No proxy fallback');
+                }
                 
                 source.latency = Date.now() - startTime;
                 
@@ -6199,6 +6253,24 @@ if ('serviceWorker' in navigator) {
                 localStorage.setItem('skytrack_watchlist', JSON.stringify(data));
             }
         },
+
+        async requestPersistentStorage() {
+            if (!navigator.storage?.persist || !navigator.storage?.persisted) return false;
+            try {
+                if (await navigator.storage.persisted()) return true;
+            } catch (_) {}
+            try {
+                if (localStorage.getItem('skytrack_persist_prompted') === '1') return false;
+                localStorage.setItem('skytrack_persist_prompted', '1');
+            } catch (_) {}
+            try {
+                const granted = await navigator.storage.persist();
+                if (granted) toast('Persistent storage enabled for your watchlist');
+                return granted;
+            } catch (_) {
+                return false;
+            }
+        },
         
         saveSettings() {
             localStorage.setItem('skytrack_alert_settings', JSON.stringify({
@@ -6213,6 +6285,7 @@ if ('serviceWorker' in navigator) {
             const upperHex = hex.toUpperCase();
             const entry = { hex: upperHex, name: name || hex, notes, addedAt: Date.now() };
             this.watchlist.set(upperHex, entry);
+            if (this.watchlist.size === 1) this.requestPersistentStorage();
             this.saveWatchlist();
             this.updateWatchlistUI();
             toast('Added to watchlist: ' + entry.name);
@@ -10595,7 +10668,7 @@ if ('serviceWorker' in navigator) {
             // manual list rather than a reflection loop because script-scope
             // `const` bindings aren't enumerable on `window`.
             const known = [
-                'CONFIG','DATA_URLS','errorHandler','perfUtils',
+                'CONFIG','DATA_URLS','errorHandler','perfUtils','dbWorkerParser','tabLeader','debugHud',
                 'connectionMonitor','offlineManager','dataSourceManager','autoRetry','errorRecovery','circuitBreakers',
                 'skytrackDB','weatherSystem','weatherOverlay','alertSystem',
                 'rangeRings','phaseClassifier','countryFlag','emergencyPulse','surveillanceOrbit','firesHurricanes','planeOverHome',
@@ -10634,8 +10707,8 @@ if ('serviceWorker' in navigator) {
                     if (!cb) continue;
                     out[key] = {
                         state: cb.state || null,
-                        failureCount: cb.failureCount || 0,
-                        lastFailTime: cb.lastFailTime || null
+                        failureCount: cb.failures ?? cb.failureCount ?? 0,
+                        lastFailTime: cb.lastFailure ?? cb.lastFailTime ?? null
                     };
                 }
                 return out;
@@ -10730,6 +10803,72 @@ if ('serviceWorker' in navigator) {
             }
         }
     };
+    // ─── module: modules/9D-debug-hud.js ───────────────────────────────────────────
+
+    // ============ DEBUG HUD (?debug=1) ============
+    // A compact, opt-in telemetry panel for support and performance work.
+    // It is absent from normal sessions and never sends data anywhere.
+    function debugHudRows(sources = [], breakers = {}) {
+        const sourceRows = (Array.isArray(sources) ? sources : []).map(source => ({
+            name: source?.name || source?.key || 'source',
+            status: source?.status || 'unknown',
+            latency: Number.isFinite(source?.latency) && source.latency < 9999 ? source.latency + 'ms' : '--',
+            errors: Number(source?.errorCount) || 0
+        }));
+        const breakerRows = Object.entries(breakers || {}).map(([name, breaker]) => ({
+            name,
+            state: breaker?.state || 'unknown',
+            failures: Number(breaker?.failures ?? breaker?.failureCount) || 0
+        }));
+        return { sourceRows, breakerRows };
+    }
+
+    const debugHud = {
+        element: null,
+        _raf: 0,
+        _lastFrame: 0,
+        _lastRender: 0,
+        _frameDelta: 0,
+
+        init() {
+            if (!CONFIG.debug) return;
+            this.element = document.getElementById('debugHud');
+            if (!this.element || typeof requestAnimationFrame !== 'function') return;
+            this.element.hidden = false;
+            this._raf = requestAnimationFrame(ts => this.tick(ts));
+        },
+
+        tick(timestamp) {
+            if (this._lastFrame) this._frameDelta = timestamp - this._lastFrame;
+            this._lastFrame = timestamp;
+            if (timestamp - this._lastRender >= 250) {
+                this._lastRender = timestamp;
+                this.render();
+            }
+            this._raf = requestAnimationFrame(ts => this.tick(ts));
+        },
+
+        render() {
+            if (!this.element) return;
+            const memory = performance.memory?.usedJSHeapSize;
+            const sources = typeof dataSourceManager === 'object' ? dataSourceManager.sources : [];
+            const breakers = typeof circuitBreakers === 'object' ? circuitBreakers : {};
+            const rows = debugHudRows(sources, breakers);
+            const sourceHtml = rows.sourceRows.map(row =>
+                '<div class="debug-hud-row"><span>' + _escHtml(row.name) + '</span><span class="debug-hud-status ' + _escHtml(row.status) + '">' + _escHtml(row.status) + ' · ' + _escHtml(row.latency) + ' · e' + row.errors + '</span></div>'
+            ).join('');
+            const breakerHtml = rows.breakerRows.map(row =>
+                '<div class="debug-hud-row"><span>' + _escHtml(row.name) + '</span><span class="debug-hud-status ' + _escHtml(row.state) + '">' + _escHtml(row.state) + ' · f' + row.failures + '</span></div>'
+            ).join('');
+            const count = typeof aircraftCache === 'object' ? Object.keys(aircraftCache).length : 0;
+            this.element.innerHTML = '<div class="debug-hud-title">Debug telemetry</div>' +
+                '<div class="debug-hud-metrics"><span>rAF ' + (this._frameDelta || 0).toFixed(1) + 'ms</span><span>AC ' + count + '</span><span>Heap ' + (Number.isFinite(memory) ? Math.round(memory / 1048576) + 'MB' : '--') + '</span></div>' +
+                '<div class="debug-hud-subtitle">Sources</div>' + sourceHtml +
+                '<div class="debug-hud-subtitle">Circuits</div>' + breakerHtml;
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => debugHud.init(), { once: true });
     // ─── module: modules/A0-faa-overlays.js ───────────────────────────────────────────
 
     // ============ FAA ARTCC / TERMINAL / AIRWAY OVERLAYS ============
@@ -15017,7 +15156,34 @@ if ('serviceWorker' in navigator) {
         } catch (e) { /* corrupt storage */ }
         return false;
     }
-    function saveAircraftCache() { try { const d = { ts: Date.now(), ac: {} }; const keys = Object.keys(aircraftCache); for (let i = 0; i < keys.length; i++) { const h = keys[i], a = aircraftCache[h]; d.ac[h] = { hex: a.hex, flight: a.flight, r: a.r, t: a.t, desc: a.desc, ownOp: a.ownOp, lat: a.lat, lon: a.lon, alt_baro: a.alt_baro, gs: a.gs, track: a.track, baro_rate: a.baro_rate, squawk: a.squawk, category: a.category, dbFlags: a.dbFlags, ladd: a.ladd, isLadd: a.isLadd, privacyIcaoAddress: a.privacyIcaoAddress, privacy: a.privacy, firstSeen: a.firstSeen, from: a.from, to: a.to, lastSeen: a.lastSeen, history: a.history?.slice(-50) || [] }; } localStorage.setItem('skytrack_aircraft', JSON.stringify(d)); } catch(e){} }
+    function serializeAircraftCache() {
+        const out = {};
+        const keys = Object.keys(aircraftCache);
+        for (let i = 0; i < keys.length; i++) {
+            const h = keys[i], a = aircraftCache[h];
+            out[h] = {
+                hex: a.hex, flight: a.flight, r: a.r, t: a.t, desc: a.desc, ownOp: a.ownOp,
+                lat: a.lat, lon: a.lon, alt_baro: a.alt_baro, gs: a.gs, track: a.track,
+                baro_rate: a.baro_rate, squawk: a.squawk, category: a.category, dbFlags: a.dbFlags,
+                ladd: a.ladd, isLadd: a.isLadd, privacyIcaoAddress: a.privacyIcaoAddress,
+                privacy: a.privacy, firstSeen: a.firstSeen, from: a.from, to: a.to,
+                lastSeen: a.lastSeen, history: a.history?.slice(-50) || []
+            };
+        }
+        return out;
+    }
+    function applySharedAircraftSnapshot(payload) {
+        if (!payload?.ac || typeof payload.ac !== 'object') return;
+        Object.keys(markers).forEach(hex => { if (markers[hex] && map) map.removeLayer(markers[hex]); delete markers[hex]; });
+        Object.keys(aircraftAnimation).forEach(hex => delete aircraftAnimation[hex]);
+        highVolumeRenderer?.clear?.();
+        aircraftCache = payload.ac;
+        Object.values(aircraftCache).forEach(ac => { ac._enriched = false; _enrichAircraft(ac, ac.hex); });
+        updateCounts();
+        if (map) updateMarkersSync();
+        if (typeof updateQuickGlance === 'function' && selectedHex) updateQuickGlance(selectedHex);
+    }
+    function saveAircraftCache() { try { localStorage.setItem('skytrack_aircraft', JSON.stringify({ ts: Date.now(), ac: serializeAircraftCache() })); } catch(e){} }
     function loadAircraftCache() { try { const s = localStorage.getItem('skytrack_aircraft'); if (s) { const d = JSON.parse(s); if (Date.now() - d.ts < CONFIG.cacheExpiry) { aircraftCache = d.ac; return true; } } } catch(e){} return false; }
     function saveSettings() { localStorage.setItem('skytrack_settings_v3', JSON.stringify(settings)); }
     function normalizeUiText(text) { return String(text ?? '').replace(/\.{3}/g, '…'); }
@@ -15320,7 +15486,15 @@ if ('serviceWorker' in navigator) {
         // don't each hit every ADS-B source. Non-leader tabs still render
         // from their own cache; they just don't initiate a fresh network
         // round. (v0.24.0 — module 10-utils.js `tabLeader`.)
-        try { tabLeader.init(); } catch (_) {}
+        try {
+            tabLeader.init({
+                onLeaderChange: isLeader => {
+                    if (isLeader) loadAircraft();
+                    else tabLeader.syncFromStore();
+                },
+                onSnapshot: applySharedAircraftSnapshot
+            });
+        } catch (_) {}
         // Initialize IndexedDB first
         try {
             await skytrackDB.init();
@@ -15331,6 +15505,7 @@ if ('serviceWorker' in navigator) {
         } catch (e) {
             console.warn('IndexedDB not available, using localStorage fallback');
         }
+        if (!tabLeader.isLeader) await tabLeader.syncFromStore();
         
         uiDialogs.init();
         loadSettings(); loadApiCredentials(); loadBookmarks();
@@ -15568,7 +15743,7 @@ if ('serviceWorker' in navigator) {
         if (apt.wiki && settings.showWiki) {
             getWikipediaSummary(apt.wiki).then(wiki => {
                 if (wiki) {
-                    if (wiki.thumbnail) photoDiv.innerHTML = '<img src="' + _escHtml(wiki.thumbnail) + '" alt="' + _escHtml(apt.name) + '">';
+                    if (wiki.thumbnail) photoDiv.innerHTML = '<img src="' + _escHtml(wiki.thumbnail) + '" alt="' + _escHtml(apt.name) + '" loading="lazy" decoding="async">';
                     document.getElementById('airportWikiSummary').textContent = wiki.extract ? wiki.extract.substring(0, 200) + '...' : '';
                     document.getElementById('airportWikiLink').href = wiki.url;
                     wikiSection.style.display = 'block';
@@ -15650,12 +15825,13 @@ if ('serviceWorker' in navigator) {
         async fetchPoint(source, point, signal) {
             const url=source.buildUrl(point,250);
             try{let r;if(source.cors!==false){try{r=await fetch(url,{signal,cache:'no-cache'});}catch(e){if(e.name==='AbortError')throw e;r=null;}}
-                if(!r||!r.ok){r=await fetchWithProxy(url,{},true);}
+                if((!r||!r.ok) && source.cors === false){r=await fetchWithProxy(url,{},true);}
                 if(r?.ok){const d=await r.json();return source.parseResponse(d)||[];}}catch(e){if(e.name==='AbortError')throw e;}return[];
         }
     };
     async function loadAircraft() {
         if(!map)return; // Guard: map not yet initialized
+        if (!tabLeader.isLeader) { await tabLeader.syncFromStore(); return; }
         if(gridFetch.inProgress){if(gridFetch.abortController)gridFetch.abortController.abort();return;}
         if(Date.now()-lastFetchTime<2000)return;
         if(!offlineManager.isOnline){offlineManager.showCachedPositions();return;}
@@ -15686,6 +15862,7 @@ if ('serviceWorker' in navigator) {
                         }catch(e){if(e.name!=='AbortError')dataSourceManager.recordFailure(src);resolve([]);}});}));
                 if(success){connectionMonitor.recordSuccess();offlineManager.cachePositions();}}
             if(!success){_el('dataSource').textContent='No sources';connectionMonitor.recordFailure();}
+            if (success && tabLeader.isLeader) tabLeader.publishSnapshot(serializeAircraftCache());
         }catch(e){if(e.name!=='AbortError')connectionMonitor.recordFailure();}
         finally{lastFetchTime=Date.now();gridFetch.inProgress=false;fetchInProgress=false;}
     }
@@ -16289,6 +16466,8 @@ if ('serviceWorker' in navigator) {
             if (preloadedUrl) {
                 // Verify the image loads
                 const img = new Image();
+                img.loading = 'lazy';
+                img.decoding = 'async';
                 img.onload = () => {
                     photoCache[hex] = { url: preloadedUrl, source: 'preloaded' };
                     displayPhoto(photoCache[hex]);
@@ -16311,6 +16490,8 @@ if ('serviceWorker' in navigator) {
         const selfHostedUrl = DATA_URLS.aircraftPhotos + hex.toUpperCase() + '.jpg';
         
         const img = new Image();
+        img.loading = 'lazy';
+        img.decoding = 'async';
         img.onload = () => {
             photoCache[hex] = { url: selfHostedUrl, source: 'self-hosted' };
             displayPhoto(photoCache[hex]);
@@ -16352,6 +16533,8 @@ if ('serviceWorker' in navigator) {
             const selfHostedUrl = CONFIG.silhouetteUrl + typeUpper + '.png';
             const externalUrl = 'https://globe.airplanes.live/aircraft_sil/' + typeUpper + '.png';
             const img = document.createElement('img');
+            img.loading = 'lazy';
+            img.decoding = 'async';
             img.style.cssText = 'object-fit:contain;background:#1a1a2e;padding:20px;width:100%;height:100%;';
             img.onerror = function() {
                 if (this.src !== externalUrl) {
@@ -16373,6 +16556,8 @@ if ('serviceWorker' in navigator) {
         div.innerHTML = '';
         const img = document.createElement('img');
         img.alt = '';
+        img.loading = 'lazy';
+        img.decoding = 'async';
         img.style.cssText = photo.isSilhouette ? 'object-fit:contain;background:#1a1a2e;padding:20px;' : 'object-fit:cover;';
         img.onerror = () => { div.innerHTML = '<div class="no-photo">No Photo Available</div>'; };
         img.src = photo.url;
@@ -20601,7 +20786,7 @@ ${trailData.map(p => {
 
         formatPhoto(value, ac) {
             if (ac.preloadedImage) {
-                return `<img class="comparison-photo" src="${_escHtml(ac.preloadedImage)}" alt="" loading="lazy">`;
+                return `<img class="comparison-photo" src="${_escHtml(ac.preloadedImage)}" alt="" loading="lazy" decoding="async">`;
             }
             return '<div class="comparison-photo"></div>';
         },
