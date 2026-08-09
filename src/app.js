@@ -3769,6 +3769,7 @@
                 if (ac?.lat !== undefined) map.panTo([ac.lat, ac.lon]);
             }
         });
+        document.getElementById('randomFollowBtn')?.addEventListener('click', () => randomFollow.toggle());
         document.getElementById('settingsBtn').addEventListener('click', () => { _el('settingsPanel').classList.toggle('show'); _el('infoPanel').classList.remove('show'); _el('airportPanel').classList.remove('show'); });
         setToggleState(document.getElementById('toggleLabels'), settings.showLabels); document.getElementById('toggleLabels').addEventListener('click', function() { settings.showLabels = !settings.showLabels; setToggleState(this, settings.showLabels); document.getElementById('labelBtn').classList.toggle('active', settings.showLabels); saveSettings(); updateMarkers(); });
         setToggleState(document.getElementById('toggleAirports'), settings.showAirports); document.getElementById('toggleAirports').addEventListener('click', function() { settings.showAirports = !settings.showAirports; setToggleState(this, settings.showAirports); document.getElementById('airportsBtn').classList.toggle('active', settings.showAirports); saveSettings(); updateAirportMarkers(); });

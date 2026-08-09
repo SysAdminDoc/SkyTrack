@@ -165,6 +165,7 @@ step is only needed when you want to ship a fresh single-file `index.html`.
 | Feature | Description |
 |---------|-------------|
 | Advanced Search | Search by hex, registration, callsign, type, airline, or airport with fuzzy ranking and `/` jump-to-callsign |
+| Random Follow | Optional kiosk mode selects a fresh, filter-eligible aircraft every 15 seconds and centers the map |
 | Multi-Select | Ctrl+click to select multiple aircraft for comparison |
 | Comparison Panel | Side-by-side analysis of selected aircraft |
 | Altitude Chart | Live altitude profile with climb/descent phases |
