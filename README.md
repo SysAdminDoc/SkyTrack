@@ -164,7 +164,7 @@ step is only needed when you want to ship a fresh single-file `index.html`.
 
 | Feature | Description |
 |---------|-------------|
-| Advanced Search | Search by hex, registration, callsign, type, airline, or airport |
+| Advanced Search | Search by hex, registration, callsign, type, airline, or airport with fuzzy ranking and `/` jump-to-callsign |
 | Multi-Select | Ctrl+click to select multiple aircraft for comparison |
 | Comparison Panel | Side-by-side analysis of selected aircraft |
 | Altitude Chart | Live altitude profile with climb/descent phases |

@@ -65,6 +65,9 @@ All notable changes to SkyTrack will be documented in this file.
   semantics and keyboard activation, reduced-motion preferences stop aircraft
   interpolation and pulse effects, and modal overlays isolate background focus
   with `inert`.
+- **Fuzzy callsign search.** Press `/` to focus search, then type a partial
+  callsign or registration; ranked contiguous/subsequence matches now appear
+  first and Enter jumps to the closest aircraft match.
 
 ## [v0.24.3] - 2026-05-01
 

@@ -3446,7 +3446,7 @@ if ('serviceWorker' in navigator) {
                 <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                 </svg>
-                <input type="text" class="search-box" id="searchInput" aria-label="Search Aircraft, Airports, or Airlines" placeholder="Search flights, airports, airlines…" autocomplete="off">
+                <input type="text" class="search-box" id="searchInput" aria-label="Search Aircraft, Airports, or Airlines" placeholder="Search callsigns, flights, airports…" autocomplete="off">
                 <button class="search-clear-btn" id="searchClearBtn" style="display:none;" aria-label="Clear Search">×</button>
                 <button class="search-filter-btn" id="searchFilterBtn" title="Advanced Filters" aria-label="Open Advanced Filters" aria-expanded="false">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -11167,6 +11167,47 @@ if ('serviceWorker' in navigator) {
     };
 
     if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', () => accessibility.init(), { once: true });
+    // ─── module: modules/A14-fuzzy-search.js ───────────────────────────────────────────
+
+    // ============ DEPENDENCY-FREE FUZZY SEARCH ============
+    // Rank contiguous matches first, then tolerate gaps for callsigns such as
+    // "DAL" → "DAL123" or "SWA" → "SWA 418" without shipping Fuse.js.
+    function fuzzySearchText(value) {
+        return Array.isArray(value)
+            ? value.filter(Boolean).join(' ').toLowerCase().trim()
+            : String(value || '').toLowerCase().trim();
+    }
+
+    function fuzzyScore(query, candidate) {
+        const q = fuzzySearchText(query);
+        const text = fuzzySearchText(candidate);
+        if (!q || !text || q.length < 2) return 0;
+        const direct = text.indexOf(q);
+        if (direct >= 0) return 1000 + q.length * 10 - direct;
+
+        let cursor = 0;
+        let first = -1;
+        let previous = -2;
+        let contiguous = 0;
+        let gaps = 0;
+        for (const char of q) {
+            const found = text.indexOf(char, cursor);
+            if (found < 0) return 0;
+            if (first < 0) first = found;
+            if (found === previous + 1) contiguous++;
+            else if (previous >= 0) gaps += found - previous - 1;
+            previous = found;
+            cursor = found + 1;
+        }
+        return 120 + contiguous * 12 + q.length * 4 - gaps * 2 - first * 0.5;
+    }
+
+    function rankFuzzy(items, query, getText = item => item, limit = Infinity) {
+        return items.map((item, index) => ({ item, index, score: fuzzyScore(query, getText(item)) }))
+            .filter(result => result.score > 0)
+            .sort((a, b) => b.score - a.score || a.index - b.index)
+            .slice(0, limit);
+    }
     // ─── module: modules/A2-satellite-3d.js ───────────────────────────────────────────
 
     // ============ CELESTRAK SATELLITES IN CESIUM 3D ============
@@ -16639,14 +16680,8 @@ if ('serviceWorker' in navigator) {
             const results = { aircraft: [], airports: [], airlines: [] };
             
             // Search aircraft
-            Object.values(aircraftCache).forEach(ac => {
-                const searchStr = [ac.flight, ac.r, ac.hex, ac.t, ac.ownOp, ac.airlineName]
-                    .filter(Boolean).join(' ').toLowerCase();
-                
-                if (searchStr.includes(q)) {
-                    results.aircraft.push(ac);
-                }
-            });
+            results.aircraft = rankFuzzy(Object.values(aircraftCache), q, ac => [ac.flight, ac.r, ac.hex, ac.t, ac.ownOp, ac.airlineName], 50)
+                .map(result => result.item);
             
             // Search airports (if airportDB has data)
             if (airportDB.loaded && q.length >= 2) {
@@ -16798,6 +16833,18 @@ if ('serviceWorker' in navigator) {
             if (byFlight) {
                 selectAircraft(byFlight.hex);
                 this.addToHistory(query, 'aircraft');
+                this.close();
+                return;
+            }
+
+            // Fuzzy callsign jump: after exact identifiers, select the best
+            // callsign/registration/hex match instead of applying a broad
+            // text filter that leaves the operator hunting through the map.
+            const fuzzyAircraft = rankFuzzy(Object.values(aircraftCache), query, ac => [ac.flight, ac.r, ac.hex], 1)[0];
+            if (q.length >= 3 && fuzzyAircraft && fuzzyAircraft.score >= 110) {
+                selectAircraft(fuzzyAircraft.item.hex);
+                this.addToHistory(query, 'aircraft');
+                toast('Selected closest callsign match: ' + (fuzzyAircraft.item.flight?.trim() || fuzzyAircraft.item.hex));
                 this.close();
                 return;
             }

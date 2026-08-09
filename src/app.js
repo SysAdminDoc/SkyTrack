@@ -4295,14 +4295,8 @@
             const results = { aircraft: [], airports: [], airlines: [] };
             
             // Search aircraft
-            Object.values(aircraftCache).forEach(ac => {
-                const searchStr = [ac.flight, ac.r, ac.hex, ac.t, ac.ownOp, ac.airlineName]
-                    .filter(Boolean).join(' ').toLowerCase();
-                
-                if (searchStr.includes(q)) {
-                    results.aircraft.push(ac);
-                }
-            });
+            results.aircraft = rankFuzzy(Object.values(aircraftCache), q, ac => [ac.flight, ac.r, ac.hex, ac.t, ac.ownOp, ac.airlineName], 50)
+                .map(result => result.item);
             
             // Search airports (if airportDB has data)
             if (airportDB.loaded && q.length >= 2) {
@@ -4454,6 +4448,18 @@
             if (byFlight) {
                 selectAircraft(byFlight.hex);
                 this.addToHistory(query, 'aircraft');
+                this.close();
+                return;
+            }
+
+            // Fuzzy callsign jump: after exact identifiers, select the best
+            // callsign/registration/hex match instead of applying a broad
+            // text filter that leaves the operator hunting through the map.
+            const fuzzyAircraft = rankFuzzy(Object.values(aircraftCache), query, ac => [ac.flight, ac.r, ac.hex], 1)[0];
+            if (q.length >= 3 && fuzzyAircraft && fuzzyAircraft.score >= 110) {
+                selectAircraft(fuzzyAircraft.item.hex);
+                this.addToHistory(query, 'aircraft');
+                toast('Selected closest callsign match: ' + (fuzzyAircraft.item.flight?.trim() || fuzzyAircraft.item.hex));
                 this.close();
                 return;
             }
