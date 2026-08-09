@@ -1987,7 +1987,7 @@
         } catch (e) { /* corrupt storage */ }
         return false;
     }
-    function saveAircraftCache() { try { const d = { ts: Date.now(), ac: {} }; const keys = Object.keys(aircraftCache); for (let i = 0; i < keys.length; i++) { const h = keys[i], a = aircraftCache[h]; d.ac[h] = { hex: a.hex, flight: a.flight, r: a.r, t: a.t, desc: a.desc, ownOp: a.ownOp, lat: a.lat, lon: a.lon, alt_baro: a.alt_baro, gs: a.gs, track: a.track, baro_rate: a.baro_rate, squawk: a.squawk, category: a.category, dbFlags: a.dbFlags, ladd: a.ladd, isLadd: a.isLadd, privacyIcaoAddress: a.privacyIcaoAddress, privacy: a.privacy, from: a.from, to: a.to, lastSeen: a.lastSeen, history: a.history?.slice(-50) || [] }; } localStorage.setItem('skytrack_aircraft', JSON.stringify(d)); } catch(e){} }
+    function saveAircraftCache() { try { const d = { ts: Date.now(), ac: {} }; const keys = Object.keys(aircraftCache); for (let i = 0; i < keys.length; i++) { const h = keys[i], a = aircraftCache[h]; d.ac[h] = { hex: a.hex, flight: a.flight, r: a.r, t: a.t, desc: a.desc, ownOp: a.ownOp, lat: a.lat, lon: a.lon, alt_baro: a.alt_baro, gs: a.gs, track: a.track, baro_rate: a.baro_rate, squawk: a.squawk, category: a.category, dbFlags: a.dbFlags, ladd: a.ladd, isLadd: a.isLadd, privacyIcaoAddress: a.privacyIcaoAddress, privacy: a.privacy, firstSeen: a.firstSeen, from: a.from, to: a.to, lastSeen: a.lastSeen, history: a.history?.slice(-50) || [] }; } localStorage.setItem('skytrack_aircraft', JSON.stringify(d)); } catch(e){} }
     function loadAircraftCache() { try { const s = localStorage.getItem('skytrack_aircraft'); if (s) { const d = JSON.parse(s); if (Date.now() - d.ts < CONFIG.cacheExpiry) { aircraftCache = d.ac; return true; } } } catch(e){} return false; }
     function saveSettings() { localStorage.setItem('skytrack_settings_v3', JSON.stringify(settings)); }
     function normalizeUiText(text) { return String(text ?? '').replace(/\.{3}/g, '…'); }
@@ -2750,6 +2750,7 @@
                 if (ac.isLadd !== undefined) existing.isLadd = ac.isLadd;
                 if (ac.privacyIcaoAddress !== undefined) existing.privacyIcaoAddress = ac.privacyIcaoAddress;
                 if (ac.privacy !== undefined) existing.privacy = ac.privacy;
+                if (!existing.firstSeen) existing.firstSeen = now;
                 if (ac.from) existing.from = ac.from;
                 if (ac.to) existing.to = ac.to;
                 existing.lastSeen = now;
@@ -2781,7 +2782,7 @@
                 const cached = { hex, flight: (ac.flight?.trim()) || '', r: ac.r || '', t: ac.t || '', desc: ac.desc || '', ownOp: ac.ownOp || ac.operator || '',
                     lat: ac.lat, lon: ac.lon, alt_baro: ac.alt_baro, gs: ac.gs, track: ac.track, baro_rate: ac.baro_rate,
                     squawk: ac.squawk || '', category: ac.category || '', dbFlags: ac.dbFlags, ladd: ac.ladd, isLadd: ac.isLadd, privacyIcaoAddress: ac.privacyIcaoAddress, privacy: ac.privacy, from: ac.from || '', to: ac.to || '',
-                    lastSeen: now, history, category_type: null, interesting: null, airlineName: null, militaryInfo: null, piaInfo: null, alliance: null, militaryRangeInfo: null, year: null, isVIP: false, civilianInteresting: null, _enriched: false };
+                    firstSeen: now, lastSeen: now, history, category_type: null, interesting: null, airlineName: null, militaryInfo: null, piaInfo: null, alliance: null, militaryRangeInfo: null, year: null, isVIP: false, civilianInteresting: null, _enriched: false };
                 aircraftCache[hex] = cached;
                 
                 // Full enrichment (only runs once per aircraft)
@@ -3179,6 +3180,7 @@
     // ============ ROUTE DISPLAY ============
     function updateRouteDisplay(ac) {
         if (!ac) return;
+        ac.routeProgress = null;
         const routeSection = document.getElementById('routeSection');
         const hasRoute = ac.from || ac.to;
         if (hasRoute) {
@@ -3195,6 +3197,7 @@
             if (fromApt && toApt) {
                 const progress = flightTracker.calculateProgress(ac, fromApt, toApt);
                 if (progress) {
+                    ac.routeProgress = progress.progress;
                     document.getElementById('routeDistFlown').textContent = progress.flownDistance + ' km';
                     document.getElementById('routeDistRemain').textContent = progress.remainingDistance + ' km';
                     document.getElementById('routeFlightTime').textContent = flightTracker.formatDuration(progress.etaMinutes) + ' remaining';
@@ -3219,6 +3222,7 @@
         } else {
             routeSection.style.display = 'none';
         }
+        if (selectedHex === ac.hex) timeAirborne.refresh(ac);
     }
 
     // ============ PHOTOS ============
@@ -3358,6 +3362,7 @@
             callsignEl.innerHTML = _escHtml(ac.flight || 'N/A') +
                 phaseClassifier.chipHtml(ac) +
                 surveillanceOrbit.chipHtml(ac) +
+                timeAirborne.chipHtml(ac) +
                 (flightAnalytics.chipHtml ? flightAnalytics.chipHtml(ac) : '');
         }
         // Hex + country flag badge (v0.19.0 — module 92-country-flag.js)
@@ -9604,6 +9609,7 @@ To capture a clean timelapse:
             if (spd) spd.textContent = ac.gs ? Math.round(ac.gs) + 'kt' : '---';
             if (dest) dest.textContent = ac.to || ac.destination || '---';
             altitudeTape.render(ac.alt_baro, ac.baro_rate);
+            timeAirborne.refresh(ac);
         }
         // Patch selectAircraft to update quickglance
         const origSelect = selectAircraft;

@@ -1722,6 +1722,9 @@
         .phase-chip.phase-descent  { background: #8b5cf6; color: #fff; }
         .phase-chip.phase-approach { background: #ec4899; color: #fff; }
         .phase-chip.phase-landing  { background: #ef4444; color: #fff; }
+        .time-airborne-chip { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 1px 6px 1px 3px; border: 1px solid rgba(0,210,150,0.35); border-radius: 10px; background: rgba(0,210,150,0.1); color: var(--accent); font-size: 10px; font-weight: 600; line-height: 16px; vertical-align: middle; }
+        .time-airborne-ring { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: conic-gradient(var(--accent) var(--airborne-progress, 0%), rgba(255,255,255,0.16) 0); position: relative; }
+        .time-airborne-ring::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: var(--bg-panel); }
         /* Plane-over-my-house widget (module 96-plane-over-my-house.js) */
         .home-widget {
             position: fixed;
@@ -10946,6 +10949,78 @@ if ('serviceWorker' in navigator) {
         const map = e?.detail?.map;
         if (map) issTracker.init(map);
     });
+    // ─── module: modules/A10-time-airborne.js ───────────────────────────────────────────
+
+    // ============ TIME-AIRBORNE CHIP ============
+    // Derive a conservative airborne duration from the local position trail.
+    // The source feeds do not expose a consistent departure timestamp, so we
+    // use the latest ground-to-airborne transition and fall back to firstSeen.
+    function timeToMs(value) {
+        const timestamp = Number(value);
+        if (!Number.isFinite(timestamp) || timestamp <= 0) return null;
+        return timestamp > 1e11 ? timestamp : timestamp * 1000;
+    }
+
+    function isAirborneAltitude(value) {
+        if (value === 'ground') return false;
+        const altitude = Number(value);
+        return Number.isFinite(altitude) && altitude > 100;
+    }
+
+    function formatAirborneDuration(durationMs) {
+        if (!Number.isFinite(durationMs) || durationMs < 0) return null;
+        const minutes = Math.floor(durationMs / 60000);
+        if (minutes < 1) return '<1m';
+        const hours = Math.floor(minutes / 60);
+        const remainder = minutes % 60;
+        return hours ? hours + 'h ' + remainder + 'm' : minutes + 'm';
+    }
+
+    function timeAirborneSummary(ac, now = Date.now()) {
+        if (!ac || !isAirborneAltitude(ac.alt_baro)) return null;
+        const history = Array.isArray(ac.history) ? ac.history : [];
+        let lastGroundIndex = -1;
+        for (let index = 0; index < history.length; index++) {
+            if (!isAirborneAltitude(history[index]?.[2])) lastGroundIndex = index;
+        }
+        const airbornePoints = history.slice(lastGroundIndex + 1).filter(point => isAirborneAltitude(point?.[2]));
+        const firstTrailTime = timeToMs(airbornePoints[0]?.[3]);
+        const startMs = firstTrailTime || timeToMs(ac.firstSeen) || timeToMs(ac.lastSeen);
+        if (!startMs) return null;
+        const nowMs = timeToMs(now) || Date.now();
+        const lastSeenMs = timeToMs(ac.lastSeen);
+        const endMs = lastSeenMs ? Math.min(nowMs, lastSeenMs + 120000) : nowMs;
+        const durationMs = Math.max(0, endMs - startMs);
+        const routeProgress = Number(ac.routeProgress);
+        return {
+            durationMs,
+            durationLabel: formatAirborneDuration(durationMs),
+            routeProgress: Number.isFinite(routeProgress) ? Math.min(100, Math.max(0, routeProgress)) : null
+        };
+    }
+
+    const timeAirborne = {
+        summary: timeAirborneSummary,
+        chipHtml(ac) {
+            const summary = timeAirborneSummary(ac);
+            if (!summary) return '';
+            const ring = summary.routeProgress === null ? '' : '<span class="time-airborne-ring" style="--airborne-progress:' + summary.routeProgress + '%" aria-hidden="true"></span>';
+            const routeTitle = summary.routeProgress === null ? 'Estimated time airborne from local position history' : 'Estimated time airborne; route progress ' + Math.round(summary.routeProgress) + '%';
+            return '<span id="timeAirborneChip" class="time-airborne-chip" title="' + routeTitle + '">' + ring + '<span>' + summary.durationLabel + '</span></span>';
+        },
+        refresh(ac) {
+            const callsign = document.getElementById('infoCallsign');
+            if (!callsign) return;
+            const html = this.chipHtml(ac);
+            const existing = document.getElementById('timeAirborneChip');
+            if (existing) {
+                if (html) existing.outerHTML = html;
+                else existing.remove();
+            } else if (html) {
+                callsign.insertAdjacentHTML('beforeend', html);
+            }
+        }
+    };
     // ─── module: modules/A2-satellite-3d.js ───────────────────────────────────────────
 
     // ============ CELESTRAK SATELLITES IN CESIUM 3D ============
@@ -14110,7 +14185,7 @@ if ('serviceWorker' in navigator) {
         } catch (e) { /* corrupt storage */ }
         return false;
     }
-    function saveAircraftCache() { try { const d = { ts: Date.now(), ac: {} }; const keys = Object.keys(aircraftCache); for (let i = 0; i < keys.length; i++) { const h = keys[i], a = aircraftCache[h]; d.ac[h] = { hex: a.hex, flight: a.flight, r: a.r, t: a.t, desc: a.desc, ownOp: a.ownOp, lat: a.lat, lon: a.lon, alt_baro: a.alt_baro, gs: a.gs, track: a.track, baro_rate: a.baro_rate, squawk: a.squawk, category: a.category, dbFlags: a.dbFlags, ladd: a.ladd, isLadd: a.isLadd, privacyIcaoAddress: a.privacyIcaoAddress, privacy: a.privacy, from: a.from, to: a.to, lastSeen: a.lastSeen, history: a.history?.slice(-50) || [] }; } localStorage.setItem('skytrack_aircraft', JSON.stringify(d)); } catch(e){} }
+    function saveAircraftCache() { try { const d = { ts: Date.now(), ac: {} }; const keys = Object.keys(aircraftCache); for (let i = 0; i < keys.length; i++) { const h = keys[i], a = aircraftCache[h]; d.ac[h] = { hex: a.hex, flight: a.flight, r: a.r, t: a.t, desc: a.desc, ownOp: a.ownOp, lat: a.lat, lon: a.lon, alt_baro: a.alt_baro, gs: a.gs, track: a.track, baro_rate: a.baro_rate, squawk: a.squawk, category: a.category, dbFlags: a.dbFlags, ladd: a.ladd, isLadd: a.isLadd, privacyIcaoAddress: a.privacyIcaoAddress, privacy: a.privacy, firstSeen: a.firstSeen, from: a.from, to: a.to, lastSeen: a.lastSeen, history: a.history?.slice(-50) || [] }; } localStorage.setItem('skytrack_aircraft', JSON.stringify(d)); } catch(e){} }
     function loadAircraftCache() { try { const s = localStorage.getItem('skytrack_aircraft'); if (s) { const d = JSON.parse(s); if (Date.now() - d.ts < CONFIG.cacheExpiry) { aircraftCache = d.ac; return true; } } } catch(e){} return false; }
     function saveSettings() { localStorage.setItem('skytrack_settings_v3', JSON.stringify(settings)); }
     function normalizeUiText(text) { return String(text ?? '').replace(/\.{3}/g, '…'); }
@@ -14873,6 +14948,7 @@ if ('serviceWorker' in navigator) {
                 if (ac.isLadd !== undefined) existing.isLadd = ac.isLadd;
                 if (ac.privacyIcaoAddress !== undefined) existing.privacyIcaoAddress = ac.privacyIcaoAddress;
                 if (ac.privacy !== undefined) existing.privacy = ac.privacy;
+                if (!existing.firstSeen) existing.firstSeen = now;
                 if (ac.from) existing.from = ac.from;
                 if (ac.to) existing.to = ac.to;
                 existing.lastSeen = now;
@@ -14904,7 +14980,7 @@ if ('serviceWorker' in navigator) {
                 const cached = { hex, flight: (ac.flight?.trim()) || '', r: ac.r || '', t: ac.t || '', desc: ac.desc || '', ownOp: ac.ownOp || ac.operator || '',
                     lat: ac.lat, lon: ac.lon, alt_baro: ac.alt_baro, gs: ac.gs, track: ac.track, baro_rate: ac.baro_rate,
                     squawk: ac.squawk || '', category: ac.category || '', dbFlags: ac.dbFlags, ladd: ac.ladd, isLadd: ac.isLadd, privacyIcaoAddress: ac.privacyIcaoAddress, privacy: ac.privacy, from: ac.from || '', to: ac.to || '',
-                    lastSeen: now, history, category_type: null, interesting: null, airlineName: null, militaryInfo: null, piaInfo: null, alliance: null, militaryRangeInfo: null, year: null, isVIP: false, civilianInteresting: null, _enriched: false };
+                    firstSeen: now, lastSeen: now, history, category_type: null, interesting: null, airlineName: null, militaryInfo: null, piaInfo: null, alliance: null, militaryRangeInfo: null, year: null, isVIP: false, civilianInteresting: null, _enriched: false };
                 aircraftCache[hex] = cached;
                 
                 // Full enrichment (only runs once per aircraft)
@@ -15302,6 +15378,7 @@ if ('serviceWorker' in navigator) {
     // ============ ROUTE DISPLAY ============
     function updateRouteDisplay(ac) {
         if (!ac) return;
+        ac.routeProgress = null;
         const routeSection = document.getElementById('routeSection');
         const hasRoute = ac.from || ac.to;
         if (hasRoute) {
@@ -15318,6 +15395,7 @@ if ('serviceWorker' in navigator) {
             if (fromApt && toApt) {
                 const progress = flightTracker.calculateProgress(ac, fromApt, toApt);
                 if (progress) {
+                    ac.routeProgress = progress.progress;
                     document.getElementById('routeDistFlown').textContent = progress.flownDistance + ' km';
                     document.getElementById('routeDistRemain').textContent = progress.remainingDistance + ' km';
                     document.getElementById('routeFlightTime').textContent = flightTracker.formatDuration(progress.etaMinutes) + ' remaining';
@@ -15342,6 +15420,7 @@ if ('serviceWorker' in navigator) {
         } else {
             routeSection.style.display = 'none';
         }
+        if (selectedHex === ac.hex) timeAirborne.refresh(ac);
     }
 
     // ============ PHOTOS ============
@@ -15481,6 +15560,7 @@ if ('serviceWorker' in navigator) {
             callsignEl.innerHTML = _escHtml(ac.flight || 'N/A') +
                 phaseClassifier.chipHtml(ac) +
                 surveillanceOrbit.chipHtml(ac) +
+                timeAirborne.chipHtml(ac) +
                 (flightAnalytics.chipHtml ? flightAnalytics.chipHtml(ac) : '');
         }
         // Hex + country flag badge (v0.19.0 — module 92-country-flag.js)
@@ -21727,6 +21807,7 @@ To capture a clean timelapse:
             if (spd) spd.textContent = ac.gs ? Math.round(ac.gs) + 'kt' : '---';
             if (dest) dest.textContent = ac.to || ac.destination || '---';
             altitudeTape.render(ac.alt_baro, ac.baro_rate);
+            timeAirborne.refresh(ac);
         }
         // Patch selectAircraft to update quickglance
         const origSelect = selectAircraft;

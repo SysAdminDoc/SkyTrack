@@ -51,6 +51,9 @@ All notable changes to SkyTrack will be documented in this file.
   in the offline aircraft cache.
 - **Selected-aircraft altitude tape.** The details panel now pairs numeric
   altitude with a compact scale, trend arrow, and vertical-rate readout.
+- **Time-airborne chip.** Selected callsigns now show estimated airborne
+  duration from the local trail, with a route-progress ring when both airports
+  are known.
 
 ## [v0.24.3] - 2026-05-01
 
