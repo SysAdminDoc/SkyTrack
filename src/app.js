@@ -2081,7 +2081,26 @@
         return 'commercial';
     }
     function getAirlineCode(cs) { return cs?.length >= 3 && /^[A-Z]{3}$/.test(cs.substring(0, 3)) ? cs.substring(0, 3) : null; }
-    async function fetchWithProxy(url, options = {}, proxyOnly = false) { if (!proxyOnly) { try { const r = await fetchWithTimeout(url, options); if (r?.ok) return r; } catch(e) {} } for (let i = 0; i < CONFIG.corsProxies.length; i++) { const idx = (lastSuccessfulProxy + i) % CONFIG.corsProxies.length; try { const r = await fetchWithTimeout(CONFIG.corsProxies[idx](url), {}); if (r?.ok) { lastSuccessfulProxy = idx; return r; } } catch(e) {} } return null; }
+    function getConfiguredProxyUrl() {
+        try { return normalizeCustomProxyUrl(localStorage.getItem(CUSTOM_PROXY_STORAGE_KEY)); } catch (_) { return ''; }
+    }
+    async function fetchWithProxy(url, options = {}, proxyOnly = false) {
+        if (!proxyOnly) {
+            try { const r = await fetchWithTimeout(url, options); if (r?.ok) return r; } catch(e) {}
+        }
+        const customProxy = buildCustomProxyUrl(getConfiguredProxyUrl(), url);
+        if (customProxy) {
+            try { const r = await fetchWithTimeout(customProxy, {}); if (r?.ok) return r; } catch(e) {}
+        }
+        for (let i = 0; i < CONFIG.corsProxies.length; i++) {
+            const idx = (lastSuccessfulProxy + i) % CONFIG.corsProxies.length;
+            try {
+                const r = await fetchWithTimeout(CONFIG.corsProxies[idx](url), {});
+                if (r?.ok) { lastSuccessfulProxy = idx; return r; }
+            } catch(e) {}
+        }
+        return null;
+    }
     async function fetchWithTimeout(url, options, timeout = 10000) { const controller = new AbortController(); const id = setTimeout(() => controller.abort(), timeout); try { const r = await fetch(url, { ...options, signal: controller.signal }); clearTimeout(id); return r; } catch (e) { clearTimeout(id); throw e; } }
     function saveMapPosition() {
         if (!map) return;
@@ -2425,6 +2444,32 @@
         s.textContent = hasCustom ? 'Custom set' : 'Not configured';
         s.className = 'api-status ' + (hasCustom ? 'connected' : '');
     }
+    function updateCustomProxyUI() {
+        const input = document.getElementById('customProxyUrl');
+        const status = document.getElementById('customProxyStatus');
+        const proxyUrl = getConfiguredProxyUrl();
+        if (input) input.value = proxyUrl;
+        if (status) {
+            status.textContent = proxyUrl ? 'Personal proxy active' : 'Public fallback proxies only';
+            status.className = 'api-status ' + (proxyUrl ? 'connected' : 'info');
+        }
+    }
+    function saveCustomProxy() {
+        const input = document.getElementById('customProxyUrl');
+        const raw = input?.value.trim() || '';
+        if (raw && !normalizeCustomProxyUrl(raw)) { toast('Enter a valid http(s) Worker URL'); return; }
+        try {
+            if (raw) localStorage.setItem(CUSTOM_PROXY_STORAGE_KEY, normalizeCustomProxyUrl(raw));
+            else localStorage.removeItem(CUSTOM_PROXY_STORAGE_KEY);
+        } catch (_) {}
+        updateCustomProxyUI();
+        toast(raw ? 'Personal proxy saved' : 'Personal proxy disabled');
+    }
+    function clearCustomProxy() {
+        try { localStorage.removeItem(CUSTOM_PROXY_STORAGE_KEY); } catch (_) {}
+        updateCustomProxyUI();
+        toast('Personal proxy disabled');
+    }
     async function getWikipediaSummary(url) { if (!settings.showWiki || !url) return null; try { const m = url.match(/wikipedia\.org\/wiki\/(.+)$/); if (!m) return null; const r = await fetchWithTimeout('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(decodeURIComponent(m[1])), {}, 5000); if (!r?.ok) return null; const d = await r.json(); return { title: d.title, extract: d.extract, thumbnail: d.thumbnail?.source, url }; } catch(e) { return null; } }
     function setLoadingProgress(pct, status) {
         document.getElementById('loadingProgress').style.width = pct + '%';
@@ -2460,7 +2505,7 @@
         if (!tabLeader.isLeader) await tabLeader.syncFromStore();
         
         uiDialogs.init();
-        loadSettings(); loadApiCredentials(); loadBookmarks();
+        loadSettings(); loadApiCredentials(); loadCustomProxyUI(); loadBookmarks();
         const hadCache = loadAircraftCache();
         await getInitialLocation();
         
@@ -2813,7 +2858,7 @@
                             _el('dataSource').textContent=[...names].join(' + ')+' - '+n+' aircraft';resolve(ac);
                         }catch(e){if(e.name!=='AbortError')dataSourceManager.recordFailure(src);resolve([]);}});}));
                 if(success){connectionMonitor.recordSuccess();offlineManager.cachePositions();}}
-            if(!success){_el('dataSource').textContent='No sources';connectionMonitor.recordFailure();}
+            if(!success){_el('dataSource').textContent='No sources';connectionMonitor.recordFailure();offlineManager.showCachedPositions({ notify: false });}
             if (success && tabLeader.isLeader) tabLeader.publishSnapshot(serializeAircraftCache());
         }catch(e){if(e.name!=='AbortError')connectionMonitor.recordFailure();}
         finally{lastFetchTime=Date.now();gridFetch.inProgress=false;fetchInProgress=false;}
@@ -3959,6 +4004,8 @@
         document.getElementById('toggleWeatherOverlay')?.addEventListener('click', function() { weatherOverlay.toggle(); setToggleState(this, weatherOverlay.enabled); });
         document.getElementById('mapStyleSelect').addEventListener('change', function() { changeBasemap(this.value); });
         document.getElementById('saveApiBtn').addEventListener('click', saveApiCredentials); document.getElementById('clearApiBtn').addEventListener('click', clearApiCredentials);
+        document.getElementById('saveCustomProxyBtn')?.addEventListener('click', saveCustomProxy);
+        document.getElementById('clearCustomProxyBtn')?.addEventListener('click', clearCustomProxy);
         document.getElementById('addBookmarkBtn').addEventListener('click', openBookmarkModal);
         document.getElementById('bookmarkCancelBtn').addEventListener('click', closeBookmarkModal);
         document.getElementById('bookmarkSaveBtn').addEventListener('click', () => { const name = document.getElementById('bookmarkNameInput').value.trim(); if (name) { addBookmark(name); closeBookmarkModal(); } else toast('Enter a name'); });

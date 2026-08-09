@@ -256,6 +256,12 @@ The grid fetch system tiles the visible map area with overlapping 250nm radius A
 ### Cesium Ion Token (Optional)
 For 3D terrain in globe view, get a free token at [cesium.com/ion](https://cesium.com/ion) and enter it in Settings.
 
+### Personal CORS Proxy (Optional)
+For feeds that block browser CORS, deploy `tools/skytrack-proxy-worker.js` to a
+Cloudflare Worker and paste the deployed URL into Settings → Data Sources →
+Personal CORS Proxy. The URL is stored only in this browser and is tried before
+the shared public fallbacks; no SkyTrack credentials are required.
+
 ### Settings Panel
 Access via the gear icon in the header. All settings persist in localStorage.
 

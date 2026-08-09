@@ -48,12 +48,32 @@
         }
     };
 
+    function formatStaleTimestamp(timestamp) {
+        const date = new Date(Number(timestamp));
+        return Number.isFinite(date.getTime()) ? date.toISOString().slice(11, 16) + 'Z' : '--:--Z';
+    }
+
     // ============ PHASE 16: OFFLINE MODE MANAGER ============
     const offlineManager = {
         isOnline: navigator.onLine,
         lastOnlineTime: Date.now(),
         offlineData: null,
         syncQueue: [],
+
+        showStaleBanner(timestamp) {
+            const banner = document.getElementById('staleDataBanner');
+            if (!banner || !Number.isFinite(Number(timestamp))) return;
+            banner.textContent = 'STALE · ' + formatStaleTimestamp(timestamp);
+            banner.hidden = false;
+            banner.classList.add('show');
+        },
+
+        hideStaleBanner() {
+            const banner = document.getElementById('staleDataBanner');
+            if (!banner) return;
+            banner.hidden = true;
+            banner.classList.remove('show');
+        },
         
         init() {
             window.addEventListener('online', () => this.handleOnline());
@@ -133,6 +153,7 @@
                 mapCenter: map ? { lat: map.getCenter().lat, lng: map.getCenter().lng } : null,
                 mapZoom: map ? map.getZoom() : 8
             };
+            this.hideStaleBanner();
             
             skytrackDB.saveDatabase('offlineCache', this.offlineData, 86400000).catch(e => {
                 console.warn('Failed to save offline cache:', e);
@@ -147,8 +168,9 @@
             }
         },
         
-        showCachedPositions() {
+        showCachedPositions({ notify = true } = {}) {
             if (!this.offlineData || !this.offlineData.positions) {
+                this.hideStaleBanner();
                 toast('No cached data available');
                 return;
             }
@@ -156,7 +178,8 @@
             const age = Date.now() - this.offlineData.timestamp;
             const ageMinutes = Math.round(age / 60000);
             
-            toast('Showing data from ' + ageMinutes + ' minutes ago');
+            if (notify) toast('Showing data from ' + ageMinutes + ' minutes ago');
+            this.showStaleBanner(this.offlineData.timestamp);
             
             Object.keys(markers).forEach(hex => {
                 if (markers[hex] && map) {

@@ -371,6 +371,8 @@
         .setting-select option { background: var(--bg-panel); color: var(--text); padding: 8px; }
         .settings-section { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
         .settings-section-title { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+        .settings-help { margin: -2px 0 12px; color: var(--text-muted); font-size: 11px; line-height: 1.5; }
+        .settings-help code { color: var(--accent); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
         .settings-input { width: 100%; padding: 8px 10px; background: rgba(128,128,128,0.15); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 12px; font-family: monospace; outline: none; margin-bottom: 8px; }
         .settings-btn { width: 100%; padding: 8px 12px; background: var(--accent); border: none; border-radius: 6px; color: #000; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 8px; }
         .settings-btn.secondary { background: rgba(128,128,128,0.2); color: var(--text); }
@@ -1328,6 +1330,9 @@
         .status-dock-dot.grey { background: #6b7280; }
         .status-dock-value { color: var(--text-dim); font-weight: 500; }
         .status-dock-sep { width: 1px; height: 14px; background: var(--border); opacity: 0.4; }
+        .stale-data-banner { position: fixed; top: 76px; left: 50%; transform: translateX(-50%); z-index: 1800; display: none; padding: 7px 14px; border: 1px solid rgba(251, 191, 36, 0.55); border-radius: 999px; background: rgba(120, 74, 0, 0.92); color: #fde68a; font: 700 11px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: 0.08em; box-shadow: 0 8px 22px rgba(0,0,0,0.28); pointer-events: none; }
+        .stale-data-banner.show { display: block; }
+        .stale-data-banner[hidden] { display: none; }
         #map { bottom: 32px !important; }
         #cesiumContainer { bottom: 32px !important; }
         .data-source-indicator { display: none !important; }

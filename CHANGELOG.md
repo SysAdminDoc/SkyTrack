@@ -5,6 +5,9 @@ All notable changes to SkyTrack will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Personal proxy and stale-data recovery.** Cloudflare Worker users can save
+  a browser-local proxy URL for blocked feeds, while failed live refreshes now
+  keep the latest cached positions visible with a UTC `STALE` banner.
 - **Runtime hardening and multi-tab coordination.** Added a restrictive CSP,
   SRI pins for external scripts, a debug HUD enabled by `?debug=1`, persistent
   storage requests for watchlists, lazy image decoding, and leader/follower

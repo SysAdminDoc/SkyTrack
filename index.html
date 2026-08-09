@@ -419,6 +419,8 @@
         .setting-select option { background: var(--bg-panel); color: var(--text); padding: 8px; }
         .settings-section { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
         .settings-section-title { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+        .settings-help { margin: -2px 0 12px; color: var(--text-muted); font-size: 11px; line-height: 1.5; }
+        .settings-help code { color: var(--accent); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
         .settings-input { width: 100%; padding: 8px 10px; background: rgba(128,128,128,0.15); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 12px; font-family: monospace; outline: none; margin-bottom: 8px; }
         .settings-btn { width: 100%; padding: 8px 12px; background: var(--accent); border: none; border-radius: 6px; color: #000; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 8px; }
         .settings-btn.secondary { background: rgba(128,128,128,0.2); color: var(--text); }
@@ -1376,6 +1378,9 @@
         .status-dock-dot.grey { background: #6b7280; }
         .status-dock-value { color: var(--text-dim); font-weight: 500; }
         .status-dock-sep { width: 1px; height: 14px; background: var(--border); opacity: 0.4; }
+        .stale-data-banner { position: fixed; top: 76px; left: 50%; transform: translateX(-50%); z-index: 1800; display: none; padding: 7px 14px; border: 1px solid rgba(251, 191, 36, 0.55); border-radius: 999px; background: rgba(120, 74, 0, 0.92); color: #fde68a; font: 700 11px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: 0.08em; box-shadow: 0 8px 22px rgba(0,0,0,0.28); pointer-events: none; }
+        .stale-data-banner.show { display: block; }
+        .stale-data-banner[hidden] { display: none; }
         #map { bottom: 32px !important; }
         #cesiumContainer { bottom: 32px !important; }
         .data-source-indicator { display: none !important; }
@@ -3431,6 +3436,7 @@ if ('serviceWorker' in navigator) {
         <div class="hud-3d-row"><span class="hud-3d-key">Click</span> Select aircraft</div>
         <div class="hud-3d-row"><span class="hud-3d-key">🛰</span> <span id="satellite3dStatus">Satellites loading…</span></div>
     </div>
+    <div class="stale-data-banner" id="staleDataBanner" hidden role="status" aria-live="polite"></div>
     <div class="debug-hud" id="debugHud" hidden aria-live="polite" aria-label="Debug telemetry"></div>
     
     <!-- Onboarding Overlay -->
@@ -3937,6 +3943,15 @@ if ('serviceWorker' in navigator) {
             <button class="btn-secondary" id="checkSourcesBtn" style="width: 100%; margin-bottom: 8px;">Check All Sources</button>
             <button class="btn-secondary" id="clearOfflineCacheBtn" style="width: 100%;">Clear Offline Cache</button>
         </div>
+        <div class="settings-section">
+            <div class="settings-section-title">Personal CORS Proxy</div>
+            <p class="settings-help">Deploy <code>tools/skytrack-proxy-worker.js</code> to Cloudflare Workers, then paste its URL here. It stays in this browser and is tried before shared fallbacks.</p>
+            <label class="settings-input-label" for="customProxyUrl">Worker URL</label>
+            <input type="url" class="settings-input" id="customProxyUrl" placeholder="https://skytrack-proxy.example.workers.dev/" inputmode="url" autocomplete="url">
+            <button class="settings-btn" id="saveCustomProxyBtn">Save Proxy URL</button>
+            <button class="settings-btn secondary" id="clearCustomProxyBtn">Clear Proxy URL</button>
+            <div class="api-status info" id="customProxyStatus">Public fallback proxies only</div>
+        </div>
     </div>
     <div class="stats-panel" id="statsPanel" role="dialog" aria-label="Statistics">
         <div class="stats-header">
@@ -4221,6 +4236,28 @@ if ('serviceWorker' in navigator) {
         // External APIs (cannot self-host)
         planespottersApi: 'https://api.planespotters.net/pub/photos/hex/'
     };
+    const CUSTOM_PROXY_STORAGE_KEY = 'skytrack_custom_proxy_url';
+    function normalizeCustomProxyUrl(value) {
+        try {
+            const parsed = new URL(String(value || '').trim());
+            if (!/^https?:$/.test(parsed.protocol) || parsed.username || parsed.password) return '';
+            parsed.hash = '';
+            return parsed.href;
+        } catch (_) {
+            return '';
+        }
+    }
+    function buildCustomProxyUrl(proxyUrl, targetUrl) {
+        const normalized = normalizeCustomProxyUrl(proxyUrl);
+        if (!normalized || !targetUrl) return '';
+        try {
+            const endpoint = new URL(normalized);
+            endpoint.searchParams.set('url', String(targetUrl));
+            return endpoint.href;
+        } catch (_) {
+            return '';
+        }
+    }
     const DATA_URLS = {
         // Aircraft Registration (tar1090-db)
         registrations: {
@@ -4897,12 +4934,32 @@ if ('serviceWorker' in navigator) {
         }
     };
 
+    function formatStaleTimestamp(timestamp) {
+        const date = new Date(Number(timestamp));
+        return Number.isFinite(date.getTime()) ? date.toISOString().slice(11, 16) + 'Z' : '--:--Z';
+    }
+
     // ============ PHASE 16: OFFLINE MODE MANAGER ============
     const offlineManager = {
         isOnline: navigator.onLine,
         lastOnlineTime: Date.now(),
         offlineData: null,
         syncQueue: [],
+
+        showStaleBanner(timestamp) {
+            const banner = document.getElementById('staleDataBanner');
+            if (!banner || !Number.isFinite(Number(timestamp))) return;
+            banner.textContent = 'STALE · ' + formatStaleTimestamp(timestamp);
+            banner.hidden = false;
+            banner.classList.add('show');
+        },
+
+        hideStaleBanner() {
+            const banner = document.getElementById('staleDataBanner');
+            if (!banner) return;
+            banner.hidden = true;
+            banner.classList.remove('show');
+        },
         
         init() {
             window.addEventListener('online', () => this.handleOnline());
@@ -4982,6 +5039,7 @@ if ('serviceWorker' in navigator) {
                 mapCenter: map ? { lat: map.getCenter().lat, lng: map.getCenter().lng } : null,
                 mapZoom: map ? map.getZoom() : 8
             };
+            this.hideStaleBanner();
             
             skytrackDB.saveDatabase('offlineCache', this.offlineData, 86400000).catch(e => {
                 console.warn('Failed to save offline cache:', e);
@@ -4996,8 +5054,9 @@ if ('serviceWorker' in navigator) {
             }
         },
         
-        showCachedPositions() {
+        showCachedPositions({ notify = true } = {}) {
             if (!this.offlineData || !this.offlineData.positions) {
+                this.hideStaleBanner();
                 toast('No cached data available');
                 return;
             }
@@ -5005,7 +5064,8 @@ if ('serviceWorker' in navigator) {
             const age = Date.now() - this.offlineData.timestamp;
             const ageMinutes = Math.round(age / 60000);
             
-            toast('Showing data from ' + ageMinutes + ' minutes ago');
+            if (notify) toast('Showing data from ' + ageMinutes + ' minutes ago');
+            this.showStaleBanner(this.offlineData.timestamp);
             
             Object.keys(markers).forEach(hex => {
                 if (markers[hex] && map) {
@@ -15129,7 +15189,26 @@ if ('serviceWorker' in navigator) {
         return 'commercial';
     }
     function getAirlineCode(cs) { return cs?.length >= 3 && /^[A-Z]{3}$/.test(cs.substring(0, 3)) ? cs.substring(0, 3) : null; }
-    async function fetchWithProxy(url, options = {}, proxyOnly = false) { if (!proxyOnly) { try { const r = await fetchWithTimeout(url, options); if (r?.ok) return r; } catch(e) {} } for (let i = 0; i < CONFIG.corsProxies.length; i++) { const idx = (lastSuccessfulProxy + i) % CONFIG.corsProxies.length; try { const r = await fetchWithTimeout(CONFIG.corsProxies[idx](url), {}); if (r?.ok) { lastSuccessfulProxy = idx; return r; } } catch(e) {} } return null; }
+    function getConfiguredProxyUrl() {
+        try { return normalizeCustomProxyUrl(localStorage.getItem(CUSTOM_PROXY_STORAGE_KEY)); } catch (_) { return ''; }
+    }
+    async function fetchWithProxy(url, options = {}, proxyOnly = false) {
+        if (!proxyOnly) {
+            try { const r = await fetchWithTimeout(url, options); if (r?.ok) return r; } catch(e) {}
+        }
+        const customProxy = buildCustomProxyUrl(getConfiguredProxyUrl(), url);
+        if (customProxy) {
+            try { const r = await fetchWithTimeout(customProxy, {}); if (r?.ok) return r; } catch(e) {}
+        }
+        for (let i = 0; i < CONFIG.corsProxies.length; i++) {
+            const idx = (lastSuccessfulProxy + i) % CONFIG.corsProxies.length;
+            try {
+                const r = await fetchWithTimeout(CONFIG.corsProxies[idx](url), {});
+                if (r?.ok) { lastSuccessfulProxy = idx; return r; }
+            } catch(e) {}
+        }
+        return null;
+    }
     async function fetchWithTimeout(url, options, timeout = 10000) { const controller = new AbortController(); const id = setTimeout(() => controller.abort(), timeout); try { const r = await fetch(url, { ...options, signal: controller.signal }); clearTimeout(id); return r; } catch (e) { clearTimeout(id); throw e; } }
     function saveMapPosition() {
         if (!map) return;
@@ -15473,6 +15552,32 @@ if ('serviceWorker' in navigator) {
         s.textContent = hasCustom ? 'Custom set' : 'Not configured';
         s.className = 'api-status ' + (hasCustom ? 'connected' : '');
     }
+    function updateCustomProxyUI() {
+        const input = document.getElementById('customProxyUrl');
+        const status = document.getElementById('customProxyStatus');
+        const proxyUrl = getConfiguredProxyUrl();
+        if (input) input.value = proxyUrl;
+        if (status) {
+            status.textContent = proxyUrl ? 'Personal proxy active' : 'Public fallback proxies only';
+            status.className = 'api-status ' + (proxyUrl ? 'connected' : 'info');
+        }
+    }
+    function saveCustomProxy() {
+        const input = document.getElementById('customProxyUrl');
+        const raw = input?.value.trim() || '';
+        if (raw && !normalizeCustomProxyUrl(raw)) { toast('Enter a valid http(s) Worker URL'); return; }
+        try {
+            if (raw) localStorage.setItem(CUSTOM_PROXY_STORAGE_KEY, normalizeCustomProxyUrl(raw));
+            else localStorage.removeItem(CUSTOM_PROXY_STORAGE_KEY);
+        } catch (_) {}
+        updateCustomProxyUI();
+        toast(raw ? 'Personal proxy saved' : 'Personal proxy disabled');
+    }
+    function clearCustomProxy() {
+        try { localStorage.removeItem(CUSTOM_PROXY_STORAGE_KEY); } catch (_) {}
+        updateCustomProxyUI();
+        toast('Personal proxy disabled');
+    }
     async function getWikipediaSummary(url) { if (!settings.showWiki || !url) return null; try { const m = url.match(/wikipedia\.org\/wiki\/(.+)$/); if (!m) return null; const r = await fetchWithTimeout('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(decodeURIComponent(m[1])), {}, 5000); if (!r?.ok) return null; const d = await r.json(); return { title: d.title, extract: d.extract, thumbnail: d.thumbnail?.source, url }; } catch(e) { return null; } }
     function setLoadingProgress(pct, status) {
         document.getElementById('loadingProgress').style.width = pct + '%';
@@ -15508,7 +15613,7 @@ if ('serviceWorker' in navigator) {
         if (!tabLeader.isLeader) await tabLeader.syncFromStore();
         
         uiDialogs.init();
-        loadSettings(); loadApiCredentials(); loadBookmarks();
+        loadSettings(); loadApiCredentials(); loadCustomProxyUI(); loadBookmarks();
         const hadCache = loadAircraftCache();
         await getInitialLocation();
         
@@ -15861,7 +15966,7 @@ if ('serviceWorker' in navigator) {
                             _el('dataSource').textContent=[...names].join(' + ')+' - '+n+' aircraft';resolve(ac);
                         }catch(e){if(e.name!=='AbortError')dataSourceManager.recordFailure(src);resolve([]);}});}));
                 if(success){connectionMonitor.recordSuccess();offlineManager.cachePositions();}}
-            if(!success){_el('dataSource').textContent='No sources';connectionMonitor.recordFailure();}
+            if(!success){_el('dataSource').textContent='No sources';connectionMonitor.recordFailure();offlineManager.showCachedPositions({ notify: false });}
             if (success && tabLeader.isLeader) tabLeader.publishSnapshot(serializeAircraftCache());
         }catch(e){if(e.name!=='AbortError')connectionMonitor.recordFailure();}
         finally{lastFetchTime=Date.now();gridFetch.inProgress=false;fetchInProgress=false;}
@@ -17007,6 +17112,8 @@ if ('serviceWorker' in navigator) {
         document.getElementById('toggleWeatherOverlay')?.addEventListener('click', function() { weatherOverlay.toggle(); setToggleState(this, weatherOverlay.enabled); });
         document.getElementById('mapStyleSelect').addEventListener('change', function() { changeBasemap(this.value); });
         document.getElementById('saveApiBtn').addEventListener('click', saveApiCredentials); document.getElementById('clearApiBtn').addEventListener('click', clearApiCredentials);
+        document.getElementById('saveCustomProxyBtn')?.addEventListener('click', saveCustomProxy);
+        document.getElementById('clearCustomProxyBtn')?.addEventListener('click', clearCustomProxy);
         document.getElementById('addBookmarkBtn').addEventListener('click', openBookmarkModal);
         document.getElementById('bookmarkCancelBtn').addEventListener('click', closeBookmarkModal);
         document.getElementById('bookmarkSaveBtn').addEventListener('click', () => { const name = document.getElementById('bookmarkNameInput').value.trim(); if (name) { addBookmark(name); closeBookmarkModal(); } else toast('Enter a name'); });

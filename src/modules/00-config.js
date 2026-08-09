@@ -26,6 +26,28 @@
         // External APIs (cannot self-host)
         planespottersApi: 'https://api.planespotters.net/pub/photos/hex/'
     };
+    const CUSTOM_PROXY_STORAGE_KEY = 'skytrack_custom_proxy_url';
+    function normalizeCustomProxyUrl(value) {
+        try {
+            const parsed = new URL(String(value || '').trim());
+            if (!/^https?:$/.test(parsed.protocol) || parsed.username || parsed.password) return '';
+            parsed.hash = '';
+            return parsed.href;
+        } catch (_) {
+            return '';
+        }
+    }
+    function buildCustomProxyUrl(proxyUrl, targetUrl) {
+        const normalized = normalizeCustomProxyUrl(proxyUrl);
+        if (!normalized || !targetUrl) return '';
+        try {
+            const endpoint = new URL(normalized);
+            endpoint.searchParams.set('url', String(targetUrl));
+            return endpoint.href;
+        } catch (_) {
+            return '';
+        }
+    }
     const DATA_URLS = {
         // Aircraft Registration (tar1090-db)
         registrations: {

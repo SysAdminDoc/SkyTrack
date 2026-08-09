@@ -379,6 +379,7 @@ if ('serviceWorker' in navigator) {
         <div class="hud-3d-row"><span class="hud-3d-key">Click</span> Select aircraft</div>
         <div class="hud-3d-row"><span class="hud-3d-key">🛰</span> <span id="satellite3dStatus">Satellites loading…</span></div>
     </div>
+    <div class="stale-data-banner" id="staleDataBanner" hidden role="status" aria-live="polite"></div>
     <div class="debug-hud" id="debugHud" hidden aria-live="polite" aria-label="Debug telemetry"></div>
     
     <!-- Onboarding Overlay -->
@@ -884,6 +885,15 @@ if ('serviceWorker' in navigator) {
             <div id="dataSourceList" style="font-size: 11px; margin-bottom: 10px;"></div>
             <button class="btn-secondary" id="checkSourcesBtn" style="width: 100%; margin-bottom: 8px;">Check All Sources</button>
             <button class="btn-secondary" id="clearOfflineCacheBtn" style="width: 100%;">Clear Offline Cache</button>
+        </div>
+        <div class="settings-section">
+            <div class="settings-section-title">Personal CORS Proxy</div>
+            <p class="settings-help">Deploy <code>tools/skytrack-proxy-worker.js</code> to Cloudflare Workers, then paste its URL here. It stays in this browser and is tried before shared fallbacks.</p>
+            <label class="settings-input-label" for="customProxyUrl">Worker URL</label>
+            <input type="url" class="settings-input" id="customProxyUrl" placeholder="https://skytrack-proxy.example.workers.dev/" inputmode="url" autocomplete="url">
+            <button class="settings-btn" id="saveCustomProxyBtn">Save Proxy URL</button>
+            <button class="settings-btn secondary" id="clearCustomProxyBtn">Clear Proxy URL</button>
+            <div class="api-status info" id="customProxyStatus">Public fallback proxies only</div>
         </div>
     </div>
     <div class="stats-panel" id="statsPanel" role="dialog" aria-label="Statistics">
