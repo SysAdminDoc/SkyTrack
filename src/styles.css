@@ -935,6 +935,18 @@
                 flex: 1;
                 -webkit-overflow-scrolling: touch;
             }
+
+            .virtual-aircraft-list {
+                position: relative;
+                width: 100%;
+            }
+
+            .list-aircraft-item.virtual-row {
+                position: absolute;
+                left: 0;
+                right: 0;
+                height: 64px;
+            }
             
             /* Hide desktop panels on mobile */
             .mobile-view #infoPanel:not(.bottom-sheet),

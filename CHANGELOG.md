@@ -43,6 +43,9 @@ All notable changes to SkyTrack will be documented in this file.
 - **Faster clustering.** The Clustering tool now uses a viewport-scoped
   Supercluster index instead of rebuilding a Leaflet marker-cluster tree,
   with click-to-expand clusters and proper restoration when disabled.
+- **Virtualized aircraft list.** The mobile aircraft sheet now sorts the full
+  live set but mounts only the visible rows plus overscan, removing the former
+  100-aircraft cap and avoiding large DOM rebuilds.
 
 ## [v0.24.3] - 2026-05-01
 

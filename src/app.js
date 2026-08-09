@@ -8519,6 +8519,8 @@ To capture a clean timelapse:
         isTouchDevice: false,
         screenSize: 'desktop',
         orientation: 'landscape',
+        _virtualAircraft: [],
+        _virtualRenderRaf: 0,
         
         init() {
             this.detect();
@@ -9024,6 +9026,21 @@ To capture a clean timelapse:
             document.body.appendChild(sheet);
             
             document.getElementById('listSort').addEventListener('change', () => this.updateAircraftList());
+            const content = document.getElementById('aircraftListContent');
+            content?.addEventListener('scroll', () => {
+                if (this._virtualRenderRaf) return;
+                this._virtualRenderRaf = requestAnimationFrame(() => {
+                    this._virtualRenderRaf = 0;
+                    this._renderVirtualAircraftList();
+                });
+            }, { passive: true });
+            content?.addEventListener('click', event => {
+                const item = event.target?.closest?.('.list-aircraft-item');
+                if (!item?.dataset.hex) return;
+                selectAircraft(item.dataset.hex);
+                this.showInfoPanel();
+                haptics.medium();
+            });
             
             return sheet;
         },
@@ -9061,6 +9078,20 @@ To capture a clean timelapse:
             const listCountEl = document.getElementById('listCount');
             if (listCountEl) listCountEl.textContent = aircraft.length;
             
+            this._virtualAircraft = aircraft;
+            this._renderVirtualAircraftList();
+        },
+
+        _renderVirtualAircraftList() {
+            const content = document.getElementById('aircraftListContent');
+            if (!content) return;
+            const aircraft = this._virtualAircraft;
+            const windowInfo = virtualWindowFor(
+                aircraft.length,
+                content.scrollTop,
+                content.clientHeight || 420,
+                8
+            );
             const getIconClass = (ac) => {
                 if (ac.militaryInfo) return 'military';
                 if (ac.interestingInfo?.category === 'Government') return 'gov';
@@ -9069,7 +9100,6 @@ To capture a clean timelapse:
                 if (ac.vipInfo) return 'vip';
                 return '';
             };
-            
             const getIconSymbol = (ac) => {
                 if (ac.militaryInfo) return '#';
                 if (ac.interestingInfo?.category === 'Government') return 'G';
@@ -9078,9 +9108,9 @@ To capture a clean timelapse:
                 if (ac.vipInfo) return '*';
                 return '>';
             };
-            
-            content.innerHTML = aircraft.slice(0, 100).map(ac => `
-                <div class="list-aircraft-item" data-hex="${_escHtml(ac.hex)}">
+            const rows = aircraft.slice(windowInfo.start, windowInfo.end).map((ac, offset) => {
+                const index = windowInfo.start + offset;
+                return `<div class="list-aircraft-item virtual-row" data-hex="${_escHtml(ac.hex)}" style="top:${index * VIRTUAL_AIRCRAFT_ROW_HEIGHT}px">
                     <div class="list-ac-icon ${getIconClass(ac)}">${getIconSymbol(ac)}</div>
                     <div class="list-ac-info">
                         <div class="list-ac-callsign">${_escHtml(ac.flight?.trim() || ac.r || ac.hex)}</div>
@@ -9090,16 +9120,9 @@ To capture a clean timelapse:
                         <div class="list-ac-alt">${ac.alt_baro === 'ground' ? 'GND' : ((ac.alt_baro || 0) / 1000).toFixed(1) + 'k'}</div>
                         <div class="list-ac-speed">${_escHtml(ac.gs || '---')} kt</div>
                     </div>
-                </div>
-            `).join('');
-            
-            content.querySelectorAll('.list-aircraft-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    selectAircraft(item.dataset.hex);
-                    this.showInfoPanel();
-                    haptics.medium();
-                });
-            });
+                </div>`;
+            }).join('');
+            content.innerHTML = `<div class="virtual-aircraft-list" style="height:${windowInfo.totalHeight}px">${rows}</div>`;
         },
         
         showInfoPanel() {

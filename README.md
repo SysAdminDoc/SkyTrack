@@ -143,6 +143,7 @@ step is only needed when you want to ship a fresh single-file `index.html`.
 | Distance Measurement | Click-to-measure great-circle distances |
 | Aircraft Clustering | Group dense traffic into expandable clusters |
 | Fast Clustering | Supercluster viewport index keeps dense global views responsive |
+| Virtualized List | Mobile aircraft list keeps the full sortable set without mounting every row |
 
 ### Monitoring & Alerts
 
