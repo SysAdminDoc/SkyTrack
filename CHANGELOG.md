@@ -40,6 +40,9 @@ All notable changes to SkyTrack will be documented in this file.
 - **High-volume canvas rendering.** Once the live cache reaches 800 aircraft,
   ordinary traffic moves to a canvas-backed point layer while selected, VIP,
   military, interesting, and PIA aircraft retain detailed interactive icons.
+- **Faster clustering.** The Clustering tool now uses a viewport-scoped
+  Supercluster index instead of rebuilding a Leaflet marker-cluster tree,
+  with click-to-expand clusters and proper restoration when disabled.
 
 ## [v0.24.3] - 2026-05-01
 

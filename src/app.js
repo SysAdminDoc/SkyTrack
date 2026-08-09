@@ -2835,6 +2835,10 @@
     let _updateMarkersRaf = 0;
     function _updateMarkersCore() {
         if (!map) return;
+        if (typeof clusterManager !== 'undefined' && clusterManager.enabled) {
+            clusterManager.updateClusters();
+            return;
+        }
         const bounds = map.getBounds();
         const zoom = map.getZoom();
         const highVolume = highVolumeRenderer.begin(Object.keys(aircraftCache).length);
@@ -7786,6 +7790,9 @@ ${trailData.map(p => {
         enabled: false,
         clusterLayer: null,
         pluginLoaded: false,
+        clusterIndex: null,
+        clusterCtor: null,
+        _mapHandler: null,
         
         init() {
             document.getElementById('clusterBtn')?.addEventListener('click', () => this.toggle());
@@ -7795,21 +7802,26 @@ ${trailData.map(p => {
             if (this.pluginLoaded) return true;
             
             return new Promise((resolve) => {
-                // Add CSS
-                const link = document.createElement('link');
-                link.rel = 'stylesheet';
-                link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.css';
-                document.head.appendChild(link);
-                
-                const link2 = document.createElement('link');
-                link2.rel = 'stylesheet';
-                link2.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.Default.css';
-                document.head.appendChild(link2);
-                
-                // Add JS
+                const candidate = window.supercluster || window.Supercluster;
+                if (typeof candidate === 'function') {
+                    this.clusterCtor = candidate;
+                    this.pluginLoaded = true;
+                    resolve(true);
+                    return;
+                }
+
+                // Supercluster is a small, maintained BSD-licensed library. It
+                // is loaded only when the user enables clustering, keeping the
+                // normal single-file path free of another startup payload.
                 const script = document.createElement('script');
-                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/leaflet.markercluster.js';
+                script.src = 'https://cdn.jsdelivr.net/npm/supercluster@8.0.1/dist/supercluster.min.js';
                 script.onload = () => {
+                    const loaded = window.supercluster || window.Supercluster;
+                    if (typeof loaded !== 'function') {
+                        resolve(false);
+                        return;
+                    }
+                    this.clusterCtor = loaded;
                     this.pluginLoaded = true;
                     resolve(true);
                 };
@@ -7841,45 +7853,26 @@ ${trailData.map(p => {
         },
         
         enable() {
-            if (typeof L.markerClusterGroup === 'undefined') {
-                console.error('MarkerCluster not loaded');
+            if (!this.clusterCtor) {
+                console.error('Supercluster not loaded');
                 return;
             }
             
-            this.clusterLayer = L.markerClusterGroup({
-                maxClusterRadius: 60,
-                spiderfyOnMaxZoom: true,
-                showCoverageOnHover: false,
-                zoomToBoundsOnClick: true,
-                disableClusteringAtZoom: 11,
-                iconCreateFunction: (cluster) => {
-                    const count = cluster.getChildCount();
-                    let size, className;
-                    
-                    if (count < 10) {
-                        size = 32; className = 'cluster-small';
-                    } else if (count < 50) {
-                        size = 40; className = 'cluster-medium';
-                    } else if (count < 100) {
-                        size = 50; className = 'cluster-large';
-                    } else {
-                        size = 60; className = 'cluster-xlarge';
-                    }
-                    
-                    return L.divIcon({
-                        html: `<div class="cluster-icon ${className}">${count}</div>`,
-                        className: 'marker-cluster',
-                        iconSize: [size, size]
-                    });
-                }
-            });
-            
-            // Hide regular markers and add to cluster
+            this.clusterIndex = new this.clusterCtor({ radius: 60, maxZoom: 11, extent: 512, nodeSize: 64 });
+            this.clusterLayer = L.layerGroup().addTo(map);
+
+            // Clear the ordinary renderer completely. updateMarkersCore will
+            // route future refreshes through updateClusters while enabled.
             Object.entries(markers).forEach(([hex, marker]) => {
                 map.removeLayer(marker);
+                delete markers[hex];
+                delete aircraftAnimation[hex];
             });
-            
-            map.addLayer(this.clusterLayer);
+
+            highVolumeRenderer.active = false;
+            highVolumeRenderer.clear();
+            this._mapHandler = () => this.updateClusters();
+            map.on('moveend zoomend', this._mapHandler);
             this.updateClusters();
         },
         
@@ -7888,40 +7881,78 @@ ${trailData.map(p => {
                 map.removeLayer(this.clusterLayer);
                 this.clusterLayer = null;
             }
-            
+            if (this._mapHandler) {
+                map.off('moveend zoomend', this._mapHandler);
+                this._mapHandler = null;
+            }
+            this.clusterIndex = null;
             // Restore regular markers
             updateMarkers();
         },
         
         updateClusters() {
-            if (!this.enabled || !this.clusterLayer) return;
-            
-            this.clusterLayer.clearLayers();
-            
+            if (!this.enabled || !this.clusterLayer || !this.clusterIndex) return;
+
+            const points = [];
             Object.values(aircraftCache).forEach(ac => {
-                if (ac.lat === undefined || ac.lon === undefined) return;
-                
-                const color = getAltitudeColor(ac.alt_baro);
-                const rotation = ac.track || 0;
-                
-                const marker = L.marker([ac.lat, ac.lon], {
-                    icon: L.divIcon({
-                        className: 'aircraft-marker clustered',
-                        html: `<div style="transform: rotate(${rotation}deg)">
-                            <svg viewBox="0 0 36 36" width="20" height="20">
-                                <path fill="${color}" d="M18 3 L20 14 L32 18 L20 20 L20 30 L24 33 L24 34 L18 32 L12 34 L12 33 L16 30 L16 20 L4 18 L16 14 Z"/>
-                            </svg>
-                        </div>`,
-                        iconSize: [20, 20],
-                        iconAnchor: [10, 10]
-                    })
+                if (!Number.isFinite(Number(ac.lat)) || !Number.isFinite(Number(ac.lon))) return;
+                if (typeof searchSystem !== 'undefined' && !searchSystem.passesFilters(ac)) return;
+                if (settings.filter !== 'all' && !this._passesCategoryFilter(ac)) return;
+                points.push({
+                    type: 'Feature',
+                    geometry: { type: 'Point', coordinates: [Number(ac.lon), Number(ac.lat)] },
+                    properties: { hex: ac.hex }
                 });
-                
-                marker._skytrackHex = ac.hex;
-                marker.on('click', () => selectAircraft(ac.hex));
-                
+            });
+            this.clusterIndex.load(points);
+            this.clusterLayer.clearLayers();
+
+            const bounds = map.getBounds();
+            const west = bounds.getWest();
+            const east = bounds.getEast();
+            const south = Math.max(-90, bounds.getSouth());
+            const north = Math.min(90, bounds.getNorth());
+            const bbox = west <= east ? [west, south, east, north] : [-180, south, 180, north];
+            const clusters = this.clusterIndex.getClusters(bbox, Math.round(map.getZoom()));
+
+            clusters.forEach(feature => {
+                const [lon, lat] = feature.geometry.coordinates;
+                const props = feature.properties || {};
+                if (props.cluster) {
+                    const count = props.point_count || 0;
+                    const size = count < 10 ? 32 : count < 50 ? 40 : count < 100 ? 50 : 60;
+                    const className = count < 10 ? 'cluster-small' : count < 50 ? 'cluster-medium' : count < 100 ? 'cluster-large' : 'cluster-xlarge';
+                    const marker = L.marker([lat, lon], {
+                        icon: L.divIcon({
+                            html: `<div class="cluster-icon ${className}">${count}</div>`,
+                            className: 'marker-cluster',
+                            iconSize: [size, size]
+                        })
+                    });
+                    marker.on('click', () => {
+                        const expansionZoom = this.clusterIndex.getClusterExpansionZoom(props.cluster_id);
+                        map.setView([lat, lon], Math.min(expansionZoom, 19));
+                    });
+                    this.clusterLayer.addLayer(marker);
+                    return;
+                }
+
+                const ac = aircraftCache[props.hex];
+                if (!ac) return;
+                const marker = L.marker([lat, lon], { icon: createIcon(ac), zIndexOffset: getZIndex(ac) });
+                marker.on('click', event => {
+                    L.DomEvent.stopPropagation(event);
+                    handleAircraftSelection(ac.hex, event);
+                });
                 this.clusterLayer.addLayer(marker);
             });
+        },
+
+        _passesCategoryFilter(ac) {
+            if (settings.filter === 'vip') return !!(ac.isVIP || badgersBestDB.isVIP(ac.hex));
+            if (settings.filter === 'interesting') return !!(ac.interesting || ac.militaryInfo || ac.civilianInteresting);
+            if (settings.filter === 'pia') return !!ac.piaInfo;
+            return ac.category_type === settings.filter;
         }
     };
 

@@ -142,6 +142,7 @@ step is only needed when you want to ship a fresh single-file `index.html`.
 | Mini-Map | Picture-in-picture overview map |
 | Distance Measurement | Click-to-measure great-circle distances |
 | Aircraft Clustering | Group dense traffic into expandable clusters |
+| Fast Clustering | Supercluster viewport index keeps dense global views responsive |
 
 ### Monitoring & Alerts
 
