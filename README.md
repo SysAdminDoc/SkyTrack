@@ -176,6 +176,7 @@ step is only needed when you want to ship a fresh single-file `index.html`.
 |---------|-------------|
 | Themes | Dark, Midnight, Light, High Contrast, Color Blind |
 | Compact Mode | Dense layout for smaller screens |
+| Accessible Motion & Dialogs | Alerts expose polite live regions, reduced-motion preferences stop map interpolation, and modals isolate background focus with `inert` |
 | Mobile Optimized | Touch gestures, responsive panels, swipe navigation |
 | Offline Mode | ServiceWorker caching for use without internet |
 | Dashboard Layouts | Configurable panel positions — Default, Minimal, Analyst presets |

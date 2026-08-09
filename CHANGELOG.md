@@ -61,6 +61,10 @@ All notable changes to SkyTrack will be documented in this file.
 - **Cesium visual polish.** 3D aircraft trails now use glow materials, with a
   selected-flight emphasis, and the scene switches between the daytime
   atmosphere and a pinned star-field skybox at civil twilight.
+- **Accessibility hardening.** Dynamic alerts now expose polite live-region
+  semantics and keyboard activation, reduced-motion preferences stop aircraft
+  interpolation and pulse effects, and modal overlays isolate background focus
+  with `inert`.
 
 ## [v0.24.3] - 2026-05-01
 

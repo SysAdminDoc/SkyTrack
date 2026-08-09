@@ -2006,6 +2006,7 @@
         overlay.classList.add('show');
         overlay.setAttribute('aria-hidden', 'false');
         document.body.classList.add('modal-open');
+        syncModalInert();
     }
     function closeOverlayModal(overlay) {
         if (!overlay) return;
@@ -2014,6 +2015,19 @@
         if (!document.querySelector('.modal-overlay.show')) {
             document.body.classList.remove('modal-open');
         }
+        syncModalInert();
+    }
+    function syncModalInert() {
+        const active = document.querySelector('.modal-overlay.show');
+        Array.from(document.body.children).forEach(child => {
+            if (active && child !== active && !child.contains(active)) {
+                if (!child.dataset.skytrackModalInert) child.dataset.skytrackModalInert = child.hasAttribute('inert') ? 'keep' : 'add';
+                child.setAttribute('inert', '');
+            } else if (!active && child.dataset.skytrackModalInert) {
+                if (child.dataset.skytrackModalInert === 'add') child.removeAttribute('inert');
+                delete child.dataset.skytrackModalInert;
+            }
+        });
     }
     const uiDialogs = {
         overlay: null,
@@ -2809,7 +2823,7 @@
                 const currentCenter = map.getCenter();
                 const distance = map.distance(currentCenter, [ac.lat, ac.lon]);
                 if (distance > 500) {
-                    map.panTo([ac.lat, ac.lon], { animate: true, duration: 0.5 });
+                    map.panTo([ac.lat, ac.lon], { animate: !accessibility.prefersReducedMotion(), duration: 0.5 });
                 }
             }
         }
@@ -2949,8 +2963,8 @@
         selectAircraft(hex);
     }
     function createMarker(ac) { const marker = L.marker([ac.lat, ac.lon], { icon: createIcon(ac), zIndexOffset: getZIndex(ac) }); marker.on('click', e => { L.DomEvent.stopPropagation(e); handleAircraftSelection(ac.hex, e); }); marker.addTo(map); markers[ac.hex] = marker; }
-    function updateMarker(ac) { const marker = markers[ac.hex]; if (!marker) return; const hash = _iconHash(ac); const cached = _iconCache[ac.hex]; const iconChanged = !cached || cached.hash !== hash; const pos = marker.getLatLng(); if (Math.abs(pos.lat - ac.lat) + Math.abs(pos.lng - ac.lon) < 0.00001) { if (iconChanged) { marker.setIcon(createIcon(ac)); marker.setZIndexOffset(getZIndex(ac)); } return; } aircraftAnimation[ac.hex] = { startLat: pos.lat, startLon: pos.lng, targetLat: ac.lat, targetLon: ac.lon, startTime: performance.now(), duration: CONFIG.refreshInterval * 0.95 }; if (iconChanged) { marker.setIcon(createIcon(ac)); marker.setZIndexOffset(getZIndex(ac)); } if (!animationRunning) { animationRunning = true; requestAnimationFrame(animateAircraft); } }
-    function animateAircraft(ts) { let active = false; Object.entries(aircraftAnimation).forEach(([hex, a]) => { const m = markers[hex]; if (!m) { delete aircraftAnimation[hex]; return; } const p = Math.min((ts - a.startTime) / a.duration, 1); if (p < 1) { active = true; const lat = a.startLat + (a.targetLat - a.startLat) * p, lon = a.startLon + (a.targetLon - a.startLon) * p; m.setLatLng([lat, lon]); if (hex === selectedHex && trailLine?._lastSegment) { const ll = trailLine._lastSegment.getLatLngs(); if (ll.length) { ll[ll.length - 1] = L.latLng(lat, lon); trailLine._lastSegment.setLatLngs(ll); } } } else { m.setLatLng([a.targetLat, a.targetLon]); delete aircraftAnimation[hex]; } }); if (active) requestAnimationFrame(animateAircraft); else animationRunning = false; }
+    function updateMarker(ac) { const marker = markers[ac.hex]; if (!marker) return; const hash = _iconHash(ac); const cached = _iconCache[ac.hex]; const iconChanged = !cached || cached.hash !== hash; const pos = marker.getLatLng(); if (Math.abs(pos.lat - ac.lat) + Math.abs(pos.lng - ac.lon) < 0.00001) { if (iconChanged) { marker.setIcon(createIcon(ac)); marker.setZIndexOffset(getZIndex(ac)); } return; } if (accessibility.prefersReducedMotion()) { marker.setLatLng([ac.lat, ac.lon]); delete aircraftAnimation[ac.hex]; if (iconChanged) { marker.setIcon(createIcon(ac)); marker.setZIndexOffset(getZIndex(ac)); } return; } aircraftAnimation[ac.hex] = { startLat: pos.lat, startLon: pos.lng, targetLat: ac.lat, targetLon: ac.lon, startTime: performance.now(), duration: CONFIG.refreshInterval * 0.95 }; if (iconChanged) { marker.setIcon(createIcon(ac)); marker.setZIndexOffset(getZIndex(ac)); } if (!animationRunning) { animationRunning = true; requestAnimationFrame(animateAircraft); } }
+    function animateAircraft(ts) { if (accessibility.prefersReducedMotion()) { Object.entries(aircraftAnimation).forEach(([hex, a]) => { markers[hex]?.setLatLng([a.targetLat, a.targetLon]); delete aircraftAnimation[hex]; }); animationRunning = false; return; } let active = false; Object.entries(aircraftAnimation).forEach(([hex, a]) => { const m = markers[hex]; if (!m) { delete aircraftAnimation[hex]; return; } const p = Math.min((ts - a.startTime) / a.duration, 1); if (p < 1) { active = true; const lat = a.startLat + (a.targetLat - a.startLat) * p, lon = a.startLon + (a.targetLon - a.startLon) * p; m.setLatLng([lat, lon]); if (hex === selectedHex && trailLine?._lastSegment) { const ll = trailLine._lastSegment.getLatLngs(); if (ll.length) { ll[ll.length - 1] = L.latLng(lat, lon); trailLine._lastSegment.setLatLngs(ll); } } } else { m.setLatLng([a.targetLat, a.targetLon]); delete aircraftAnimation[hex]; } }); if (active) requestAnimationFrame(animateAircraft); else animationRunning = false; }
     function getAltitudeCSSFilter(alt, selected) {
         if (selected) return 'brightness(0) invert(1) sepia(1) saturate(10) hue-rotate(140deg) brightness(1.2) drop-shadow(0 0 6px cyan) drop-shadow(0 0 12px cyan)';
         if (alt === 'ground' || alt === 0) return 'brightness(0) invert(0.55) sepia(0.3) saturate(0.5)';

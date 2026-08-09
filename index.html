@@ -1539,6 +1539,8 @@
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
         }
+        html.reduced-motion, html.reduced-motion * { scroll-behavior: auto !important; }
+        html.reduced-motion *, html.reduced-motion *::before, html.reduced-motion *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 
         /* Range-ring labels (module 90-range-rings.js) */
         .range-ring-label {
@@ -6105,19 +6107,35 @@ if ('serviceWorker' in navigator) {
                 container = document.createElement('div');
                 container.id = 'alertContainer';
                 container.className = 'alert-container';
+                container.setAttribute('role', 'status');
+                container.setAttribute('aria-live', 'polite');
+                container.setAttribute('aria-atomic', 'false');
+                container.setAttribute('aria-relevant', 'additions text');
                 document.body.appendChild(container);
             }
             
             const el = document.createElement('div');
             el.className = 'alert-notification';
+            el.setAttribute('role', 'status');
             el.style.borderLeftColor = alert.alertType.color;
             el.innerHTML = '<div class="alert-icon" style="color:' + _escHtml(alert.alertType.color) + '">' + _escHtml(alert.alertType.icon) + '</div>' +
                 '<div class="alert-body"><div class="alert-title">' + _escHtml(alert.callsign) + '</div><div class="alert-message">' + _escHtml(alert.message) + '</div></div>' +
-                '<button class="alert-close">&times;</button>';
+                '<button class="alert-close" aria-label="Dismiss alert">&times;</button>';
             
-            el.querySelector('.alert-body').addEventListener('click', () => {
+            const alertBody = el.querySelector('.alert-body');
+            alertBody.setAttribute('role', 'button');
+            alertBody.setAttribute('tabindex', '0');
+            alertBody.setAttribute('aria-label', 'Open ' + alert.callsign + ' alert');
+            const openAlertAircraft = () => {
                 selectAircraft(alert.aircraft.hex);
                 el.remove();
+            };
+            alertBody.addEventListener('click', openAlertAircraft);
+            alertBody.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openAlertAircraft();
+                }
             });
             el.querySelector('.alert-close').addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -11122,6 +11140,33 @@ if ('serviceWorker' in navigator) {
         positiveZ: 'https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Assets/Textures/SkyBox/tycho2t3_80_pz.jpg',
         negativeZ: 'https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Assets/Textures/SkyBox/tycho2t3_80_mz.jpg'
     };
+    // ─── module: modules/A13-accessibility.js ───────────────────────────────────────────
+
+    // ============ ACCESSIBILITY STATE ============
+    function prefersReducedMotionFrom(mediaQuery) {
+        return mediaQuery?.matches === true;
+    }
+
+    const accessibility = {
+        reducedMotion: false,
+        _query: null,
+        init() {
+            if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+            this._query = window.matchMedia('(prefers-reduced-motion: reduce)');
+            const update = () => {
+                this.reducedMotion = prefersReducedMotionFrom(this._query);
+                document.documentElement.classList.toggle('reduced-motion', this.reducedMotion);
+            };
+            update();
+            if (this._query.addEventListener) this._query.addEventListener('change', update);
+            else this._query.addListener?.(update);
+        },
+        prefersReducedMotion() {
+            return this.reducedMotion || prefersReducedMotionFrom(this._query);
+        }
+    };
+
+    if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', () => accessibility.init(), { once: true });
     // ─── module: modules/A2-satellite-3d.js ───────────────────────────────────────────
 
     // ============ CELESTRAK SATELLITES IN CESIUM 3D ============
@@ -14305,6 +14350,7 @@ if ('serviceWorker' in navigator) {
         overlay.classList.add('show');
         overlay.setAttribute('aria-hidden', 'false');
         document.body.classList.add('modal-open');
+        syncModalInert();
     }
     function closeOverlayModal(overlay) {
         if (!overlay) return;
@@ -14313,6 +14359,19 @@ if ('serviceWorker' in navigator) {
         if (!document.querySelector('.modal-overlay.show')) {
             document.body.classList.remove('modal-open');
         }
+        syncModalInert();
+    }
+    function syncModalInert() {
+        const active = document.querySelector('.modal-overlay.show');
+        Array.from(document.body.children).forEach(child => {
+            if (active && child !== active && !child.contains(active)) {
+                if (!child.dataset.skytrackModalInert) child.dataset.skytrackModalInert = child.hasAttribute('inert') ? 'keep' : 'add';
+                child.setAttribute('inert', '');
+            } else if (!active && child.dataset.skytrackModalInert) {
+                if (child.dataset.skytrackModalInert === 'add') child.removeAttribute('inert');
+                delete child.dataset.skytrackModalInert;
+            }
+        });
     }
     const uiDialogs = {
         overlay: null,
@@ -15108,7 +15167,7 @@ if ('serviceWorker' in navigator) {
                 const currentCenter = map.getCenter();
                 const distance = map.distance(currentCenter, [ac.lat, ac.lon]);
                 if (distance > 500) {
-                    map.panTo([ac.lat, ac.lon], { animate: true, duration: 0.5 });
+                    map.panTo([ac.lat, ac.lon], { animate: !accessibility.prefersReducedMotion(), duration: 0.5 });
                 }
             }
         }
@@ -15248,8 +15307,8 @@ if ('serviceWorker' in navigator) {
         selectAircraft(hex);
     }
     function createMarker(ac) { const marker = L.marker([ac.lat, ac.lon], { icon: createIcon(ac), zIndexOffset: getZIndex(ac) }); marker.on('click', e => { L.DomEvent.stopPropagation(e); handleAircraftSelection(ac.hex, e); }); marker.addTo(map); markers[ac.hex] = marker; }
-    function updateMarker(ac) { const marker = markers[ac.hex]; if (!marker) return; const hash = _iconHash(ac); const cached = _iconCache[ac.hex]; const iconChanged = !cached || cached.hash !== hash; const pos = marker.getLatLng(); if (Math.abs(pos.lat - ac.lat) + Math.abs(pos.lng - ac.lon) < 0.00001) { if (iconChanged) { marker.setIcon(createIcon(ac)); marker.setZIndexOffset(getZIndex(ac)); } return; } aircraftAnimation[ac.hex] = { startLat: pos.lat, startLon: pos.lng, targetLat: ac.lat, targetLon: ac.lon, startTime: performance.now(), duration: CONFIG.refreshInterval * 0.95 }; if (iconChanged) { marker.setIcon(createIcon(ac)); marker.setZIndexOffset(getZIndex(ac)); } if (!animationRunning) { animationRunning = true; requestAnimationFrame(animateAircraft); } }
-    function animateAircraft(ts) { let active = false; Object.entries(aircraftAnimation).forEach(([hex, a]) => { const m = markers[hex]; if (!m) { delete aircraftAnimation[hex]; return; } const p = Math.min((ts - a.startTime) / a.duration, 1); if (p < 1) { active = true; const lat = a.startLat + (a.targetLat - a.startLat) * p, lon = a.startLon + (a.targetLon - a.startLon) * p; m.setLatLng([lat, lon]); if (hex === selectedHex && trailLine?._lastSegment) { const ll = trailLine._lastSegment.getLatLngs(); if (ll.length) { ll[ll.length - 1] = L.latLng(lat, lon); trailLine._lastSegment.setLatLngs(ll); } } } else { m.setLatLng([a.targetLat, a.targetLon]); delete aircraftAnimation[hex]; } }); if (active) requestAnimationFrame(animateAircraft); else animationRunning = false; }
+    function updateMarker(ac) { const marker = markers[ac.hex]; if (!marker) return; const hash = _iconHash(ac); const cached = _iconCache[ac.hex]; const iconChanged = !cached || cached.hash !== hash; const pos = marker.getLatLng(); if (Math.abs(pos.lat - ac.lat) + Math.abs(pos.lng - ac.lon) < 0.00001) { if (iconChanged) { marker.setIcon(createIcon(ac)); marker.setZIndexOffset(getZIndex(ac)); } return; } if (accessibility.prefersReducedMotion()) { marker.setLatLng([ac.lat, ac.lon]); delete aircraftAnimation[ac.hex]; if (iconChanged) { marker.setIcon(createIcon(ac)); marker.setZIndexOffset(getZIndex(ac)); } return; } aircraftAnimation[ac.hex] = { startLat: pos.lat, startLon: pos.lng, targetLat: ac.lat, targetLon: ac.lon, startTime: performance.now(), duration: CONFIG.refreshInterval * 0.95 }; if (iconChanged) { marker.setIcon(createIcon(ac)); marker.setZIndexOffset(getZIndex(ac)); } if (!animationRunning) { animationRunning = true; requestAnimationFrame(animateAircraft); } }
+    function animateAircraft(ts) { if (accessibility.prefersReducedMotion()) { Object.entries(aircraftAnimation).forEach(([hex, a]) => { markers[hex]?.setLatLng([a.targetLat, a.targetLon]); delete aircraftAnimation[hex]; }); animationRunning = false; return; } let active = false; Object.entries(aircraftAnimation).forEach(([hex, a]) => { const m = markers[hex]; if (!m) { delete aircraftAnimation[hex]; return; } const p = Math.min((ts - a.startTime) / a.duration, 1); if (p < 1) { active = true; const lat = a.startLat + (a.targetLat - a.startLat) * p, lon = a.startLon + (a.targetLon - a.startLon) * p; m.setLatLng([lat, lon]); if (hex === selectedHex && trailLine?._lastSegment) { const ll = trailLine._lastSegment.getLatLngs(); if (ll.length) { ll[ll.length - 1] = L.latLng(lat, lon); trailLine._lastSegment.setLatLngs(ll); } } } else { m.setLatLng([a.targetLat, a.targetLon]); delete aircraftAnimation[hex]; } }); if (active) requestAnimationFrame(animateAircraft); else animationRunning = false; }
     function getAltitudeCSSFilter(alt, selected) {
         if (selected) return 'brightness(0) invert(1) sepia(1) saturate(10) hue-rotate(140deg) brightness(1.2) drop-shadow(0 0 6px cyan) drop-shadow(0 0 12px cyan)';
         if (alt === 'ground' || alt === 0) return 'brightness(0) invert(0.55) sepia(0.3) saturate(0.5)';

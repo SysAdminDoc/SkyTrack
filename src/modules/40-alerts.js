@@ -222,19 +222,35 @@
                 container = document.createElement('div');
                 container.id = 'alertContainer';
                 container.className = 'alert-container';
+                container.setAttribute('role', 'status');
+                container.setAttribute('aria-live', 'polite');
+                container.setAttribute('aria-atomic', 'false');
+                container.setAttribute('aria-relevant', 'additions text');
                 document.body.appendChild(container);
             }
             
             const el = document.createElement('div');
             el.className = 'alert-notification';
+            el.setAttribute('role', 'status');
             el.style.borderLeftColor = alert.alertType.color;
             el.innerHTML = '<div class="alert-icon" style="color:' + _escHtml(alert.alertType.color) + '">' + _escHtml(alert.alertType.icon) + '</div>' +
                 '<div class="alert-body"><div class="alert-title">' + _escHtml(alert.callsign) + '</div><div class="alert-message">' + _escHtml(alert.message) + '</div></div>' +
-                '<button class="alert-close">&times;</button>';
+                '<button class="alert-close" aria-label="Dismiss alert">&times;</button>';
             
-            el.querySelector('.alert-body').addEventListener('click', () => {
+            const alertBody = el.querySelector('.alert-body');
+            alertBody.setAttribute('role', 'button');
+            alertBody.setAttribute('tabindex', '0');
+            alertBody.setAttribute('aria-label', 'Open ' + alert.callsign + ' alert');
+            const openAlertAircraft = () => {
                 selectAircraft(alert.aircraft.hex);
                 el.remove();
+            };
+            alertBody.addEventListener('click', openAlertAircraft);
+            alertBody.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openAlertAircraft();
+                }
             });
             el.querySelector('.alert-close').addEventListener('click', (e) => {
                 e.stopPropagation();
