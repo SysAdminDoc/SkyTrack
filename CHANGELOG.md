@@ -58,6 +58,9 @@ All notable changes to SkyTrack will be documented in this file.
   slicing and PolylineOffset lane separation, while EdgeBuffer keeps base-map
   tiles warm just beyond the visible viewport; native GeoJSON remains the
   fallback when a plugin is unavailable.
+- **Cesium visual polish.** 3D aircraft trails now use glow materials, with a
+  selected-flight emphasis, and the scene switches between the daytime
+  atmosphere and a pinned star-field skybox at civil twilight.
 
 ## [v0.24.3] - 2026-05-01
 

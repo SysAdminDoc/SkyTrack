@@ -11085,6 +11085,43 @@ if ('serviceWorker' in navigator) {
         if (ident.startsWith('J')) return 4;
         return 0;
     }
+    // ─── module: modules/A12-cesium-effects.js ───────────────────────────────────────────
+
+    // ============ CESIUM LIGHTING HELPERS ============
+    // NOAA-style low-cost solar position approximation. It is accurate enough
+    // to switch the 3D presentation around the civil-twilight boundary while
+    // keeping the single-file client free of a date/astronomy dependency.
+    function solarElevationDegrees(date, latitude, longitude) {
+        const d = date instanceof Date ? date : new Date(date);
+        if (Number.isNaN(d.getTime())) return null;
+        const lat = Number(latitude), lon = Number(longitude);
+        if (![lat, lon].every(Number.isFinite)) return null;
+        const start = Date.UTC(d.getUTCFullYear(), 0, 0);
+        const day = (d.getTime() - start) / 86400000;
+        const minutes = d.getUTCHours() * 60 + d.getUTCMinutes() + d.getUTCSeconds() / 60;
+        const gamma = 2 * Math.PI / 365 * (day - 1 + (minutes / 1440 - 0.5));
+        const equationOfTime = 229.18 * (0.000075 + 0.001868 * Math.cos(gamma) - 0.032077 * Math.sin(gamma) - 0.014615 * Math.cos(2 * gamma) - 0.040849 * Math.sin(2 * gamma));
+        const declination = 0.006918 - 0.399912 * Math.cos(gamma) + 0.070257 * Math.sin(gamma) - 0.006758 * Math.cos(2 * gamma) + 0.000907 * Math.sin(2 * gamma) - 0.002697 * Math.cos(3 * gamma) + 0.00148 * Math.sin(3 * gamma);
+        const solarMinutes = minutes + equationOfTime + 4 * lon;
+        const hourAngle = solarMinutes / 4 - 180;
+        const rad = Math.PI / 180;
+        const cosineZenith = Math.sin(lat * rad) * Math.sin(declination) + Math.cos(lat * rad) * Math.cos(declination) * Math.cos(hourAngle * rad);
+        return 90 - Math.acos(Math.max(-1, Math.min(1, cosineZenith))) / rad;
+    }
+
+    function isNightSkyboxTime(date, latitude, longitude) {
+        const elevation = solarElevationDegrees(date, latitude, longitude);
+        return elevation !== null && elevation < -6;
+    }
+
+    const CESIUM_NIGHT_SKYBOX_SOURCES = {
+        positiveX: 'https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Assets/Textures/SkyBox/tycho2t3_80_px.jpg',
+        negativeX: 'https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Assets/Textures/SkyBox/tycho2t3_80_mx.jpg',
+        positiveY: 'https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Assets/Textures/SkyBox/tycho2t3_80_py.jpg',
+        negativeY: 'https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Assets/Textures/SkyBox/tycho2t3_80_my.jpg',
+        positiveZ: 'https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Assets/Textures/SkyBox/tycho2t3_80_pz.jpg',
+        negativeZ: 'https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Assets/Textures/SkyBox/tycho2t3_80_mz.jpg'
+    };
     // ─── module: modules/A2-satellite-3d.js ───────────────────────────────────────────
 
     // ============ CELESTRAK SATELLITES IN CESIUM 3D ============
@@ -18171,6 +18208,9 @@ ${trailData.map(p => {
         trailMap: new Map(),
         modelUri: null,
         updateTimer: null,
+        daySkyBox: null,
+        nightMode: null,
+        lastSkyCheck: 0,
         
         createAirplaneGLB() {
             // Build proper 3D airplane with tubular fuselage, swept wings, tail, engines
@@ -18319,6 +18359,51 @@ ${trailData.map(p => {
             if (alt<40000) return '#ffeaa7';
             return '#fdcb6e';
         },
+
+        updateSkybox() {
+            if (!this.cesiumViewer?.scene || typeof isNightSkyboxTime !== 'function') return;
+            const center = typeof map !== 'undefined' && map ? map.getCenter() : { lat: 0, lng: 0 };
+            const night = isNightSkyboxTime(new Date(), center.lat, center.lng);
+            if (night === this.nightMode) return;
+            this.nightMode = night;
+            const scene = this.cesiumViewer.scene;
+            try {
+                if (night) {
+                    scene.skyBox = new Cesium.SkyBox({ sources: CESIUM_NIGHT_SKYBOX_SOURCES });
+                    if (scene.skyAtmosphere) scene.skyAtmosphere.show = false;
+                    scene.backgroundColor = Cesium.Color.fromCssColorString('#02030a');
+                } else {
+                    scene.skyBox = this.daySkyBox || scene.skyBox;
+                    if (scene.skyAtmosphere) scene.skyAtmosphere.show = true;
+                    scene.backgroundColor = Cesium.Color.fromCssColorString('#05050f');
+                }
+            } catch (_) { /* the default Cesium sky remains usable */ }
+        },
+
+        createTrailMaterial(color, selected) {
+            if (typeof Cesium.PolylineGlowMaterialProperty === 'function') {
+                return new Cesium.PolylineGlowMaterialProperty({
+                    glowPower: selected ? 0.35 : 0.14,
+                    taperPower: 0.8,
+                    color: color.withAlpha(selected ? 0.78 : 0.55)
+                });
+            }
+            return color.withAlpha(selected ? 0.78 : 0.55);
+        },
+
+        updateTrailMaterial(trail, color, selected) {
+            if (typeof Cesium.PolylineGlowMaterialProperty === 'function') {
+                if (!trail._skytrackGlow) {
+                    trail.polyline.material = this.createTrailMaterial(color, selected);
+                    trail._skytrackGlow = true;
+                } else {
+                    trail.polyline.material.color = color.withAlpha(selected ? 0.78 : 0.55);
+                    trail.polyline.material.glowPower = selected ? 0.35 : 0.14;
+                }
+            } else {
+                trail.polyline.material = color.withAlpha(selected ? 0.78 : 0.55);
+            }
+        },
         
         async toggle() {
             if (!this.enabled) {
@@ -18369,6 +18454,9 @@ ${trailData.map(p => {
                 scene.globe.showGroundAtmosphere=true;
                 scene.fog.enabled=true; scene.fog.density=0.0002;
                 if(scene.skyAtmosphere){scene.skyAtmosphere.hueShift=-0.05;scene.skyAtmosphere.saturationShift=-0.2;scene.skyAtmosphere.brightnessShift=-0.3;}
+                this.daySkyBox = scene.skyBox;
+                this.nightMode = null;
+                this.lastSkyCheck = 0;
                 try{this.cesiumViewer.cesiumWidget.creditContainer.style.display='none';}catch(e){}
                 
                 // Click to select aircraft
@@ -18414,6 +18502,10 @@ ${trailData.map(p => {
         updateAircraft() {
             if(!this.enabled||!this.cesiumViewer)return;
             const now=Date.now();
+            if (!this.lastSkyCheck || now - this.lastSkyCheck >= 60000) {
+                this.lastSkyCheck = now;
+                this.updateSkybox();
+            }
             const jNow=this.cesiumViewer.clock.currentTime.clone();
             const activeHexes=new Set();
             
@@ -18503,12 +18595,14 @@ ${trailData.map(p => {
                     let trail=this.trailMap.get(hex);
                     if(trail){
                         trail.polyline.positions=pts;
-                        trail.polyline.material=color.withAlpha(0.55);
+                        this.updateTrailMaterial(trail, color, hex===selectedHex);
                         trail.polyline.width=hex===selectedHex?3:1.5;
                     } else {
+                        const selectedTrail = hex===selectedHex;
                         trail=this.cesiumViewer.entities.add({
-                            polyline:{positions:pts,width:hex===selectedHex?3:1.5,material:color.withAlpha(0.55),clampToGround:false}
+                            polyline:{positions:pts,width:selectedTrail?3:1.5,material:this.createTrailMaterial(color, selectedTrail),clampToGround:false}
                         });
+                        trail._skytrackGlow = typeof Cesium.PolylineGlowMaterialProperty === 'function';
                         trail._skytrackTrail=hex;
                         this.trailMap.set(hex,trail);
                     }

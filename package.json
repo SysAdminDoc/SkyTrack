@@ -12,6 +12,6 @@
   "scripts": {
     "build": "node build.mjs",
     "check": "node build.mjs --check",
-    "test": "node --test tests/fire-correlation.test.mjs tests/satellite-3d.test.mjs tests/opensky-tracks.test.mjs tests/oceanic-firs.test.mjs tests/aircraft-sprites.test.mjs tests/high-volume-renderer.test.mjs tests/virtual-list.test.mjs tests/privacy-markers.test.mjs tests/altitude-tape.test.mjs tests/time-airborne.test.mjs tests/leaflet-rendering.test.mjs"
+    "test": "node --test tests/fire-correlation.test.mjs tests/satellite-3d.test.mjs tests/opensky-tracks.test.mjs tests/oceanic-firs.test.mjs tests/aircraft-sprites.test.mjs tests/high-volume-renderer.test.mjs tests/virtual-list.test.mjs tests/privacy-markers.test.mjs tests/altitude-tape.test.mjs tests/time-airborne.test.mjs tests/leaflet-rendering.test.mjs tests/cesium-effects.test.mjs"
   }
 }
