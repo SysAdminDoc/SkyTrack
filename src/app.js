@@ -2443,12 +2443,12 @@
 
     function initMap() {
         map = L.map('map', { center: CONFIG.center, zoom: CONFIG.zoom, zoomControl: true, preferCanvas: true, worldCopyJump: true });
-        baseMaps['dark'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
-        baseMaps['satellite'] = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
-        baseMaps['google-streets'] = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'] });
-        baseMaps['google-satellite'] = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'] });
-        baseMaps['google-hybrid'] = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'] });
-        baseMaps['google-terrain'] = L.tileLayer('https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'] });
+        baseMaps['dark'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, edgeBufferTiles: 1 });
+        baseMaps['satellite'] = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, edgeBufferTiles: 1 });
+        baseMaps['google-streets'] = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], edgeBufferTiles: 1 });
+        baseMaps['google-satellite'] = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], edgeBufferTiles: 1 });
+        baseMaps['google-hybrid'] = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], edgeBufferTiles: 1 });
+        baseMaps['google-terrain'] = L.tileLayer('https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], edgeBufferTiles: 1 });
         currentBaseMap = settings.mapStyle && baseMaps[settings.mapStyle] ? settings.mapStyle : 'google-hybrid'; baseMaps[currentBaseMap].addTo(map); document.getElementById('mapStyleSelect').value = currentBaseMap;
         airportLayer = L.layerGroup().addTo(map);
         let moveTimeout; map.on('moveend', () => { clearTimeout(moveTimeout); moveTimeout = setTimeout(() => { loadAircraft(); if (settings.showAirports) updateAirportMarkers(); if (airspaceLayer.enabled) airspaceLayer.load(); }, 800); saveMapPosition(); });

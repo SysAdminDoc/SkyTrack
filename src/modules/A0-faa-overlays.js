@@ -78,12 +78,19 @@
             while (east > 180) { west -= 360; east -= 360; }
             if (east <= west) { west = -180; east = 180; }
             const round = value => Math.round(value * 4) / 4;
-            return {
+            const visible = {
                 west: Math.max(-180, round(west)),
                 south: Math.max(-60, round(south)),
                 east: Math.min(180, round(east)),
                 north: Math.min(75, round(north))
             };
+            const buffered = bufferedOverlayBounds(visible, this.map.getZoom());
+            return buffered ? {
+                west: Math.max(-180, round(buffered.west)),
+                south: Math.max(-60, round(buffered.south)),
+                east: Math.min(180, round(buffered.east)),
+                north: Math.min(75, round(buffered.north))
+            } : visible;
         },
 
         _url(slot, bounds) {
@@ -134,6 +141,7 @@
                 color: ident.startsWith('V') ? '#c084fc' : '#fbbf24',
                 weight: 0.8,
                 opacity: 0.65,
+                offset: airwayOffsetFor(ident),
                 interactive: true
             };
         },
@@ -151,17 +159,36 @@
 
         _createLayer(slot, geo, cacheKey) {
             if (slot.layer && this.map) this.map.removeLayer(slot.layer);
-            slot.layer = L.geoJSON(geo, {
-                style: feature => this._style(slot, feature),
-                interactive: true,
-                onEachFeature: (feature, layer) => {
-                    layer.bindPopup(this._popup(slot, feature.properties));
-                    const label = feature?.properties?.[slot.labelProp];
-                    if (label && slot !== this.layers.airways) {
-                        layer.bindTooltip(String(label), { sticky: true, direction: 'center' });
+            if (slot === this.layers.airways && L.vectorGrid?.slicer && geo.features?.length > 100) {
+                try {
+                    slot.layer = L.vectorGrid.slicer(geo, {
+                        rendererFactory: L.canvas.tile,
+                        vectorTileLayerStyles: { sliced: properties => this._style(slot, { properties }) },
+                        interactive: true,
+                        getFeatureId: feature => feature?.properties?.IDENT || feature?.id
+                    });
+                    slot.layer.on('click', event => {
+                        const properties = event.layer?.properties || {};
+                        L.popup().setLatLng(event.latlng).setContent(this._popup(slot, properties)).openOn(this.map);
+                    });
+                } catch (_) { slot.layer = null; }
+            }
+            if (!slot.layer) {
+                slot.layer = L.geoJSON(geo, {
+                    style: feature => this._style(slot, feature),
+                    interactive: true,
+                    onEachFeature: (feature, layer) => {
+                        if (slot === this.layers.airways && typeof layer.setOffset === 'function') {
+                            layer.setOffset(airwayOffsetFor(feature?.properties?.IDENT));
+                        }
+                        layer.bindPopup(this._popup(slot, feature.properties));
+                        const label = feature?.properties?.[slot.labelProp];
+                        if (label && slot !== this.layers.airways) {
+                            layer.bindTooltip(String(label), { sticky: true, direction: 'center' });
+                        }
                     }
-                }
-            });
+                });
+            }
             slot.cacheKey = cacheKey;
             if (slot.enabled) slot.layer.addTo(this.map);
             _dbg('FAA overlay loaded:', slot.label, geo.features?.length || 0);

@@ -54,6 +54,10 @@ All notable changes to SkyTrack will be documented in this file.
 - **Time-airborne chip.** Selected callsigns now show estimated airborne
   duration from the local trail, with a route-progress ring when both airports
   are known.
+- **Leaflet overlay rendering.** FAA airway data now uses optional VectorGrid
+  slicing and PolylineOffset lane separation, while EdgeBuffer keeps base-map
+  tiles warm just beyond the visible viewport; native GeoJSON remains the
+  fallback when a plugin is unavailable.
 
 ## [v0.24.3] - 2026-05-01
 
