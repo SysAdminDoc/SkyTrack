@@ -71,6 +71,9 @@ All notable changes to SkyTrack will be documented in this file.
 - **Random Follow kiosk mode.** A dedicated Tools control now cycles through
   fresh, filter-eligible aircraft every 15 seconds and centers the map without
   changing the existing manual Follow mode.
+- **CPA conflict warnings.** A bounded five-minute pairwise projection now
+  highlights predicted conflicts within 5 nm and 1,000 ft on the current map
+  viewport, with a toggleable red layer and selected-aircraft chip.
 
 ## [v0.24.3] - 2026-05-01
 

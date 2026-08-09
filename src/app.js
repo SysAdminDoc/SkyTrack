@@ -2809,6 +2809,7 @@
         // Call unconditionally; the module is defensive about missing IDB.
         try { logbook.ingest(aircraftCache); } catch (_) { /* never block refresh */ }
         updateCounts(); updateMarkersSync();
+        try { cpaPrediction.update(aircraftCache); } catch (_) {}
         // Refresh the fires overlay's nearby firefighting-aircraft correlation
         // on the same cadence as live aircraft positions.
         try { firesHurricanes.updateAircraft(aircraftCache); } catch (_) {}
@@ -3377,6 +3378,7 @@
                 phaseClassifier.chipHtml(ac) +
                 surveillanceOrbit.chipHtml(ac) +
                 timeAirborne.chipHtml(ac) +
+                cpaPrediction.chipHtml(ac) +
                 (flightAnalytics.chipHtml ? flightAnalytics.chipHtml(ac) : '');
         }
         // Hex + country flag badge (v0.19.0 — module 92-country-flag.js)
@@ -3770,6 +3772,10 @@
             }
         });
         document.getElementById('randomFollowBtn')?.addEventListener('click', () => randomFollow.toggle());
+        document.getElementById('cpaBtn')?.addEventListener('click', () => {
+            const enabled = cpaPrediction.toggle();
+            toast(enabled ? 'CPA warnings ON' : 'CPA warnings OFF');
+        });
         document.getElementById('settingsBtn').addEventListener('click', () => { _el('settingsPanel').classList.toggle('show'); _el('infoPanel').classList.remove('show'); _el('airportPanel').classList.remove('show'); });
         setToggleState(document.getElementById('toggleLabels'), settings.showLabels); document.getElementById('toggleLabels').addEventListener('click', function() { settings.showLabels = !settings.showLabels; setToggleState(this, settings.showLabels); document.getElementById('labelBtn').classList.toggle('active', settings.showLabels); saveSettings(); updateMarkers(); });
         setToggleState(document.getElementById('toggleAirports'), settings.showAirports); document.getElementById('toggleAirports').addEventListener('click', function() { settings.showAirports = !settings.showAirports; setToggleState(this, settings.showAirports); document.getElementById('airportsBtn').classList.toggle('active', settings.showAirports); saveSettings(); updateAirportMarkers(); });

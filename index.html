@@ -1724,6 +1724,7 @@
         .phase-chip.phase-descent  { background: #8b5cf6; color: #fff; }
         .phase-chip.phase-approach { background: #ec4899; color: #fff; }
         .phase-chip.phase-landing  { background: #ef4444; color: #fff; }
+        .cpa-chip { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 3px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.4px; vertical-align: middle; }
         .time-airborne-chip { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 1px 6px 1px 3px; border: 1px solid rgba(0,210,150,0.35); border-radius: 10px; background: rgba(0,210,150,0.1); color: var(--accent); font-size: 10px; font-weight: 600; line-height: 16px; vertical-align: middle; }
         .time-airborne-ring { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: conic-gradient(var(--accent) var(--airborne-progress, 0%), rgba(255,255,255,0.16) 0); position: relative; }
         .time-airborne-ring::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: var(--bg-panel); }
@@ -3371,6 +3372,7 @@ if ('serviceWorker' in navigator) {
                 <div class="hv2-item" data-btn="diagnosticsBtn"><div class="hv2-item-icon"><button class="header-btn" id="diagnosticsBtn" title="Copy Diagnostics" aria-label="Copy diagnostic report to clipboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7 7 1-5 4 2 8-7-4-7 4 2-8-5-4 7-1z"/></svg></button></div><div class="hv2-item-label">Diagnostics</div></div>
                 <div class="hv2-item" data-btn="followBtn"><div class="hv2-item-icon"><button class="header-btn" id="followBtn" title="Follow" aria-label="Follow Aircraft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><path d="M12 8v8M8 12h8" stroke-dasharray="2 2"/></svg></button></div><div class="hv2-item-label">Follow Aircraft</div></div>
                 <div class="hv2-item" data-btn="randomFollowBtn"><div class="hv2-item-icon"><button class="header-btn" id="randomFollowBtn" title="Cycle through random aircraft" aria-label="Toggle Random Follow mode" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h4c4 0 5 10 10 10h4"/><path d="M17 14l4 3-4 3"/><path d="M3 17h4c1.5 0 2.6-1.3 3.6-2.8M17 4l4 3-4 3"/><path d="M7 7c1.4 0 2.4 1.1 3.4 2.6"/></svg></button></div><div class="hv2-item-label">Random Follow</div></div>
+                <div class="hv2-item" data-btn="cpaBtn"><div class="hv2-item-icon"><button class="header-btn active" id="cpaBtn" title="Toggle closest point of approach warnings" aria-label="Toggle CPA conflict warnings" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><path d="M9 12h6" stroke-dasharray="2 2"/><path d="M12 4v4m0 8v4"/></svg></button></div><div class="hv2-item-label">CPA Warnings</div></div>
                 <div class="hv2-item" data-btn="multiSelectBtn"><div class="hv2-item-icon"><button class="header-btn" id="multiSelectBtn" title="Multi-Select" aria-label="Multi-Select Mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button></div><div class="hv2-item-label">Multi-Select</div></div>
             <div class="hv2-item" data-btn="geofenceBtn"><div class="hv2-item-icon"><button class="header-btn" id="geofenceBtn" title="Geofence" aria-label="Open Geofencing Tools" aria-expanded="false" aria-controls="geofenceList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><circle cx="12" cy="12" r="3"/></svg></button></div><div class="hv2-item-label">Geofencing</div></div>
             <div class="hv2-item" data-btn="captureBtn"><div class="hv2-item-icon"><button class="header-btn" id="captureBtn" title="Screenshot" aria-label="Open Capture Tools" aria-expanded="false" aria-controls="captureMenu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M5 7h.01"/></svg></button></div><div class="hv2-item-label">Screenshot</div></div>
@@ -11284,6 +11286,149 @@ if ('serviceWorker' in navigator) {
             return this.enabled;
         }
     };
+    // ─── module: modules/A16-cpa-prediction.js ───────────────────────────────────────────
+
+    // ============ CLOSEST POINT OF APPROACH PREDICTION ============
+    const CPA_HORIZON_SECONDS = 300;
+    const CPA_HORIZONTAL_LIMIT_NM = 5;
+    const CPA_VERTICAL_LIMIT_FT = 1000;
+
+    function cpaPoint(ac, referenceLat) {
+        const lat = Number(ac?.lat), lon = Number(ac?.lon), speed = Number(ac?.gs), track = Number(ac?.track);
+        const altitude = Number(ac?.alt_baro);
+        if (![lat, lon, speed, track, altitude].every(Number.isFinite) || speed < 1) return null;
+        const radians = Math.PI / 180;
+        const cosLat = Math.max(0.1, Math.cos(referenceLat * radians));
+        const x = (lon * 60 * cosLat);
+        const y = lat * 60;
+        const heading = track * radians;
+        return {
+            x,
+            y,
+            vx: speed * Math.sin(heading) / 3600,
+            vy: speed * Math.cos(heading) / 3600,
+            altitude,
+            verticalRate: Number.isFinite(Number(ac.baro_rate)) ? Number(ac.baro_rate) : 0
+        };
+    }
+
+    function cpaForPair(first, second, horizonSeconds = CPA_HORIZON_SECONDS) {
+        if (!first || !second || first.hex === second.hex) return null;
+        const refLat = (Number(first.lat) + Number(second.lat)) / 2;
+        if (!Number.isFinite(refLat)) return null;
+        const a = cpaPoint(first, refLat), b = cpaPoint(second, refLat);
+        if (!a || !b) return null;
+        const rx = b.x - a.x, ry = b.y - a.y;
+        const vx = b.vx - a.vx, vy = b.vy - a.vy;
+        const speedSquared = vx * vx + vy * vy;
+        const rawTime = speedSquared > 1e-9 ? -(rx * vx + ry * vy) / speedSquared : 0;
+        const timeSeconds = Math.max(0, Math.min(Number(horizonSeconds) || CPA_HORIZON_SECONDS, rawTime));
+        const horizontalNm = Math.hypot(rx + vx * timeSeconds, ry + vy * timeSeconds);
+        const verticalFt = (b.altitude - a.altitude) + ((b.verticalRate - a.verticalRate) * timeSeconds / 60);
+        return {
+            firstHex: first.hex,
+            secondHex: second.hex,
+            timeSeconds,
+            horizontalNm,
+            verticalFt,
+            conflict: horizontalNm <= CPA_HORIZONTAL_LIMIT_NM && Math.abs(verticalFt) <= CPA_VERTICAL_LIMIT_FT
+        };
+    }
+
+    function findCpaConflicts(aircraft, options = {}) {
+        const now = Number.isFinite(options.now) ? options.now : Date.now();
+        const maxAircraft = Number.isFinite(options.maxAircraft) ? Math.max(2, Math.floor(options.maxAircraft)) : 180;
+        const values = Object.values(aircraft || {}).filter(ac => {
+            if (!ac?.hex || ac.alt_baro === 'ground') return false;
+            if (Number.isFinite(ac.lastSeen) && now - ac.lastSeen > 120000) return false;
+            return Number.isFinite(Number(ac.lat)) && Number.isFinite(Number(ac.lon));
+        }).sort((a, b) => (Number(b.gs) || 0) - (Number(a.gs) || 0)).slice(0, maxAircraft);
+        const conflicts = [];
+        for (let i = 0; i < values.length; i++) {
+            for (let j = i + 1; j < values.length; j++) {
+                const cpa = cpaForPair(values[i], values[j], options.horizonSeconds);
+                if (cpa?.conflict) conflicts.push(cpa);
+            }
+        }
+        return conflicts.sort((a, b) => a.timeSeconds - b.timeSeconds);
+    }
+
+    const cpaPrediction = {
+        enabled: true,
+        map: null,
+        layer: null,
+        conflicts: [],
+        init(mapInstance) {
+            if (this.map || !mapInstance) return;
+            this.map = mapInstance;
+            this.layer = L.layerGroup().addTo(mapInstance);
+            this._setButton();
+        },
+        _setButton() {
+            const button = document.getElementById('cpaBtn');
+            button?.classList.toggle('active', this.enabled);
+            button?.setAttribute('aria-pressed', String(this.enabled));
+        },
+        toggle() {
+            this.enabled = !this.enabled;
+            this._setButton();
+            if (!this.enabled) {
+                this.conflicts = [];
+                this.layer?.clearLayers();
+                this.refreshSelected();
+            } else {
+                this.update(aircraftCache);
+            }
+            return this.enabled;
+        },
+        update(aircraft) {
+            if (!this.map || !this.enabled) return;
+            const bounds = this.map.getBounds?.();
+            const visibleAircraft = bounds ? Object.fromEntries(Object.entries(aircraft || {}).filter(([, ac]) => {
+                const lat = Number(ac?.lat), lon = Number(ac?.lon);
+                return Number.isFinite(lat) && Number.isFinite(lon) && bounds.contains([lat, lon]);
+            })) : aircraft;
+            this.conflicts = findCpaConflicts(visibleAircraft, { maxAircraft: 180 });
+            this.layer?.clearLayers();
+            this.conflicts.slice(0, 40).forEach(conflict => {
+                const first = aircraft[conflict.firstHex], second = aircraft[conflict.secondHex];
+                if (!first || !second) return;
+                const line = L.polyline([[first.lat, first.lon], [second.lat, second.lon]], {
+                    color: '#ef4444', weight: 3, opacity: 0.9, dashArray: '7 5', interactive: true
+                });
+                line.bindTooltip('CPA in ' + Math.round(conflict.timeSeconds) + 's · ' + conflict.horizontalNm.toFixed(1) + ' nm · ' + Math.round(Math.abs(conflict.verticalFt)) + ' ft vertical', { sticky: true });
+                line.addTo(this.layer);
+            });
+            this.refreshSelected();
+        },
+        _forAircraft(hex) {
+            return this.conflicts.find(conflict => conflict.firstHex === hex || conflict.secondHex === hex) || null;
+        },
+        chipHtml(ac) {
+            if (!this.enabled || !ac?.hex) return '';
+            const conflict = this._forAircraft(ac.hex);
+            if (!conflict) return '';
+            return '<span id="cpaChip" class="cpa-chip" title="Predicted closest approach within 5 nm and 1,000 ft">CPA ' + Math.round(conflict.timeSeconds) + 's</span>';
+        },
+        refreshSelected() {
+            if (!selectedHex) return;
+            const callsign = document.getElementById('infoCallsign');
+            if (!callsign) return;
+            const ac = aircraftCache[selectedHex];
+            const html = this.chipHtml(ac);
+            const chip = document.getElementById('cpaChip');
+            if (chip) {
+                if (html) chip.outerHTML = html;
+                else chip.remove();
+            } else if (html) callsign.insertAdjacentHTML('beforeend', html);
+        }
+    };
+
+    if (typeof document !== 'undefined') {
+        document.addEventListener('skytrack:map-ready', event => {
+            try { cpaPrediction.init(event.detail?.map); } catch (_) {}
+        }, { once: true });
+    }
     // ─── module: modules/A2-satellite-3d.js ───────────────────────────────────────────
 
     // ============ CELESTRAK SATELLITES IN CESIUM 3D ============
@@ -15270,6 +15415,7 @@ if ('serviceWorker' in navigator) {
         // Call unconditionally; the module is defensive about missing IDB.
         try { logbook.ingest(aircraftCache); } catch (_) { /* never block refresh */ }
         updateCounts(); updateMarkersSync();
+        try { cpaPrediction.update(aircraftCache); } catch (_) {}
         // Refresh the fires overlay's nearby firefighting-aircraft correlation
         // on the same cadence as live aircraft positions.
         try { firesHurricanes.updateAircraft(aircraftCache); } catch (_) {}
@@ -15838,6 +15984,7 @@ if ('serviceWorker' in navigator) {
                 phaseClassifier.chipHtml(ac) +
                 surveillanceOrbit.chipHtml(ac) +
                 timeAirborne.chipHtml(ac) +
+                cpaPrediction.chipHtml(ac) +
                 (flightAnalytics.chipHtml ? flightAnalytics.chipHtml(ac) : '');
         }
         // Hex + country flag badge (v0.19.0 — module 92-country-flag.js)
@@ -16231,6 +16378,10 @@ if ('serviceWorker' in navigator) {
             }
         });
         document.getElementById('randomFollowBtn')?.addEventListener('click', () => randomFollow.toggle());
+        document.getElementById('cpaBtn')?.addEventListener('click', () => {
+            const enabled = cpaPrediction.toggle();
+            toast(enabled ? 'CPA warnings ON' : 'CPA warnings OFF');
+        });
         document.getElementById('settingsBtn').addEventListener('click', () => { _el('settingsPanel').classList.toggle('show'); _el('infoPanel').classList.remove('show'); _el('airportPanel').classList.remove('show'); });
         setToggleState(document.getElementById('toggleLabels'), settings.showLabels); document.getElementById('toggleLabels').addEventListener('click', function() { settings.showLabels = !settings.showLabels; setToggleState(this, settings.showLabels); document.getElementById('labelBtn').classList.toggle('active', settings.showLabels); saveSettings(); updateMarkers(); });
         setToggleState(document.getElementById('toggleAirports'), settings.showAirports); document.getElementById('toggleAirports').addEventListener('click', function() { settings.showAirports = !settings.showAirports; setToggleState(this, settings.showAirports); document.getElementById('airportsBtn').classList.toggle('active', settings.showAirports); saveSettings(); updateAirportMarkers(); });
