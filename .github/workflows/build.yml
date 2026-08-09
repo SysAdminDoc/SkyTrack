@@ -1,0 +1,33 @@
+name: Build and quality checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify generated release
+        run: node build.mjs --check
+      - name: Run tests
+        run: npm test
+      - name: Validate HTML
+        run: npx --yes html-validate@11.6.2 index.html
+      - name: Run Lighthouse CI
+        run: npx --yes @lhci/cli@0.15.1 autorun

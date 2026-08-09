@@ -4,6 +4,8 @@
 .vs/
 CLAUDE.md
 node_modules/
+.lighthouse-ci/
+.lighthouseci/
 # Ad-hoc scratch files sometimes produced by the build/audit tooling.
 _*.mjs
 _*.js

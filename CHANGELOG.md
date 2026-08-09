@@ -5,6 +5,9 @@ All notable changes to SkyTrack will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Build and CI guardrails.** Normal builds advance the tracked aircraft
+  database version, while GitHub Actions checks the generated release, tests,
+  HTML validity, and Lighthouse health.
 - **Personal proxy and stale-data recovery.** Cloudflare Worker users can save
   a browser-local proxy URL for blocked feeds, while failed live refreshes now
   keep the latest cached positions visible with a UTC `STALE` banner.

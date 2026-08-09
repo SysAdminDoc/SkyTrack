@@ -1,0 +1,14 @@
+{
+  "extends": ["html-validate:recommended"],
+  "rules": {
+    "void-style": "off",
+    "no-inline-style": "off",
+    "no-implicit-button-type": "off",
+    "no-trailing-whitespace": "off",
+    "no-raw-characters": "off",
+    "aria-label-misuse": "off",
+    "attribute-allowed-values": "off",
+    "autocomplete-password": "off",
+    "hidden-focusable": "off"
+  }
+}

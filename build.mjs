@@ -30,6 +30,7 @@ const MODULES_DIR = path.join(SRC_DIR, 'modules');
 const SHELL = path.join(SRC_DIR, 'index.html');
 const CSS = path.join(SRC_DIR, 'styles.css');
 const APP = path.join(SRC_DIR, 'app.js');
+const DB_VERSION_FILE = path.join(__dirname, 'data', 'aircraft', 'dbversion.txt');
 
 function read(p) {
     if (!fs.existsSync(p)) {
@@ -60,6 +61,24 @@ function buildJs() {
     chunks.push('    // ─── entry: app.js ───────────────────────────────────────────');
     chunks.push(read(APP).replace(/\s+$/, ''));
     return chunks.join('\n');
+}
+
+function bumpDatabaseVersion() {
+    if (!fs.existsSync(DB_VERSION_FILE)) {
+        console.error('[build] missing data/aircraft/dbversion.txt');
+        process.exit(1);
+    }
+    const current = fs.readFileSync(DB_VERSION_FILE, 'utf8').trim();
+    const parts = current.split('.');
+    const last = Number(parts[parts.length - 1]);
+    if (!parts.length || !Number.isSafeInteger(last) || last < 0) {
+        console.error('[build] invalid data/aircraft/dbversion.txt: expected dotted numeric version');
+        process.exit(1);
+    }
+    parts[parts.length - 1] = String(last + 1);
+    const next = parts.join('.');
+    fs.writeFileSync(DB_VERSION_FILE, next + '\n', 'utf8');
+    return next;
 }
 
 function build() {
@@ -123,5 +142,6 @@ if (checkMode) {
 }
 
 fs.writeFileSync(outPath, built, 'utf8');
+const dbVersion = bumpDatabaseVersion();
 const moduleCount = listModules().length;
-console.log(`[build] wrote ${path.relative(__dirname, outPath)} (${built.length} bytes, ${built.split(/\r?\n/).length} lines, ${moduleCount} modules + app.js)`);
+console.log(`[build] wrote ${path.relative(__dirname, outPath)} (${built.length} bytes, ${built.split(/\r?\n/).length} lines, ${moduleCount} modules + app.js; dbversion ${dbVersion})`);
