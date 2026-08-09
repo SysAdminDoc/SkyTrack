@@ -49,6 +49,8 @@ All notable changes to SkyTrack will be documented in this file.
 - **PIA/LADD privacy markers.** Aircraft carrying privacy-address metadata now
   receive a dashed magenta outline and `?` badge, with privacy fields retained
   in the offline aircraft cache.
+- **Selected-aircraft altitude tape.** The details panel now pairs numeric
+  altitude with a compact scale, trend arrow, and vertical-rate readout.
 
 ## [v0.24.3] - 2026-05-01
 

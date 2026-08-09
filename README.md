@@ -72,6 +72,7 @@ step is only needed when you want to ship a fresh single-file `index.html`.
 | Grid Fetch | Viewport-tiled API requests for global coverage — see every plane in the sky |
 | Smooth Animation | Interpolated movement on 2D map via `requestAnimationFrame`, SampledPositionProperty on 3D globe |
 | History Trails | Altitude-colored flight paths with local history and OpenSky trajectory data |
+| Altitude Tape | Selected-aircraft panel shows a compact altitude scale with climb/descent trend |
 | Aircraft Photos | Auto-fetched from planespotters.net with preloaded image database |
 | Category SVG Sprites | Inline top-down silhouettes distinguish light, small, large, heavy, rotorcraft, glider, balloon, UAV, and space categories |
 | High-Volume Rendering | Canvas-backed points for ordinary traffic at 800+ aircraft; selected and priority aircraft keep detailed icons |

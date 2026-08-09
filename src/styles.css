@@ -287,6 +287,22 @@
         .info-stat { background: rgba(128,128,128,0.1); padding: 8px; border-radius: 6px; text-align: center; }
         .info-stat-value { font-size: 15px; font-weight: 700; }
         .info-stat-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
+        .info-flight-metrics { display: flex; align-items: stretch; gap: 8px; }
+        .info-flight-metrics .info-grid { flex: 1; min-width: 0; }
+        .altitude-tape { position: relative; width: 84px; min-height: 116px; padding: 5px 4px 4px; overflow: hidden; border: 1px solid var(--border); border-radius: 6px; background: linear-gradient(90deg, rgba(0,210,150,0.04), rgba(0,0,0,0.22)); color: var(--text-dim); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .altitude-tape-heading { color: var(--text-muted); font-size: 8px; font-weight: 700; letter-spacing: 0.7px; text-align: center; }
+        .altitude-tape-scale { display: flex; flex-direction: column; justify-content: space-between; height: 72px; margin: 4px 0; }
+        .altitude-tape-tick { display: flex; align-items: center; justify-content: flex-end; gap: 4px; height: 9px; font-size: 8px; line-height: 1; }
+        .altitude-tape-tick i { display: block; width: 12px; border-top: 1px solid var(--text-muted); }
+        .altitude-tape-tick.current { color: var(--selected); font-weight: 700; }
+        .altitude-tape-tick.current i { width: 18px; border-color: var(--selected); }
+        .altitude-tape-readout { position: absolute; top: 50%; right: 2px; left: 2px; display: flex; align-items: center; justify-content: center; gap: 2px; padding: 2px 1px; transform: translateY(-50%); background: var(--bg-panel); border: 1px solid var(--selected); border-radius: 3px; color: var(--selected); font-size: 9px; line-height: 1.1; white-space: nowrap; }
+        .altitude-tape-readout strong { overflow: hidden; text-overflow: ellipsis; }
+        .altitude-tape-arrow { font-size: 13px; line-height: 1; }
+        .altitude-tape.trend-down .altitude-tape-arrow { color: #f97316; }
+        .altitude-tape.trend-level .altitude-tape-arrow { color: var(--text-muted); }
+        .altitude-tape-rate { position: absolute; right: 3px; bottom: 3px; left: 3px; overflow: hidden; color: var(--text-muted); font-size: 8px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+        .altitude-tape.ground .altitude-tape-readout { color: var(--text-dim); border-color: var(--border); }
         .squawk-code { font-family: monospace; font-weight: 700; padding: 2px 6px; border-radius: 3px; }
         .squawk-normal { background: rgba(128,128,128,0.2); }
         .squawk-7500, .squawk-7600, .squawk-7700 { background: #ef4444; color: #fff; }

@@ -3518,6 +3518,7 @@
         }
         const catMap = { commercial: 'Commercial', military: 'Military', government: 'Government', police: 'Police', medical: 'Medical', cargo: 'Cargo', private: 'Private', helicopter: 'Helicopter', ground: 'Ground', pia: 'PIA' }; document.getElementById('infoCat').textContent = catMap[ac.category_type] || 'Unknown';
         const alt = ac.alt_baro === 'ground' ? 'Ground' : (ac.alt_baro ? ac.alt_baro.toLocaleString() + ' ft' : '---'); document.getElementById('infoAlt').textContent = alt;
+        altitudeTape.render(ac.alt_baro, ac.baro_rate);
         document.getElementById('infoSpeed').textContent = ac.gs ? Math.round(ac.gs) + ' kts' : '---'; document.getElementById('infoTrack').textContent = ac.track ? Math.round(ac.track) + '\u00B0' : '---'; document.getElementById('infoVRate').textContent = ac.baro_rate ? (ac.baro_rate > 0 ? '+' : '') + ac.baro_rate + ' fpm' : '---';
         const sqEl = document.getElementById('infoSquawk'); sqEl.textContent = ac.squawk || '----'; sqEl.className = 'squawk-code squawk-' + (['7500', '7600', '7700'].includes(ac.squawk) ? ac.squawk : 'normal');
         const typeData = aircraftTypeDB.getByDesignator(ac.t);
@@ -9602,6 +9603,7 @@ To capture a clean timelapse:
             if (alt) alt.textContent = (typeof ac.alt_baro === 'number') ? Math.round(ac.alt_baro).toLocaleString() + "'" : '---';
             if (spd) spd.textContent = ac.gs ? Math.round(ac.gs) + 'kt' : '---';
             if (dest) dest.textContent = ac.to || ac.destination || '---';
+            altitudeTape.render(ac.alt_baro, ac.baro_rate);
         }
         // Patch selectAircraft to update quickglance
         const origSelect = selectAircraft;

@@ -334,6 +334,22 @@
         .info-stat { background: rgba(128,128,128,0.1); padding: 8px; border-radius: 6px; text-align: center; }
         .info-stat-value { font-size: 15px; font-weight: 700; }
         .info-stat-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
+        .info-flight-metrics { display: flex; align-items: stretch; gap: 8px; }
+        .info-flight-metrics .info-grid { flex: 1; min-width: 0; }
+        .altitude-tape { position: relative; width: 84px; min-height: 116px; padding: 5px 4px 4px; overflow: hidden; border: 1px solid var(--border); border-radius: 6px; background: linear-gradient(90deg, rgba(0,210,150,0.04), rgba(0,0,0,0.22)); color: var(--text-dim); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .altitude-tape-heading { color: var(--text-muted); font-size: 8px; font-weight: 700; letter-spacing: 0.7px; text-align: center; }
+        .altitude-tape-scale { display: flex; flex-direction: column; justify-content: space-between; height: 72px; margin: 4px 0; }
+        .altitude-tape-tick { display: flex; align-items: center; justify-content: flex-end; gap: 4px; height: 9px; font-size: 8px; line-height: 1; }
+        .altitude-tape-tick i { display: block; width: 12px; border-top: 1px solid var(--text-muted); }
+        .altitude-tape-tick.current { color: var(--selected); font-weight: 700; }
+        .altitude-tape-tick.current i { width: 18px; border-color: var(--selected); }
+        .altitude-tape-readout { position: absolute; top: 50%; right: 2px; left: 2px; display: flex; align-items: center; justify-content: center; gap: 2px; padding: 2px 1px; transform: translateY(-50%); background: var(--bg-panel); border: 1px solid var(--selected); border-radius: 3px; color: var(--selected); font-size: 9px; line-height: 1.1; white-space: nowrap; }
+        .altitude-tape-readout strong { overflow: hidden; text-overflow: ellipsis; }
+        .altitude-tape-arrow { font-size: 13px; line-height: 1; }
+        .altitude-tape.trend-down .altitude-tape-arrow { color: #f97316; }
+        .altitude-tape.trend-level .altitude-tape-arrow { color: var(--text-muted); }
+        .altitude-tape-rate { position: absolute; right: 3px; bottom: 3px; left: 3px; overflow: hidden; color: var(--text-muted); font-size: 8px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+        .altitude-tape.ground .altitude-tape-readout { color: var(--text-dim); border-color: var(--border); }
         .squawk-code { font-family: monospace; font-weight: 700; padding: 2px 6px; border-radius: 3px; }
         .squawk-normal { background: rgba(128,128,128,0.2); }
         .squawk-7500, .squawk-7600, .squawk-7700 { background: #ef4444; color: #fff; }
@@ -3575,11 +3591,14 @@ if ('serviceWorker' in navigator) {
                 </div>
             </div>
             <div class="info-section">
+                <div class="info-flight-metrics">
                 <div class="info-grid">
                     <div class="info-stat"><div class="info-stat-value" id="infoAlt">---</div><div class="info-stat-label">Altitude</div></div>
                     <div class="info-stat"><div class="info-stat-value" id="infoSpeed">---</div><div class="info-stat-label">Speed</div></div>
                     <div class="info-stat"><div class="info-stat-value" id="infoTrack">---</div><div class="info-stat-label">Track</div></div>
                     <div class="info-stat"><div class="info-stat-value" id="infoVRate">---</div><div class="info-stat-label">V/S</div></div>
+                </div>
+                <div class="altitude-tape" id="altitudeTape" aria-label="Selected aircraft altitude"></div>
                 </div>
             </div>
             <div class="altitude-chart-container"><div class="altitude-chart-title">Altitude Profile</div><canvas id="altitudeChart"></canvas></div>
@@ -11950,6 +11969,49 @@ if ('serviceWorker' in navigator) {
         if (!isPrivacyAircraft(ac)) return null;
         return { label: 'Privacy ICAO address', badge: '?', color: '#ec4899' };
     }
+    // ─── module: modules/A9-altitude-tape.js ───────────────────────────────────────────
+
+    // ============ SELECTED AIRCRAFT ALTITUDE TAPE ============
+    // A compact, dependency-free gauge for the selected-aircraft panel. The
+    // model is kept pure so its scale and trend rules can be verified without
+    // a browser or a charting library.
+    const ALTITUDE_TAPE_ROW_COUNT = 7;
+
+    function altitudeTapeModel(altitude, verticalRate) {
+        const isGround = altitude === 'ground' || altitude === 0;
+        const parsedAltitude = Number(altitude);
+        const current = isGround ? 0 : (Number.isFinite(parsedAltitude) ? Math.max(0, parsedAltitude) : null);
+        const rate = Number(verticalRate);
+        const trend = Number.isFinite(rate) && rate > 100 ? 'up' : (Number.isFinite(rate) && rate < -100 ? 'down' : 'level');
+        const step = current === null ? 5000 : (current < 10000 ? 1000 : (current < 30000 ? 2500 : 5000));
+        const center = current === null ? 0 : Math.round(current / step) * step;
+        const ticks = Array.from({ length: ALTITUDE_TAPE_ROW_COUNT }, (_, index) => Math.max(0, center + (3 - index) * step));
+        const display = current === null ? '---' : (isGround ? 'GROUND' : Math.round(current).toLocaleString() + ' ft');
+        const rateLabel = trend === 'level' || !Number.isFinite(rate) ? 'level' : (rate > 0 ? '+' : '') + Math.round(rate).toLocaleString() + ' fpm';
+        return { current, isGround, rate: Number.isFinite(rate) ? rate : 0, trend, step, ticks, display, rateLabel };
+    }
+
+    function altitudeTapeTickLabel(value) {
+        if (value >= 1000) return (value % 1000 === 0 ? (value / 1000) : (value / 1000).toFixed(1)) + 'k';
+        return String(value);
+    }
+
+    const altitudeTape = {
+        model: altitudeTapeModel,
+        render(altitude, verticalRate) {
+            const element = document.getElementById('altitudeTape');
+            if (!element) return;
+            const model = altitudeTapeModel(altitude, verticalRate);
+            const ticks = model.ticks.map((tick, index) => '<div class="altitude-tape-tick' + (index === 3 ? ' current' : '') + '"><span>' + altitudeTapeTickLabel(tick) + '</span><i></i></div>').join('');
+            const arrow = model.trend === 'up' ? '↑' : (model.trend === 'down' ? '↓' : '→');
+            element.className = 'altitude-tape trend-' + model.trend + (model.isGround ? ' ground' : '');
+            element.setAttribute('aria-label', 'Altitude ' + model.display + ', vertical trend ' + model.rateLabel);
+            element.innerHTML = '<div class="altitude-tape-heading">ALT</div>' +
+                '<div class="altitude-tape-scale" aria-hidden="true">' + ticks + '</div>' +
+                '<div class="altitude-tape-readout"><span class="altitude-tape-arrow" aria-hidden="true">' + arrow + '</span><strong>' + model.display + '</strong></div>' +
+                '<div class="altitude-tape-rate">' + model.rateLabel + '</div>';
+        }
+    };
     // ─── module: modules/AA-flight-analytics.js ───────────────────────────────────────────
 
     // ============ FLIGHT ANALYTICS ============
@@ -15579,6 +15641,7 @@ if ('serviceWorker' in navigator) {
         }
         const catMap = { commercial: 'Commercial', military: 'Military', government: 'Government', police: 'Police', medical: 'Medical', cargo: 'Cargo', private: 'Private', helicopter: 'Helicopter', ground: 'Ground', pia: 'PIA' }; document.getElementById('infoCat').textContent = catMap[ac.category_type] || 'Unknown';
         const alt = ac.alt_baro === 'ground' ? 'Ground' : (ac.alt_baro ? ac.alt_baro.toLocaleString() + ' ft' : '---'); document.getElementById('infoAlt').textContent = alt;
+        altitudeTape.render(ac.alt_baro, ac.baro_rate);
         document.getElementById('infoSpeed').textContent = ac.gs ? Math.round(ac.gs) + ' kts' : '---'; document.getElementById('infoTrack').textContent = ac.track ? Math.round(ac.track) + '\u00B0' : '---'; document.getElementById('infoVRate').textContent = ac.baro_rate ? (ac.baro_rate > 0 ? '+' : '') + ac.baro_rate + ' fpm' : '---';
         const sqEl = document.getElementById('infoSquawk'); sqEl.textContent = ac.squawk || '----'; sqEl.className = 'squawk-code squawk-' + (['7500', '7600', '7700'].includes(ac.squawk) ? ac.squawk : 'normal');
         const typeData = aircraftTypeDB.getByDesignator(ac.t);
@@ -21663,6 +21726,7 @@ To capture a clean timelapse:
             if (alt) alt.textContent = (typeof ac.alt_baro === 'number') ? Math.round(ac.alt_baro).toLocaleString() + "'" : '---';
             if (spd) spd.textContent = ac.gs ? Math.round(ac.gs) + 'kt' : '---';
             if (dest) dest.textContent = ac.to || ac.destination || '---';
+            altitudeTape.render(ac.alt_baro, ac.baro_rate);
         }
         // Patch selectAircraft to update quickglance
         const origSelect = selectAircraft;

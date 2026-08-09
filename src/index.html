@@ -556,11 +556,14 @@ if ('serviceWorker' in navigator) {
                 </div>
             </div>
             <div class="info-section">
+                <div class="info-flight-metrics">
                 <div class="info-grid">
                     <div class="info-stat"><div class="info-stat-value" id="infoAlt">---</div><div class="info-stat-label">Altitude</div></div>
                     <div class="info-stat"><div class="info-stat-value" id="infoSpeed">---</div><div class="info-stat-label">Speed</div></div>
                     <div class="info-stat"><div class="info-stat-value" id="infoTrack">---</div><div class="info-stat-label">Track</div></div>
                     <div class="info-stat"><div class="info-stat-value" id="infoVRate">---</div><div class="info-stat-label">V/S</div></div>
+                </div>
+                <div class="altitude-tape" id="altitudeTape" aria-label="Selected aircraft altitude"></div>
                 </div>
             </div>
             <div class="altitude-chart-container"><div class="altitude-chart-title">Altitude Profile</div><canvas id="altitudeChart"></canvas></div>
