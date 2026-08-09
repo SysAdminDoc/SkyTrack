@@ -171,9 +171,11 @@
 
     // Helper function to fetch with automatic failover
     async function fetchWithFailover(urlConfig, options = {}) {
-        const urls = typeof urlConfig === 'string' 
-            ? [urlConfig] 
-            : [urlConfig.primary, urlConfig.fallback].filter(Boolean);
+        const urls = typeof urlConfig === 'string'
+            ? [urlConfig]
+            : (Array.isArray(urlConfig.urls)
+                ? urlConfig.urls.filter(Boolean)
+                : [urlConfig.primary, urlConfig.fallback].filter(Boolean));
         
         for (const url of urls) {
             try {
@@ -189,14 +191,21 @@
                     try {
                         const buffer = await resp.arrayBuffer();
                         const decompressed = pako.inflate(new Uint8Array(buffer), { to: 'string' });
-                        return { ok: true, text: () => Promise.resolve(decompressed), json: () => Promise.resolve(JSON.parse(decompressed)), url };
+                        const decoded = new TextEncoder().encode(decompressed).buffer;
+                        return {
+                            ok: true,
+                            text: () => Promise.resolve(decompressed),
+                            json: () => Promise.resolve(JSON.parse(decompressed)),
+                            arrayBuffer: () => Promise.resolve(decoded.slice(0)),
+                            url
+                        };
                     } catch (e) {
                         console.warn('Decompression failed for ' + url + ':', e);
                         continue;
                     }
                 }
                 
-                return { ok: true, resp, url, text: () => resp.text(), json: () => resp.json() };
+                return { ok: true, resp, url, text: () => resp.text(), json: () => resp.json(), arrayBuffer: () => resp.arrayBuffer() };
             } catch (e) {
                 console.warn('Fetch error for ' + url + ':', e.message);
                 continue;
@@ -206,30 +215,62 @@
         return { ok: false };
     }
 
+    // Fetch a static database once as bytes, then let the blob worker parse it.
+    // The fallback parser receives decoded text only when workers are missing
+    // or reject the payload, keeping older browsers fully functional.
+    async function fetchParsedDatabase(urlConfig, kind, fallbackParser) {
+        const result = await fetchWithFailover(urlConfig);
+        if (!result.ok) return null;
+        const buffer = await result.arrayBuffer();
+        const fallbackBuffer = buffer.slice(0);
+        let data = null;
+        try {
+            data = await dbWorkerParser.parse(kind, buffer);
+        } catch (error) {
+            _dbg('Database worker failed for ' + kind + ':', error.message);
+        }
+        if (data === null || data === undefined) {
+            const text = new TextDecoder().decode(fallbackBuffer);
+            data = fallbackParser(text);
+        }
+        return { data, url: result.url };
+    }
+
     // ============ CATEGORIES DATABASE (v3.3) ============
     const categoriesDB = {
         categories: new Map(),
         loaded: false,
         async init() {
             try {
-                const result = await fetchWithFailover(DATA_URLS.categories);
-                if (!result.ok) return false;
-                const text = await result.text();
-                this.parseCSV(text);
-                this.loaded = true;
-                _dbg('Categories DB loaded from', result.url?.includes('SysAdminDoc') ? 'self-hosted' : 'fallback');
-                return true;
+                const cached = await skytrackDB.loadDatabase('categories');
+                if (cached) {
+                    this.loadFromData(cached);
+                    return this.loaded;
+                }
+            } catch (_) {}
+            try {
+                const parsed = await fetchParsedDatabase(DATA_URLS.categories, 'categories', text => this.parseCSV(text));
+                if (!parsed) return false;
+                this.loadFromData(parsed.data);
+                try { await skytrackDB.saveDatabase('categories', parsed.data); } catch (_) {}
+                _dbg('Categories DB loaded from', parsed.url?.includes('SysAdminDoc') ? 'self-hosted' : 'fallback');
+                return this.loaded;
             } catch (e) { console.warn('Categories DB failed:', e); return false; }
         },
         parseCSV(text) {
-            const lines = text.trim().split('\n').slice(1);
-            for (const line of lines) {
-                const match = line.match(/^"?([^",]+)"?,\s*"?([^"]+)"?,?\s*(\d+)?/);
-                if (match) {
-                    const category = match[1].trim(), description = match[2].trim(), count = parseInt(match[3], 10) || 0;
-                    this.categories.set(category.toLowerCase(), { name: category, description, count, color: this.getCategoryColor(category) });
-                }
-            }
+            return text.trim().split(/\r?\n/).slice(1).map(line => {
+                const fields = line.split(',');
+                return { name: (fields[0] || '').replace(/^"|"$/g, '').trim(), description: (fields[1] || '').replace(/^"|"$/g, '').trim(), count: parseInt(fields[2], 10) || 0 };
+            }).filter(row => row.name);
+        },
+        loadFromData(data) {
+            this.categories.clear();
+            (Array.isArray(data) ? data : []).forEach(row => {
+                if (!row?.name) return;
+                const name = String(row.name).trim();
+                this.categories.set(name.toLowerCase(), { name, description: row.description || '', count: Number(row.count) || 0, color: this.getCategoryColor(name) });
+            });
+            this.loaded = this.categories.size > 0;
         },
         getCategoryColor(category) {
             const colorMap = {
@@ -255,13 +296,22 @@
         loaded: false,
         async init() {
             try {
-                const result = await fetchWithFailover(DATA_URLS.badgersBest);
-                if (!result.ok) return false;
-                const text = await result.text();
-                this.parseCSV(text);
-                this.loaded = true;
+                const cached = await skytrackDB.loadDatabase('badgersBest');
+                if (cached) {
+                    this.loadFromData(cached);
+                    return this.loaded;
+                }
+            } catch (_) {}
+            try {
+                const parsed = await fetchParsedDatabase(DATA_URLS.badgersBest, 'badgers', text => {
+                    this.parseCSV(text);
+                    return Array.from(this.aircraft, ([hex, info]) => ({ hex, ...info }));
+                });
+                if (!parsed) return false;
+                this.loadFromData(parsed.data);
+                try { await skytrackDB.saveDatabase('badgersBest', parsed.data); } catch (_) {}
                 _dbg("Badger's Best DB loaded:", this.aircraft.size, 'VIP aircraft');
-                return true;
+                return this.loaded;
             } catch (e) { console.warn("Badger's Best DB failed:", e); return false; }
         },
         parseCSV(text) {
@@ -283,6 +333,16 @@
                 }
             }
         },
+        loadFromData(data) {
+            this.aircraft.clear();
+            if (Array.isArray(data)) data.forEach(row => {
+                if (row?.hex) {
+                    const { hex, ...info } = row;
+                    this.aircraft.set(String(hex).toUpperCase(), info);
+                }
+            });
+            this.loaded = this.aircraft.size > 0;
+        },
         parseLine(line) { const result = []; let current = '', inQuotes = false; for (const char of line) { if (char === '"') inQuotes = !inQuotes; else if (char === ',' && !inQuotes) { result.push(current); current = ''; } else current += char; } result.push(current); return result; },
         isVIP(hex) { return this.aircraft.has(hex?.toUpperCase()); },
         getByHex(hex) { return this.aircraft.get(hex?.toUpperCase()); }
@@ -294,13 +354,22 @@
         loaded: false,
         async init() {
             try {
-                const result = await fetchWithFailover(DATA_URLS.civilianInteresting);
-                if (!result.ok) return false;
-                const text = await result.text();
-                this.parseCSV(text);
-                this.loaded = true;
+                const cached = await skytrackDB.loadDatabase('civilian');
+                if (cached) {
+                    this.loadFromData(cached);
+                    return this.loaded;
+                }
+            } catch (_) {}
+            try {
+                const parsed = await fetchParsedDatabase(DATA_URLS.civilianInteresting, 'civilian', text => {
+                    this.parseCSV(text);
+                    return Array.from(this.aircraft, ([hex, info]) => ({ hex, ...info }));
+                });
+                if (!parsed) return false;
+                this.loadFromData(parsed.data);
+                try { await skytrackDB.saveDatabase('civilian', parsed.data); } catch (_) {}
                 _dbg('Civilian Interesting DB loaded:', this.aircraft.size, 'aircraft');
-                return true;
+                return this.loaded;
             } catch (e) { console.warn('Civilian Interesting DB failed:', e); return false; }
         },
         parseCSV(text) {
@@ -321,6 +390,16 @@
                     }
                 }
             }
+        },
+        loadFromData(data) {
+            this.aircraft.clear();
+            if (Array.isArray(data)) data.forEach(row => {
+                if (row?.hex) {
+                    const { hex, ...info } = row;
+                    this.aircraft.set(String(hex).toUpperCase(), info);
+                }
+            });
+            this.loaded = this.aircraft.size > 0;
         },
         parseLine(line) { const result = []; let current = '', inQuotes = false; for (const char of line) { if (char === '"') inQuotes = !inQuotes; else if (char === ',' && !inQuotes) { result.push(current); current = ''; } else current += char; } result.push(current); return result; },
         getByHex(hex) { return this.aircraft.get(hex?.toUpperCase()); },
@@ -363,6 +442,13 @@
         images: new Map(),
         loaded: false,
         async init() {
+            try {
+                const cached = await skytrackDB.loadDatabase('preloadedImages');
+                if (Array.isArray(cached) && cached.length) {
+                    this.loadFromData(cached);
+                    return this.loaded;
+                }
+            } catch (_) {}
             const sources = [DATA_URLS.planeImages, DATA_URLS.militaryImages, DATA_URLS.governmentImages, DATA_URLS.policeImages, DATA_URLS.civilianImages];
             for (const urlConfig of sources) {
                 try {
@@ -374,6 +460,9 @@
                 } catch (e) { /* continue */ }
             }
             this.loaded = true;
+            if (this.images.size) {
+                try { await skytrackDB.saveDatabase('preloadedImages', Array.from(this.images.entries())); } catch (_) {}
+            }
             _dbg('Preloaded Images DB loaded:', this.images.size, 'aircraft with images');
             return true;
         },
@@ -394,6 +483,14 @@
                     }
                 }
             }
+        },
+        loadFromData(data) {
+            this.images.clear();
+            (Array.isArray(data) ? data : []).forEach(entry => {
+                if (!Array.isArray(entry) || entry.length < 2 || !entry[0] || !Array.isArray(entry[1])) return;
+                this.images.set(String(entry[0]).toUpperCase(), entry[1].filter(Boolean).slice(0, 4));
+            });
+            this.loaded = this.images.size > 0;
         },
         getImages(hex) { return this.images.get(hex?.toUpperCase()) || []; },
         getFirstImage(hex) { const images = this.getImages(hex); return images.length > 0 ? images[0] : null; },
@@ -427,10 +524,12 @@
             }
             
             try {
-                const result = await fetchWithFailover(DATA_URLS.airports);
-                if (result.ok) {
-                    const csv = await result.text();
+                const parsed = await fetchParsedDatabase(DATA_URLS.airports, 'airports', csv => {
                     this.parseCSV(csv);
+                    return Array.from(this.airports.values());
+                });
+                if (parsed) {
+                    this.loadFromData(parsed.data);
                     await this.saveToCache();
                     return true;
                 }
@@ -451,7 +550,15 @@
         },
         parseCSVLine(line) { const result = []; let current = '', inQuotes = false; for (let i = 0; i < line.length; i++) { const char = line[i]; if (char === '"') inQuotes = !inQuotes; else if (char === ',' && !inQuotes) { result.push(current.trim()); current = ''; } else current += char; } result.push(current.trim()); return result; },
         checkMilitary(name) { if (!name) return false; const n = name.toUpperCase(); return n.includes('AIR FORCE BASE') || n.includes(' AFB') || n.includes('NAVAL AIR') || n.includes(' NAS ') || n.includes('MCAS ') || n.includes('MARINE CORPS') || n.includes(' RAF ') || n.includes('MILITARY') || n.includes('AIR BASE'); },
-        loadFromData(data) { data.forEach(apt => { this.airports.set(apt.icao, apt); if (apt.iata) this.iataIndex.set(apt.iata, apt.icao); }); this.loaded = true; },
+        loadFromData(data) {
+            this.airports.clear(); this.iataIndex.clear();
+            (Array.isArray(data) ? data : []).forEach(apt => {
+                if (!apt?.icao) return;
+                this.airports.set(apt.icao, apt);
+                if (apt.iata) this.iataIndex.set(apt.iata, apt.icao);
+            });
+            this.loaded = this.airports.size > 0;
+        },
         async saveToCache() {
             const data = Array.from(this.airports.values());
             try {
@@ -503,9 +610,9 @@
             if (this.loading) return false;
             this.loading = true;
             try {
-                const result = await fetchWithFailover(DATA_URLS.registrations);
-                if (!result.ok) throw new Error('All sources failed');
-                const data = await result.json();
+                const parsed = await fetchParsedDatabase(DATA_URLS.registrations, 'registrations', text => JSON.parse(text));
+                if (!parsed) throw new Error('All sources failed');
+                const data = parsed.data;
                 this.loadFromData(data);
                 
                 // Save to IndexedDB (can handle larger data)
@@ -517,7 +624,7 @@
                     this.saveToLocalStorage(data);
                 }
                 
-                _dbg('Loaded', this.aircraft.size, 'registrations from', result.url?.includes('SysAdminDoc') ? 'self-hosted' : 'fallback');
+                _dbg('Loaded', this.aircraft.size, 'registrations from', parsed.url?.includes('SysAdminDoc') ? 'self-hosted' : 'fallback');
                 return true;
             }
             catch(e) { console.warn('Registration DB failed:', e); return false; }
@@ -1148,12 +1255,19 @@
         
         async init() {
             try {
-                const result = await fetchWithFailover(DATA_URLS.routes);
-                if (!result.ok) throw new Error('All sources failed');
-                const csv = await result.text();
-                this.parseCSV(csv);
+                const cached = await skytrackDB.loadDatabase('routes');
+                if (cached) {
+                    this.loadFromData(cached);
+                    return this.loaded;
+                }
+            } catch (_) {}
+            try {
+                const parsed = await fetchParsedDatabase(DATA_URLS.routes, 'routes', text => this.parseCSV(text));
+                if (!parsed) throw new Error('All sources failed');
+                this.loadFromData(parsed.data);
+                try { await skytrackDB.saveDatabase('routes', parsed.data); } catch (_) {}
                 _dbg('Loaded routes for', this.byAirline.size, 'airlines');
-                return true;
+                return this.loaded;
             } catch (e) {
                 console.warn('Routes DB failed:', e);
                 return false;
@@ -1161,25 +1275,32 @@
         },
         
         parseCSV(csv) {
-            const lines = csv.split('\n');
-            for (const line of lines) {
-                if (!line.trim()) continue;
+            return csv.split(/\r?\n/).reduce((out, line) => {
+                if (!line.trim()) return out;
                 const fields = line.split(',');
-                if (fields.length < 5) continue;
-                
+                if (fields.length < 5) return out;
                 const airline = fields[0].replace(/"/g, '').trim();
-                const source = fields[2].replace(/"/g, '').trim();
-                const dest = fields[4].replace(/"/g, '').trim();
-                
-                if (!airline || !source || !dest) continue;
-                if (source === '\\N' || dest === '\\N') continue;
-                
-                if (!this.byAirline.has(airline)) {
-                    this.byAirline.set(airline, []);
-                }
-                this.byAirline.get(airline).push({ from: source, to: dest });
-            }
-            this.loaded = true;
+                const from = fields[2].replace(/"/g, '').trim();
+                const to = fields[4].replace(/"/g, '').trim();
+                if (airline && from && to && from !== '\\N' && to !== '\\N') out.push({ airline, from, to });
+                return out;
+            }, []);
+        },
+
+        loadFromData(data) {
+            this.routes.clear();
+            this.byAirline.clear();
+            (Array.isArray(data) ? data : []).forEach(row => {
+                const airline = String(row?.airline || '').trim();
+                const from = String(row?.from || '').trim();
+                const to = String(row?.to || '').trim();
+                if (!airline || !from || !to) return;
+                const route = { from, to };
+                if (!this.byAirline.has(airline)) this.byAirline.set(airline, []);
+                this.byAirline.get(airline).push(route);
+                this.routes.set(airline + ':' + from + ':' + to, route);
+            });
+            this.loaded = this.byAirline.size > 0;
         },
         
         findRoutes(airlineCode, fromAirport) {

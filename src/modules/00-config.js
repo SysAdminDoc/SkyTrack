@@ -29,8 +29,11 @@
     const DATA_URLS = {
         // Aircraft Registration (tar1090-db)
         registrations: {
-            primary: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/aircraft/registrations.json',
-            fallback: 'https://raw.githubusercontent.com/wiedehopf/tar1090-db/master/db.json.gz'
+            urls: [
+                'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/aircraft/registrations.json.gz',
+                'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/aircraft/registrations.json',
+                'https://raw.githubusercontent.com/wiedehopf/tar1090-db/master/db.json.gz'
+            ]
         },
         types: 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/main/data/aircraft/types.json',
         icaoTypes: {

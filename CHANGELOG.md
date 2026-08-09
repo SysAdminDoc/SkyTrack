@@ -5,6 +5,10 @@ All notable changes to SkyTrack will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Worker-backed database startup.** Registration, airport, route, category,
+  VIP, and civilian datasets now transfer fetched bytes to a blob worker for
+  parsing, prefer the self-hosted compressed registration database, and cache
+  parsed results in IndexedDB for 24 hours.
 - **FAA airspace polygons.** The Airspace overlay now queries the public FAA
   Class Airspace feature service for viewport-scoped Class B/C/D polygons,
   displays floor/ceiling metadata in each popup, and caches responses in
