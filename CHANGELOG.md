@@ -5,6 +5,9 @@ All notable changes to SkyTrack will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Presentation overlays.** Added zero-dependency low-zoom hex density bins,
+  curved route-flow arcs, and a fullscreen broadcast mode that cycles through
+  emergency, VIP, military, flagged, and CPA-conflict traffic.
 - **Build and CI guardrails.** Normal builds advance the tracked aircraft
   database version, while GitHub Actions checks the generated release, tests,
   HTML validity, and Lighthouse health.

@@ -3013,6 +3013,8 @@
         // Call unconditionally; the module is defensive about missing IDB.
         try { logbook.ingest(aircraftCache); } catch (_) { /* never block refresh */ }
         updateCounts(); updateMarkersSync();
+        try { hexDensity.update(aircraftCache); } catch (_) {}
+        try { flowMap.update(aircraftCache); } catch (_) {}
         try { cpaPrediction.update(aircraftCache); } catch (_) {}
         if (selectedHex && aircraftCache[selectedHex]) {
             try { holdingPattern.annotate(aircraftCache[selectedHex]); holdingPattern.refresh(aircraftCache[selectedHex]); } catch (_) {}
@@ -3989,6 +3991,7 @@
             }
         });
         document.getElementById('randomFollowBtn')?.addEventListener('click', () => randomFollow.toggle());
+        document.getElementById('broadcastBtn')?.addEventListener('click', () => broadcastMode.toggle());
         document.getElementById('cpaBtn')?.addEventListener('click', () => {
             const enabled = cpaPrediction.toggle();
             toast(enabled ? 'CPA warnings ON' : 'CPA warnings OFF');
@@ -4260,6 +4263,8 @@
         // Phase 6: Visual feature handlers
         document.getElementById('miniMapBtn')?.addEventListener('click', () => miniMap.toggle());
         document.getElementById('heatmapBtn')?.addEventListener('click', () => heatmapLayer.toggle());
+        document.getElementById('densityBtn')?.addEventListener('click', () => hexDensity.toggle());
+        document.getElementById('flowMapBtn')?.addEventListener('click', () => flowMap.toggle());
         document.getElementById('airspaceBtn')?.addEventListener('click', () => airspaceLayer.toggle());
         document.getElementById('view3DBtn')?.addEventListener('click', () => view3D.toggle());
         document.getElementById('showBoardBtn')?.addEventListener('click', () => {
