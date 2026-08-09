@@ -2898,129 +2898,6 @@
     function createMarker(ac) { const marker = L.marker([ac.lat, ac.lon], { icon: createIcon(ac), zIndexOffset: getZIndex(ac) }); marker.on('click', e => { L.DomEvent.stopPropagation(e); if (e.originalEvent?.ctrlKey || e.originalEvent?.metaKey) { if (!multiSelect.enabled) { multiSelect.enabled = true; document.getElementById('multiSelectBtn')?.classList.add('active'); document.body.classList.add('multi-select-mode'); multiSelect.showToolbar(); toast('Multi-select ON - Ctrl+click to select more'); } multiSelect.toggleSelection(ac.hex); return; } selectAircraft(ac.hex); }); marker.addTo(map); markers[ac.hex] = marker; }
     function updateMarker(ac) { const marker = markers[ac.hex]; if (!marker) return; const hash = _iconHash(ac); const cached = _iconCache[ac.hex]; const iconChanged = !cached || cached.hash !== hash; const pos = marker.getLatLng(); if (Math.abs(pos.lat - ac.lat) + Math.abs(pos.lng - ac.lon) < 0.00001) { if (iconChanged) { marker.setIcon(createIcon(ac)); marker.setZIndexOffset(getZIndex(ac)); } return; } aircraftAnimation[ac.hex] = { startLat: pos.lat, startLon: pos.lng, targetLat: ac.lat, targetLon: ac.lon, startTime: performance.now(), duration: CONFIG.refreshInterval * 0.95 }; if (iconChanged) { marker.setIcon(createIcon(ac)); marker.setZIndexOffset(getZIndex(ac)); } if (!animationRunning) { animationRunning = true; requestAnimationFrame(animateAircraft); } }
     function animateAircraft(ts) { let active = false; Object.entries(aircraftAnimation).forEach(([hex, a]) => { const m = markers[hex]; if (!m) { delete aircraftAnimation[hex]; return; } const p = Math.min((ts - a.startTime) / a.duration, 1); if (p < 1) { active = true; const lat = a.startLat + (a.targetLat - a.startLat) * p, lon = a.startLon + (a.targetLon - a.startLon) * p; m.setLatLng([lat, lon]); if (hex === selectedHex && trailLine?._lastSegment) { const ll = trailLine._lastSegment.getLatLngs(); if (ll.length) { ll[ll.length - 1] = L.latLng(lat, lon); trailLine._lastSegment.setLatLngs(ll); } } } else { m.setLatLng([a.targetLat, a.targetLon]); delete aircraftAnimation[hex]; } }); if (active) requestAnimationFrame(animateAircraft); else animationRunning = false; }
-    // ============ TAR1090 SPRITE ICON SYSTEM ============
-    const SPRITE_URL = 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/silhouettes/aircraft.png';
-    
-    // Sprite sheet: 16 cols x 6 rows, 86x86px each
-    const SPRITE_INDEX = {
-        'a319':0,'a320':1,'a321':2,'p8':3,'e737':4,'b737':5,'b738':6,'b739':7,
-        'airliner':8,'blimp':9,'balloon':10,'cessna':11,'a359':12,'a332':13,'heavy_2e':14,'md11':15,
-        'c130':16,'hi_perf':17,'f18':18,'e3awacs':19,'heavy_4e':20,'single_turbo':21,'jet_nonswept':22,'jet_swept':23,
-        'twin_large':24,'twin_small':25,'alpha_jet':26,'a225':27,'a400':28,'v22_slow':29,'v22_fast':30,'t38':31,
-        'f35':32,'l159':33,'mirage':34,'sb39':35,'md_a4':36,'tornado':37,'uav':38,'typhoon':39,
-        'rafale':40,'hunter':41,'lancaster':42,'beluga':43,'c17':44,'c5':45,'super_guppy':46,'wb57':47,
-        'a380':48,'il_62':49,'u2':50,'glider':51,'p3_orion':52,'cirrus_sr22':53,'verhees':54,'gyrocopter':55,
-        'helicopter':56,'pa24':57,'bae_hawk':58,'a10':59,'chinook':60,'apache':61,'blackhawk':62,'s61':63,
-        'f5_tiger':64,'c2':65,'b52':66,'b707':67,'rutan_veze':68,'pumpkin':69,'witchr':70,'witchl':71,
-        'm326':72,'miragef1':73,'unknown':74,'ground_square':75,'ground_emergency':76,'ground_service':77,'ground_unknown':78,'ground_fixed':79,
-        'ground_tower':80,'puma':81,'tiger':82,'mil24':83,'dauphin':84,'gazelle':85,'md_f15':86,'strato':87,
-        'asterisk':88,'b1b_lancer':89,'para':90,'e390':91
-    };
-    const NO_ROTATE_ICONS = new Set(['balloon','blimp','ground_square','ground_emergency','ground_service','ground_unknown','ground_fixed','ground_tower','asterisk']);
-
-    const TYPE_DESIGNATOR_ICONS = {
-        'SHIP':'blimp','BALL':'balloon','A318':'a319','A319':'a319','A19N':'a319','A320':'a320','A20N':'a320','A321':'a321','A21N':'a321',
-        'A306':'heavy_2e','A330':'a332','A332':'a332','A333':'a332','A338':'a332','A339':'a332','DC10':'md11','MD11':'md11',
-        'A359':'a359','A35K':'a359','A388':'a380','B731':'b737','B732':'b737','B735':'b737','B733':'b737','B734':'b737',
-        'B736':'b737','B737':'b737','B738':'b738','B739':'b739','B37M':'b737','B38M':'b738','B39M':'b739','B3XM':'b739',
-        'P8':'p8','E737':'e737','J328':'airliner','E170':'airliner','E75S':'airliner','E75L':'airliner','A148':'airliner',
-        'RJ70':'b707','RJ85':'b707','RJ1H':'b707','B461':'b707','B462':'b707','B463':'b707',
-        'E190':'airliner','E195':'airliner','E290':'airliner','E295':'airliner','BCS1':'airliner','BCS3':'airliner',
-        'B741':'heavy_4e','B742':'heavy_4e','B743':'heavy_4e','B744':'heavy_4e','B74D':'heavy_4e','B74S':'heavy_4e','B74R':'heavy_4e','BLCF':'heavy_4e','BSCA':'heavy_4e','B748':'heavy_4e',
-        'B752':'heavy_2e','B753':'heavy_2e','B772':'heavy_2e','B773':'heavy_2e','B77L':'heavy_2e','B77W':'heavy_2e',
-        'B701':'b707','B703':'b707','K35R':'b707','K35E':'b707',
-        'FA20':'jet_swept','C680':'jet_swept','C68A':'jet_swept','C750':'jet_swept','F2TH':'jet_swept','FA50':'jet_swept','CL30':'jet_swept','CL35':'jet_swept',
-        'F900':'jet_swept','CL60':'jet_swept','G200':'jet_swept','G280':'jet_swept','HA4T':'jet_swept','FA7X':'jet_swept','FA8X':'jet_swept',
-        'GLF2':'jet_swept','GLF3':'jet_swept','GLF4':'jet_swept','GA5C':'jet_swept','GL5T':'jet_swept','GLF5':'jet_swept','GA6C':'jet_swept',
-        'GLEX':'jet_swept','GL6T':'jet_swept','GLF6':'jet_swept','GA7C':'jet_swept','GA8C':'jet_swept','GL7T':'jet_swept',
-        'E135':'jet_swept','E35L':'jet_swept','E145':'jet_swept','E45X':'jet_swept','E390':'e390',
-        'CRJ1':'jet_swept','CRJ2':'jet_swept','CRJ7':'jet_swept','CRJ9':'jet_swept','CRJX':'jet_swept','F100':'jet_swept',
-        'F28':'jet_swept','F70':'jet_swept','DC91':'jet_swept','DC92':'jet_swept','DC93':'jet_swept','DC94':'jet_swept','DC95':'jet_swept',
-        'MD80':'jet_swept','MD81':'jet_swept','MD82':'jet_swept','MD83':'jet_swept','MD87':'jet_swept','MD88':'jet_swept','MD90':'jet_swept',
-        'B712':'jet_swept','B721':'jet_swept','B722':'jet_swept','T154':'jet_swept',
-        'BE40':'jet_nonswept','FA10':'jet_nonswept','C501':'jet_nonswept','C510':'jet_nonswept','C25A':'jet_nonswept','C25B':'jet_nonswept','C25C':'jet_nonswept',
-        'C525':'jet_nonswept','C550':'jet_nonswept','C560':'jet_nonswept','C56X':'jet_nonswept',
-        'LJ23':'jet_nonswept','LJ24':'jet_nonswept','LJ25':'jet_nonswept','LJ28':'jet_nonswept','LJ31':'jet_nonswept','LJ35':'jet_nonswept','LR35':'jet_nonswept',
-        'LJ40':'jet_nonswept','LJ45':'jet_nonswept','LR45':'jet_nonswept','LJ55':'jet_nonswept','LJ60':'jet_nonswept','LJ70':'jet_nonswept','LJ75':'jet_nonswept','LJ85':'jet_nonswept',
-        'C650':'jet_nonswept','ASTR':'jet_nonswept','G150':'jet_nonswept','H25A':'jet_nonswept','H25B':'jet_nonswept','H25C':'jet_nonswept',
-        'PRM1':'jet_nonswept','E55P':'jet_nonswept','E50P':'jet_nonswept','EA50':'jet_nonswept','HDJT':'jet_nonswept','SF50':'jet_nonswept',
-        'C97':'super_guppy','SGUP':'super_guppy','A3ST':'beluga','A337':'beluga','WB57':'wb57',
-        'A37':'hi_perf','A700':'hi_perf','LEOP':'hi_perf','ME62':'hi_perf','T2':'hi_perf','T37':'hi_perf','T38':'t38','F104':'t38','A10':'a10',
-        'A3':'hi_perf','A6':'hi_perf','AJET':'alpha_jet','AT3':'hi_perf','CKUO':'hi_perf','EUFI':'typhoon','SB39':'sb39',
-        'MIR2':'mirage','KFIR':'mirage','F1':'hi_perf','F111':'hi_perf','F117':'hi_perf','F14':'hi_perf',
-        'F15':'md_f15','F16':'hi_perf','F18':'f18','F18H':'f18','F18S':'f18','F22':'f35','F22A':'f35','F35':'f35','VF35':'f35',
-        'L159':'l159','L39':'l159','F4':'hi_perf','F5':'f5_tiger','HUNT':'hunter','LANC':'lancaster','B17':'lancaster','B29':'lancaster',
-        'J8A':'hi_perf','J8B':'hi_perf','JH7':'hi_perf','LTNG':'hi_perf','M346':'hi_perf','METR':'hi_perf',
-        'MG19':'hi_perf','MG25':'hi_perf','MG29':'hi_perf','MG31':'hi_perf','MG44':'hi_perf','MIR4':'hi_perf',
-        'RFAL':'rafale','S3':'hi_perf','SR71':'hi_perf','SU15':'hi_perf','SU24':'hi_perf','SU25':'hi_perf','SU27':'hi_perf',
-        'T22M':'hi_perf','T4':'hi_perf','TOR':'tornado','A4':'md_a4','TU22':'hi_perf','VAUT':'hi_perf',
-        'MRF1':'miragef1','M326':'m326','M339':'m326','FOUG':'m326','T33':'m326',
-        'A225':'a225','A124':'b707','SLCH':'strato','WHK2':'strato','C130':'c130','C30J':'c130','P3':'p3_orion','PARA':'para',
-        'DRON':'uav','Q1':'uav','Q4':'uav','Q9':'uav','Q25':'uav','HRON':'uav','A400':'a400',
-        'V22F':'v22_fast','V22':'v22_slow','H64':'apache','H60':'blackhawk','S92':'blackhawk','NH90':'blackhawk',
-        'AS32':'puma','AS3B':'puma','PUMA':'puma','TIGR':'tiger','MI24':'mil24',
-        'AS65':'dauphin','S76':'dauphin','GAZL':'gazelle','AS50':'gazelle','AS55':'gazelle','ALO2':'gazelle','ALO3':'gazelle',
-        'R22':'helicopter','R44':'helicopter','R66':'helicopter',
-        'EC55':'s61','A169':'s61','H160':'s61','A139':'s61','EC75':'s61','A189':'s61','A149':'s61','S61':'s61','S61R':'s61','EC25':'s61','EH10':'s61','H53':'s61','H53S':'s61',
-        'U2':'u2','C2':'c2','E2':'c2','H47':'chinook','H46':'chinook','HAWK':'bae_hawk',
-        'GYRO':'gyrocopter','DLTA':'verhees','B1':'b1b_lancer','B52':'b52','C17':'c17','C5M':'c5','E3TF':'e3awacs','E3CF':'e3awacs',
-        'GLID':'glider','S6':'glider','S10S':'glider','S12':'glider',
-        'BE20':'twin_large','IL62':'il_62','SR20':'cirrus_sr22','SR22':'cirrus_sr22','S22T':'cirrus_sr22',
-        'VEZE':'rutan_veze','VELO':'rutan_veze','PA24':'pa24',
-        'B752':'heavy_2e','B753':'heavy_2e','B762':'heavy_2e','B763':'heavy_2e','B764':'heavy_2e',
-        'B788':'heavy_2e','B789':'heavy_2e','B78X':'heavy_2e',
-        'GND':'ground_unknown','GRND':'ground_unknown','SERV':'ground_service','EMER':'ground_emergency','TWR':'ground_tower'
-    };
-
-    const TYPE_DESC_ICONS = {
-        'H':'helicopter','G':'gyrocopter','L1P':'cessna','A1P':'cessna','L1T':'single_turbo','L1J':'hi_perf',
-        'L2P':'twin_small','A2P':'twin_large','L2T':'twin_large','A2T':'twin_large',
-        'L2J-L':'jet_nonswept','L2J-M':'airliner','L2J-H':'heavy_2e','L3J-H':'md11',
-        'L4T-M':'c130','L4T-H':'c130','L4T':'c130','L4J-H':'b707','L4J-M':'b707','L4J':'b707'
-    };
-
-    const CATEGORY_ICONS = {
-        'A1':'cessna','A2':'jet_swept','A3':'airliner','A4':'airliner','A5':'heavy_2e','A6':'hi_perf','A7':'helicopter',
-        'B1':'glider','B2':'balloon','B4':'cessna','B6':'uav',
-        'C0':'ground_unknown','C1':'ground_emergency','C2':'ground_service','C3':'ground_tower'
-    };
-
-    // Preload sprite sheet
-    const spriteImg = new Image();
-    spriteImg.src = SPRITE_URL;
-
-    function getSpriteIcon(ac) {
-        const type = (ac.t || '').toUpperCase();
-        const cat = ac.category || '';
-        const desc = ac.desc || '';
-        
-        if (type && TYPE_DESIGNATOR_ICONS[type]) {
-            const n = TYPE_DESIGNATOR_ICONS[type];
-            return { idx: SPRITE_INDEX[n] ?? 74, name: n, noRotate: NO_ROTATE_ICONS.has(n) };
-        }
-        // Type description lookup - only for ICAO format strings (L2J, H, L1P, etc.)
-        const isIcaoDesc = desc.length <= 4 && /^[LAGHS]\d?[PJTEHR]?$/.test(desc);
-        if (isIcaoDesc) {
-            const wtcMap = { 'A5':'H','A4':'M','A3':'M','A2':'L','A1':'L' };
-            const wtc = wtcMap[cat] || '';
-            if (wtc && desc.length === 3) {
-                const k = desc + '-' + wtc;
-                if (TYPE_DESC_ICONS[k]) { const n = TYPE_DESC_ICONS[k]; return { idx: SPRITE_INDEX[n] ?? 74, name: n, noRotate: NO_ROTATE_ICONS.has(n) }; }
-            }
-            if (TYPE_DESC_ICONS[desc]) { const n = TYPE_DESC_ICONS[desc]; return { idx: SPRITE_INDEX[n] ?? 74, name: n, noRotate: NO_ROTATE_ICONS.has(n) }; }
-            const b = desc.charAt(0);
-            if (TYPE_DESC_ICONS[b]) { const n = TYPE_DESC_ICONS[b]; return { idx: SPRITE_INDEX[n] ?? 74, name: n, noRotate: NO_ROTATE_ICONS.has(n) }; }
-        }
-        if (cat && CATEGORY_ICONS[cat]) {
-            const n = CATEGORY_ICONS[cat];
-            return { idx: SPRITE_INDEX[n] ?? 74, name: n, noRotate: NO_ROTATE_ICONS.has(n) };
-        }
-        if (ac.alt_baro === 'ground' || ac.alt_baro === 0) {
-            return { idx: SPRITE_INDEX['ground_square'], name: 'ground_square', noRotate: true };
-        }
-        return { idx: 74, name: 'unknown', noRotate: false };
-    }
-
     function getAltitudeCSSFilter(alt, selected) {
         if (selected) return 'brightness(0) invert(1) sepia(1) saturate(10) hue-rotate(140deg) brightness(1.2) drop-shadow(0 0 6px cyan) drop-shadow(0 0 12px cyan)';
         if (alt === 'ground' || alt === 0) return 'brightness(0) invert(0.55) sepia(0.3) saturate(0.5)';
@@ -3049,7 +2926,7 @@
         const dim = (selectedHex && !sel) ? 1 : 0;
         const lbl = settings.showLabels ? 1 : 0;
         const bdg = settings.showInterestingBadges ? 1 : 0;
-        return ac.hex + '|' + altBand + '|' + rot + '|' + sel + dim + lbl + bdg + '|' + (ac.flight || '') + '|' + (ac.t || '');
+        return ac.hex + '|' + altBand + '|' + rot + '|' + sel + dim + lbl + bdg + '|' + (ac.flight || '') + '|' + (ac.t || '') + '|' + (ac.category || '') + '|' + (ac.desc || '');
     }
 
     function createIcon(ac) {
@@ -3065,10 +2942,6 @@
         const isDimmed = selectedHex && ac.hex !== selectedHex;
         const interestingCategory = ac.piaInfo ? 'PIA' : (ac.interesting?.category || ac.militaryInfo?.category);
         
-        const spriteInfo = getSpriteIcon(ac);
-        const col = spriteInfo.idx % 16;
-        const row = Math.floor(spriteInfo.idx / 16);
-        
         let label = '';
         if (settings.showLabels && (ac.flight || ac.hex)) {
             const labelColor = sel ? '#00ffff' : color;
@@ -3083,15 +2956,7 @@
         }
         
         const cssFilter = getAltitudeCSSFilter(ac.alt_baro, sel);
-        const bgW = (1376 * size / 86);
-        const bgH = (516 * size / 86);
-        
-        const sprite = '<div class="sprite-icon" style="' +
-            'width:' + size + 'px;height:' + size + 'px;' +
-            'background:url(' + SPRITE_URL + ') -' + (col * size) + 'px -' + (row * size) + 'px/' + bgW + 'px ' + bgH + 'px no-repeat;' +
-            'filter:' + cssFilter + ';' +
-            (spriteInfo.noRotate ? '' : 'transform:rotate(' + rot + 'deg);') +
-            '"></div>';
+        const sprite = aircraftSpriteSvg(ac, { size, rotation: rot, filter: cssFilter });
         
         const className = 'aircraft-marker' + 
             (sel ? ' selected' : '') + 

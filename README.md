@@ -73,6 +73,7 @@ step is only needed when you want to ship a fresh single-file `index.html`.
 | Smooth Animation | Interpolated movement on 2D map via `requestAnimationFrame`, SampledPositionProperty on 3D globe |
 | History Trails | Altitude-colored flight paths with local history and OpenSky trajectory data |
 | Aircraft Photos | Auto-fetched from planespotters.net with preloaded image database |
+| Category SVG Sprites | Inline top-down silhouettes distinguish light, small, large, heavy, rotorcraft, glider, balloon, UAV, and space categories |
 | Trail Export | Export flight paths as KML or GeoJSON |
 | Share Flight | Generate shareable links for specific aircraft |
 | Historical Playback | Scrub through recorded flight paths with playback controls |

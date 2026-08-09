@@ -36,7 +36,6 @@
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-    <link rel="preload" href="https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/silhouettes/aircraft.png" as="image">
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" as="style">
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" as="script">
     <link rel="icon" href="data:image/x-icon;base64,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">
@@ -84,9 +83,10 @@
         .leaflet-top.leaflet-left { top: auto !important; bottom: 145px !important; left: auto !important; right: 15px !important; }
         .leaflet-control-zoom { margin-bottom: 0 !important; }
         .leaflet-control-zoom a { background: var(--bg-panel) !important; color: var(--text) !important; border: 1px solid var(--border) !important; }
+        .aircraft-sprite-sheet { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
         .aircraft-marker { transition: none; }
         .aircraft-marker.selected { z-index: 10000 !important; }
-        .aircraft-marker .sprite-icon { image-rendering: auto; }
+        .aircraft-marker .sprite-icon { display: block; image-rendering: auto; overflow: visible; pointer-events: none; }
         .aircraft-marker.interesting { z-index: 5000 !important; }
         .aircraft-marker.vip { z-index: 6000 !important; }
         .aircraft-marker.vip .sprite-icon { filter: brightness(0) invert(1) sepia(1) saturate(10) hue-rotate(35deg) brightness(1.3) drop-shadow(0 0 8px #ffd700) drop-shadow(0 0 4px #ffd700) !important; }
@@ -3101,7 +3101,6 @@ if ('serviceWorker' in navigator) {
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
                     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
                     'https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js',
-                    'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/silhouettes/aircraft.png',
                     'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo.ico',
                     'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-16x16.png',
                     'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/logo/SkyTrack_Logo-32x32.png',
@@ -3167,7 +3166,7 @@ if ('serviceWorker' in navigator) {
                         return;
                     }
                     
-                    // Cache-first for CDN static assets (Leaflet, pako, logos, sprites)
+                    // Cache-first for CDN static assets (Leaflet, pako, and logos)
                     if (STATIC_ASSETS.some(a => event.request.url.includes(a)) ||
                         url.hostname.includes('cdnjs.cloudflare.com') ||
                         (url.hostname.includes('githubusercontent.com') && url.pathname.includes('/logo/'))) {
@@ -11667,6 +11666,139 @@ if ('serviceWorker' in navigator) {
         const map = e?.detail?.map;
         if (map) oceanicFirs.init(map);
     });
+    // ─── module: modules/A5-aircraft-sprites.js ───────────────────────────────────────────
+
+    // ============ CATEGORY AIRCRAFT SVG SPRITES ============
+    // A compact inline symbol sheet keeps marker rendering local and makes
+    // the ADS-B category meaningful at a glance. The silhouettes follow the
+    // same top-down convention as tar1090's marker artwork, while remaining
+    // intentionally small enough to ship in the single-file build.
+    const AIRCRAFT_SPRITE_SHEET_ID = 'skytrack-aircraft-sprite-sheet';
+    const AIRCRAFT_SPRITE_NS = 'http://www.w3.org/2000/svg';
+    const AIRCRAFT_SPRITES = Object.freeze({
+        A1: {
+            label: 'Light aircraft',
+            body: '<path d="M24 3l2.4 13.1 12.8 6.2v2.8l-12.8 2.8-.8 8.5 4.2 4.2v1.7L24 39.8l-5.8 2.5v-1.7l4.2-4.2-.8-8.5-12.8-2.8v-2.8l12.8-6.2L24 3z"/><path d="M15 7h18v2H15z"/>',
+            noRotate: false
+        },
+        A2: {
+            label: 'Small jet',
+            body: '<path d="M24 3l2.1 12.3 14 7.5v2.5l-14.2 1.6-.8 8.1 4.9 4.2v1.8L24 38.8l-6 3.2v-1.8l4.9-4.2-.8-8.1-14.2-1.6V24.8l14-7.5L24 3z"/>',
+            noRotate: false
+        },
+        A3: {
+            label: 'Large aircraft',
+            body: '<path d="M24 2l2.5 13.6 16 8v2.8l-16.2 1.8-.9 8.5 4.9 4.4v1.8L24 39.8l-6.3 3.1v-1.8l4.9-4.4-.9-8.5-16.2-1.8v-2.8l16-8L24 2z"/><circle cx="18" cy="25" r="1.6"/><circle cx="30" cy="25" r="1.6"/>',
+            noRotate: false
+        },
+        A5: {
+            label: 'Heavy aircraft',
+            body: '<path d="M24 1.5l2.8 14.2 16.7 8.6v3l-16.8 1.5-.9 8.8 5.2 4.6v1.8L24 40l-7 4v-1.8l5.2-4.6-.9-8.8-16.8-1.5v-3l16.7-8.6L24 1.5z"/><circle cx="16.5" cy="27" r="1.8"/><circle cx="21" cy="27" r="1.8"/><circle cx="27" cy="27" r="1.8"/><circle cx="31.5" cy="27" r="1.8"/>',
+            noRotate: false
+        },
+        A7: {
+            label: 'Rotorcraft',
+            body: '<ellipse cx="24" cy="18" rx="16" ry="2"/><path d="M22 9h4v17l4.8 5.3v2.2h-2.3L24 29l-4.5 4.5h-2.3v-2.2L22 26V9z"/><path d="M15 15h18v6H15z"/><circle cx="24" cy="18" r="2.3"/>',
+            noRotate: false
+        },
+        B1: {
+            label: 'Glider',
+            body: '<path d="M24 2.5l1.4 16.1 19 3.1v3.2l-19 1.3-1.4 15.8-1.4-15.8-19-1.3v-3.2l19-3.1L24 2.5z"/><path d="M20 18.2h8v3.2h-8z"/>',
+            noRotate: false
+        },
+        B2: {
+            label: 'Balloon',
+            body: '<path d="M24 3C15.2 3 9 9.8 9 18.2c0 8 5.4 12.6 12 14.2v4.1h6v-4.1c6.6-1.6 12-6.2 12-14.2C39 9.8 32.8 3 24 3z"/><path d="M20 36.5h8v5h-8z"/><path d="M18 19c0-5 2.7-9 6-9s6 4 6 9-2.7 9-6 9-6-4-6-9z" fill="none" stroke="currentColor" stroke-width="1.5"/>',
+            noRotate: true
+        },
+        B4: {
+            label: 'Ultralight aircraft',
+            body: '<path d="M24 4l4.2 13 13.8 4.5v2.7l-13.6 1.2-2.7 11.3h-3.4l-2.7-11.3-13.6-1.2v-2.7L19.8 17 24 4z"/><path d="M12 15l-5-3-1.5 2.3 6.1 4.2zM36 15l5-3 1.5 2.3-6.1 4.2z"/>',
+            noRotate: false
+        },
+        B6: {
+            label: 'Unmanned aerial vehicle',
+            body: '<path d="M24 4l4.2 13 13.8 4.5v2.7l-13.6 1.2-2.7 11.3h-3.4l-2.7-11.3-13.6-1.2v-2.7L19.8 17 24 4z"/><path d="M12 15l-5-3-1.5 2.3 6.1 4.2zM36 15l5-3 1.5 2.3-6.1 4.2z"/><circle cx="24" cy="23" r="2"/>',
+            noRotate: false
+        },
+        B7: {
+            label: 'Space vehicle',
+            body: '<path d="M24 2c5.8 4.3 8.3 10.5 7.7 17.8L27 29.5h-6l-4.7-9.7C15.7 12.5 18.2 6.3 24 2z"/><path d="M18.3 22.5L9 28l3.5 3.5 8-3zM29.7 22.5L39 28l-3.5 3.5-8-3z"/><path d="M21 30h6l3 8-6-2-6 2z"/><circle cx="24" cy="14" r="2"/>',
+            noRotate: false
+        },
+        GROUND: {
+            label: 'Ground vehicle',
+            body: '<rect x="12" y="12" width="24" height="24" rx="4"/>',
+            noRotate: true
+        },
+        UNKNOWN: {
+            label: 'Unknown aircraft',
+            body: '<path d="M24 4l2.2 12.6 12.4 7v2.5l-12.6 1.5-.8 8.2 4 4v1.6L24 38.8l-5.2 2.6v-1.6l4-4-.8-8.2-12.6-1.5v-2.5l12.4-7L24 4z"/>',
+            noRotate: false
+        }
+    });
+
+    const AIRCRAFT_SPRITE_CATEGORIES = Object.freeze(['A1', 'A2', 'A3', 'A5', 'A7', 'B1', 'B2', 'B4', 'B6', 'B7']);
+    const AIRCRAFT_SPRITE_CATEGORY_ALIASES = Object.freeze({ A4: 'A3', A6: 'A2', B3: 'B1' });
+
+    function aircraftSpriteCategory(ac = {}) {
+        const rawCategory = String(ac.category || '').trim().toUpperCase();
+        if (AIRCRAFT_SPRITES[rawCategory]) return rawCategory;
+        if (AIRCRAFT_SPRITE_CATEGORY_ALIASES[rawCategory]) return AIRCRAFT_SPRITE_CATEGORY_ALIASES[rawCategory];
+
+        const type = String(ac.t || '').trim().toUpperCase();
+        const desc = String(ac.desc || '').trim().toUpperCase();
+        const searchable = type + ' ' + desc;
+        if (ac.alt_baro === 'ground' || ac.alt_baro === 0 || /^C[0-3]$/.test(rawCategory)) return 'GROUND';
+        if (/BALL|BLIM|PARA/.test(searchable)) return 'B2';
+        if (/GLID|S6|S10S|S12/.test(searchable)) return 'B1';
+        if (/DRON|UAV|Q1|Q4|Q9|Q25|HRON/.test(searchable)) return 'B6';
+        if (/SAT|SPAC|ROCK|LEOP|STRATO/.test(searchable)) return 'B7';
+        if (desc === 'H' || /^(?:H\d|R(?:22|44|66)|AS\d|EC\d|S(?:6|7|9)\d|V22)/.test(type) || /HELI|GYRO|ROTOR/.test(searchable)) return 'A7';
+        if (/A380|A388|A350|A330|A340|B747|B777|B767|B787|B748|MD11|DC10|A225|A124|C5M/.test(searchable)) return 'A5';
+        if (/A3\d\d|A321|B737|B757|B767|E17|E19|CRJ|RJ|AIRLINER/.test(searchable)) return 'A3';
+        if (/JET|L2J|FA20|FA50|GULF|GLF|C5\d\d|LJ\d|CL\d|BIZ/.test(searchable)) return 'A2';
+        return 'A1';
+    }
+
+    function ensureAircraftSpriteSheet() {
+        if (typeof document === 'undefined') return false;
+        if (document.getElementById?.(AIRCRAFT_SPRITE_SHEET_ID)) return true;
+        const sheet = document.createElementNS(AIRCRAFT_SPRITE_NS, 'svg');
+        sheet.setAttribute('id', AIRCRAFT_SPRITE_SHEET_ID);
+        sheet.setAttribute('class', 'aircraft-sprite-sheet');
+        sheet.setAttribute('aria-hidden', 'true');
+        sheet.setAttribute('focusable', 'false');
+        const defs = document.createElementNS(AIRCRAFT_SPRITE_NS, 'defs');
+        Object.entries(AIRCRAFT_SPRITES).forEach(([category, sprite]) => {
+            const symbol = document.createElementNS(AIRCRAFT_SPRITE_NS, 'symbol');
+            symbol.setAttribute('id', 'skytrack-aircraft-' + category);
+            symbol.setAttribute('viewBox', '0 0 48 48');
+            symbol.setAttribute('aria-label', sprite.label);
+            symbol.innerHTML = sprite.body;
+            defs.appendChild(symbol);
+        });
+        sheet.appendChild(defs);
+        (document.body || document.documentElement)?.appendChild(sheet);
+        return true;
+    }
+
+    function aircraftSpriteSvg(ac = {}, options = {}) {
+        ensureAircraftSpriteSheet();
+        const category = aircraftSpriteCategory(ac);
+        const sprite = AIRCRAFT_SPRITES[category] || AIRCRAFT_SPRITES.UNKNOWN;
+        const size = Number.isFinite(options.size) ? Math.max(12, Math.min(96, options.size)) : 28;
+        const rotation = Number.isFinite(options.rotation) ? options.rotation : 0;
+        const filter = String(options.filter || '');
+        const transform = sprite.noRotate ? '' : 'transform:rotate(' + rotation + 'deg);transform-origin:50% 50%;transform-box:fill-box;';
+        return '<svg class="sprite-icon" xmlns="http://www.w3.org/2000/svg" data-sprite-category="' + category + '" viewBox="0 0 48 48" width="' + size + '" height="' + size + '" aria-hidden="true" focusable="false" style="width:' + size + 'px;height:' + size + 'px;color:#fff;filter:' + filter + ';' + transform + '"><use href="#skytrack-aircraft-' + category + '" xlink:href="#skytrack-aircraft-' + category + '"></use></svg>';
+    }
+
+    if (typeof document !== 'undefined') {
+        const installAircraftSprites = () => ensureAircraftSpriteSheet();
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installAircraftSprites, { once: true });
+        else installAircraftSprites();
+    }
     // ─── module: modules/AA-flight-analytics.js ───────────────────────────────────────────
 
     // ============ FLIGHT ANALYTICS ============
@@ -14676,129 +14808,6 @@ if ('serviceWorker' in navigator) {
     function createMarker(ac) { const marker = L.marker([ac.lat, ac.lon], { icon: createIcon(ac), zIndexOffset: getZIndex(ac) }); marker.on('click', e => { L.DomEvent.stopPropagation(e); if (e.originalEvent?.ctrlKey || e.originalEvent?.metaKey) { if (!multiSelect.enabled) { multiSelect.enabled = true; document.getElementById('multiSelectBtn')?.classList.add('active'); document.body.classList.add('multi-select-mode'); multiSelect.showToolbar(); toast('Multi-select ON - Ctrl+click to select more'); } multiSelect.toggleSelection(ac.hex); return; } selectAircraft(ac.hex); }); marker.addTo(map); markers[ac.hex] = marker; }
     function updateMarker(ac) { const marker = markers[ac.hex]; if (!marker) return; const hash = _iconHash(ac); const cached = _iconCache[ac.hex]; const iconChanged = !cached || cached.hash !== hash; const pos = marker.getLatLng(); if (Math.abs(pos.lat - ac.lat) + Math.abs(pos.lng - ac.lon) < 0.00001) { if (iconChanged) { marker.setIcon(createIcon(ac)); marker.setZIndexOffset(getZIndex(ac)); } return; } aircraftAnimation[ac.hex] = { startLat: pos.lat, startLon: pos.lng, targetLat: ac.lat, targetLon: ac.lon, startTime: performance.now(), duration: CONFIG.refreshInterval * 0.95 }; if (iconChanged) { marker.setIcon(createIcon(ac)); marker.setZIndexOffset(getZIndex(ac)); } if (!animationRunning) { animationRunning = true; requestAnimationFrame(animateAircraft); } }
     function animateAircraft(ts) { let active = false; Object.entries(aircraftAnimation).forEach(([hex, a]) => { const m = markers[hex]; if (!m) { delete aircraftAnimation[hex]; return; } const p = Math.min((ts - a.startTime) / a.duration, 1); if (p < 1) { active = true; const lat = a.startLat + (a.targetLat - a.startLat) * p, lon = a.startLon + (a.targetLon - a.startLon) * p; m.setLatLng([lat, lon]); if (hex === selectedHex && trailLine?._lastSegment) { const ll = trailLine._lastSegment.getLatLngs(); if (ll.length) { ll[ll.length - 1] = L.latLng(lat, lon); trailLine._lastSegment.setLatLngs(ll); } } } else { m.setLatLng([a.targetLat, a.targetLon]); delete aircraftAnimation[hex]; } }); if (active) requestAnimationFrame(animateAircraft); else animationRunning = false; }
-    // ============ TAR1090 SPRITE ICON SYSTEM ============
-    const SPRITE_URL = 'https://raw.githubusercontent.com/SysAdminDoc/SkyTrack/refs/heads/main/assets/silhouettes/aircraft.png';
-    
-    // Sprite sheet: 16 cols x 6 rows, 86x86px each
-    const SPRITE_INDEX = {
-        'a319':0,'a320':1,'a321':2,'p8':3,'e737':4,'b737':5,'b738':6,'b739':7,
-        'airliner':8,'blimp':9,'balloon':10,'cessna':11,'a359':12,'a332':13,'heavy_2e':14,'md11':15,
-        'c130':16,'hi_perf':17,'f18':18,'e3awacs':19,'heavy_4e':20,'single_turbo':21,'jet_nonswept':22,'jet_swept':23,
-        'twin_large':24,'twin_small':25,'alpha_jet':26,'a225':27,'a400':28,'v22_slow':29,'v22_fast':30,'t38':31,
-        'f35':32,'l159':33,'mirage':34,'sb39':35,'md_a4':36,'tornado':37,'uav':38,'typhoon':39,
-        'rafale':40,'hunter':41,'lancaster':42,'beluga':43,'c17':44,'c5':45,'super_guppy':46,'wb57':47,
-        'a380':48,'il_62':49,'u2':50,'glider':51,'p3_orion':52,'cirrus_sr22':53,'verhees':54,'gyrocopter':55,
-        'helicopter':56,'pa24':57,'bae_hawk':58,'a10':59,'chinook':60,'apache':61,'blackhawk':62,'s61':63,
-        'f5_tiger':64,'c2':65,'b52':66,'b707':67,'rutan_veze':68,'pumpkin':69,'witchr':70,'witchl':71,
-        'm326':72,'miragef1':73,'unknown':74,'ground_square':75,'ground_emergency':76,'ground_service':77,'ground_unknown':78,'ground_fixed':79,
-        'ground_tower':80,'puma':81,'tiger':82,'mil24':83,'dauphin':84,'gazelle':85,'md_f15':86,'strato':87,
-        'asterisk':88,'b1b_lancer':89,'para':90,'e390':91
-    };
-    const NO_ROTATE_ICONS = new Set(['balloon','blimp','ground_square','ground_emergency','ground_service','ground_unknown','ground_fixed','ground_tower','asterisk']);
-
-    const TYPE_DESIGNATOR_ICONS = {
-        'SHIP':'blimp','BALL':'balloon','A318':'a319','A319':'a319','A19N':'a319','A320':'a320','A20N':'a320','A321':'a321','A21N':'a321',
-        'A306':'heavy_2e','A330':'a332','A332':'a332','A333':'a332','A338':'a332','A339':'a332','DC10':'md11','MD11':'md11',
-        'A359':'a359','A35K':'a359','A388':'a380','B731':'b737','B732':'b737','B735':'b737','B733':'b737','B734':'b737',
-        'B736':'b737','B737':'b737','B738':'b738','B739':'b739','B37M':'b737','B38M':'b738','B39M':'b739','B3XM':'b739',
-        'P8':'p8','E737':'e737','J328':'airliner','E170':'airliner','E75S':'airliner','E75L':'airliner','A148':'airliner',
-        'RJ70':'b707','RJ85':'b707','RJ1H':'b707','B461':'b707','B462':'b707','B463':'b707',
-        'E190':'airliner','E195':'airliner','E290':'airliner','E295':'airliner','BCS1':'airliner','BCS3':'airliner',
-        'B741':'heavy_4e','B742':'heavy_4e','B743':'heavy_4e','B744':'heavy_4e','B74D':'heavy_4e','B74S':'heavy_4e','B74R':'heavy_4e','BLCF':'heavy_4e','BSCA':'heavy_4e','B748':'heavy_4e',
-        'B752':'heavy_2e','B753':'heavy_2e','B772':'heavy_2e','B773':'heavy_2e','B77L':'heavy_2e','B77W':'heavy_2e',
-        'B701':'b707','B703':'b707','K35R':'b707','K35E':'b707',
-        'FA20':'jet_swept','C680':'jet_swept','C68A':'jet_swept','C750':'jet_swept','F2TH':'jet_swept','FA50':'jet_swept','CL30':'jet_swept','CL35':'jet_swept',
-        'F900':'jet_swept','CL60':'jet_swept','G200':'jet_swept','G280':'jet_swept','HA4T':'jet_swept','FA7X':'jet_swept','FA8X':'jet_swept',
-        'GLF2':'jet_swept','GLF3':'jet_swept','GLF4':'jet_swept','GA5C':'jet_swept','GL5T':'jet_swept','GLF5':'jet_swept','GA6C':'jet_swept',
-        'GLEX':'jet_swept','GL6T':'jet_swept','GLF6':'jet_swept','GA7C':'jet_swept','GA8C':'jet_swept','GL7T':'jet_swept',
-        'E135':'jet_swept','E35L':'jet_swept','E145':'jet_swept','E45X':'jet_swept','E390':'e390',
-        'CRJ1':'jet_swept','CRJ2':'jet_swept','CRJ7':'jet_swept','CRJ9':'jet_swept','CRJX':'jet_swept','F100':'jet_swept',
-        'F28':'jet_swept','F70':'jet_swept','DC91':'jet_swept','DC92':'jet_swept','DC93':'jet_swept','DC94':'jet_swept','DC95':'jet_swept',
-        'MD80':'jet_swept','MD81':'jet_swept','MD82':'jet_swept','MD83':'jet_swept','MD87':'jet_swept','MD88':'jet_swept','MD90':'jet_swept',
-        'B712':'jet_swept','B721':'jet_swept','B722':'jet_swept','T154':'jet_swept',
-        'BE40':'jet_nonswept','FA10':'jet_nonswept','C501':'jet_nonswept','C510':'jet_nonswept','C25A':'jet_nonswept','C25B':'jet_nonswept','C25C':'jet_nonswept',
-        'C525':'jet_nonswept','C550':'jet_nonswept','C560':'jet_nonswept','C56X':'jet_nonswept',
-        'LJ23':'jet_nonswept','LJ24':'jet_nonswept','LJ25':'jet_nonswept','LJ28':'jet_nonswept','LJ31':'jet_nonswept','LJ35':'jet_nonswept','LR35':'jet_nonswept',
-        'LJ40':'jet_nonswept','LJ45':'jet_nonswept','LR45':'jet_nonswept','LJ55':'jet_nonswept','LJ60':'jet_nonswept','LJ70':'jet_nonswept','LJ75':'jet_nonswept','LJ85':'jet_nonswept',
-        'C650':'jet_nonswept','ASTR':'jet_nonswept','G150':'jet_nonswept','H25A':'jet_nonswept','H25B':'jet_nonswept','H25C':'jet_nonswept',
-        'PRM1':'jet_nonswept','E55P':'jet_nonswept','E50P':'jet_nonswept','EA50':'jet_nonswept','HDJT':'jet_nonswept','SF50':'jet_nonswept',
-        'C97':'super_guppy','SGUP':'super_guppy','A3ST':'beluga','A337':'beluga','WB57':'wb57',
-        'A37':'hi_perf','A700':'hi_perf','LEOP':'hi_perf','ME62':'hi_perf','T2':'hi_perf','T37':'hi_perf','T38':'t38','F104':'t38','A10':'a10',
-        'A3':'hi_perf','A6':'hi_perf','AJET':'alpha_jet','AT3':'hi_perf','CKUO':'hi_perf','EUFI':'typhoon','SB39':'sb39',
-        'MIR2':'mirage','KFIR':'mirage','F1':'hi_perf','F111':'hi_perf','F117':'hi_perf','F14':'hi_perf',
-        'F15':'md_f15','F16':'hi_perf','F18':'f18','F18H':'f18','F18S':'f18','F22':'f35','F22A':'f35','F35':'f35','VF35':'f35',
-        'L159':'l159','L39':'l159','F4':'hi_perf','F5':'f5_tiger','HUNT':'hunter','LANC':'lancaster','B17':'lancaster','B29':'lancaster',
-        'J8A':'hi_perf','J8B':'hi_perf','JH7':'hi_perf','LTNG':'hi_perf','M346':'hi_perf','METR':'hi_perf',
-        'MG19':'hi_perf','MG25':'hi_perf','MG29':'hi_perf','MG31':'hi_perf','MG44':'hi_perf','MIR4':'hi_perf',
-        'RFAL':'rafale','S3':'hi_perf','SR71':'hi_perf','SU15':'hi_perf','SU24':'hi_perf','SU25':'hi_perf','SU27':'hi_perf',
-        'T22M':'hi_perf','T4':'hi_perf','TOR':'tornado','A4':'md_a4','TU22':'hi_perf','VAUT':'hi_perf',
-        'MRF1':'miragef1','M326':'m326','M339':'m326','FOUG':'m326','T33':'m326',
-        'A225':'a225','A124':'b707','SLCH':'strato','WHK2':'strato','C130':'c130','C30J':'c130','P3':'p3_orion','PARA':'para',
-        'DRON':'uav','Q1':'uav','Q4':'uav','Q9':'uav','Q25':'uav','HRON':'uav','A400':'a400',
-        'V22F':'v22_fast','V22':'v22_slow','H64':'apache','H60':'blackhawk','S92':'blackhawk','NH90':'blackhawk',
-        'AS32':'puma','AS3B':'puma','PUMA':'puma','TIGR':'tiger','MI24':'mil24',
-        'AS65':'dauphin','S76':'dauphin','GAZL':'gazelle','AS50':'gazelle','AS55':'gazelle','ALO2':'gazelle','ALO3':'gazelle',
-        'R22':'helicopter','R44':'helicopter','R66':'helicopter',
-        'EC55':'s61','A169':'s61','H160':'s61','A139':'s61','EC75':'s61','A189':'s61','A149':'s61','S61':'s61','S61R':'s61','EC25':'s61','EH10':'s61','H53':'s61','H53S':'s61',
-        'U2':'u2','C2':'c2','E2':'c2','H47':'chinook','H46':'chinook','HAWK':'bae_hawk',
-        'GYRO':'gyrocopter','DLTA':'verhees','B1':'b1b_lancer','B52':'b52','C17':'c17','C5M':'c5','E3TF':'e3awacs','E3CF':'e3awacs',
-        'GLID':'glider','S6':'glider','S10S':'glider','S12':'glider',
-        'BE20':'twin_large','IL62':'il_62','SR20':'cirrus_sr22','SR22':'cirrus_sr22','S22T':'cirrus_sr22',
-        'VEZE':'rutan_veze','VELO':'rutan_veze','PA24':'pa24',
-        'B752':'heavy_2e','B753':'heavy_2e','B762':'heavy_2e','B763':'heavy_2e','B764':'heavy_2e',
-        'B788':'heavy_2e','B789':'heavy_2e','B78X':'heavy_2e',
-        'GND':'ground_unknown','GRND':'ground_unknown','SERV':'ground_service','EMER':'ground_emergency','TWR':'ground_tower'
-    };
-
-    const TYPE_DESC_ICONS = {
-        'H':'helicopter','G':'gyrocopter','L1P':'cessna','A1P':'cessna','L1T':'single_turbo','L1J':'hi_perf',
-        'L2P':'twin_small','A2P':'twin_large','L2T':'twin_large','A2T':'twin_large',
-        'L2J-L':'jet_nonswept','L2J-M':'airliner','L2J-H':'heavy_2e','L3J-H':'md11',
-        'L4T-M':'c130','L4T-H':'c130','L4T':'c130','L4J-H':'b707','L4J-M':'b707','L4J':'b707'
-    };
-
-    const CATEGORY_ICONS = {
-        'A1':'cessna','A2':'jet_swept','A3':'airliner','A4':'airliner','A5':'heavy_2e','A6':'hi_perf','A7':'helicopter',
-        'B1':'glider','B2':'balloon','B4':'cessna','B6':'uav',
-        'C0':'ground_unknown','C1':'ground_emergency','C2':'ground_service','C3':'ground_tower'
-    };
-
-    // Preload sprite sheet
-    const spriteImg = new Image();
-    spriteImg.src = SPRITE_URL;
-
-    function getSpriteIcon(ac) {
-        const type = (ac.t || '').toUpperCase();
-        const cat = ac.category || '';
-        const desc = ac.desc || '';
-        
-        if (type && TYPE_DESIGNATOR_ICONS[type]) {
-            const n = TYPE_DESIGNATOR_ICONS[type];
-            return { idx: SPRITE_INDEX[n] ?? 74, name: n, noRotate: NO_ROTATE_ICONS.has(n) };
-        }
-        // Type description lookup - only for ICAO format strings (L2J, H, L1P, etc.)
-        const isIcaoDesc = desc.length <= 4 && /^[LAGHS]\d?[PJTEHR]?$/.test(desc);
-        if (isIcaoDesc) {
-            const wtcMap = { 'A5':'H','A4':'M','A3':'M','A2':'L','A1':'L' };
-            const wtc = wtcMap[cat] || '';
-            if (wtc && desc.length === 3) {
-                const k = desc + '-' + wtc;
-                if (TYPE_DESC_ICONS[k]) { const n = TYPE_DESC_ICONS[k]; return { idx: SPRITE_INDEX[n] ?? 74, name: n, noRotate: NO_ROTATE_ICONS.has(n) }; }
-            }
-            if (TYPE_DESC_ICONS[desc]) { const n = TYPE_DESC_ICONS[desc]; return { idx: SPRITE_INDEX[n] ?? 74, name: n, noRotate: NO_ROTATE_ICONS.has(n) }; }
-            const b = desc.charAt(0);
-            if (TYPE_DESC_ICONS[b]) { const n = TYPE_DESC_ICONS[b]; return { idx: SPRITE_INDEX[n] ?? 74, name: n, noRotate: NO_ROTATE_ICONS.has(n) }; }
-        }
-        if (cat && CATEGORY_ICONS[cat]) {
-            const n = CATEGORY_ICONS[cat];
-            return { idx: SPRITE_INDEX[n] ?? 74, name: n, noRotate: NO_ROTATE_ICONS.has(n) };
-        }
-        if (ac.alt_baro === 'ground' || ac.alt_baro === 0) {
-            return { idx: SPRITE_INDEX['ground_square'], name: 'ground_square', noRotate: true };
-        }
-        return { idx: 74, name: 'unknown', noRotate: false };
-    }
-
     function getAltitudeCSSFilter(alt, selected) {
         if (selected) return 'brightness(0) invert(1) sepia(1) saturate(10) hue-rotate(140deg) brightness(1.2) drop-shadow(0 0 6px cyan) drop-shadow(0 0 12px cyan)';
         if (alt === 'ground' || alt === 0) return 'brightness(0) invert(0.55) sepia(0.3) saturate(0.5)';
@@ -14827,7 +14836,7 @@ if ('serviceWorker' in navigator) {
         const dim = (selectedHex && !sel) ? 1 : 0;
         const lbl = settings.showLabels ? 1 : 0;
         const bdg = settings.showInterestingBadges ? 1 : 0;
-        return ac.hex + '|' + altBand + '|' + rot + '|' + sel + dim + lbl + bdg + '|' + (ac.flight || '') + '|' + (ac.t || '');
+        return ac.hex + '|' + altBand + '|' + rot + '|' + sel + dim + lbl + bdg + '|' + (ac.flight || '') + '|' + (ac.t || '') + '|' + (ac.category || '') + '|' + (ac.desc || '');
     }
 
     function createIcon(ac) {
@@ -14843,10 +14852,6 @@ if ('serviceWorker' in navigator) {
         const isDimmed = selectedHex && ac.hex !== selectedHex;
         const interestingCategory = ac.piaInfo ? 'PIA' : (ac.interesting?.category || ac.militaryInfo?.category);
         
-        const spriteInfo = getSpriteIcon(ac);
-        const col = spriteInfo.idx % 16;
-        const row = Math.floor(spriteInfo.idx / 16);
-        
         let label = '';
         if (settings.showLabels && (ac.flight || ac.hex)) {
             const labelColor = sel ? '#00ffff' : color;
@@ -14861,15 +14866,7 @@ if ('serviceWorker' in navigator) {
         }
         
         const cssFilter = getAltitudeCSSFilter(ac.alt_baro, sel);
-        const bgW = (1376 * size / 86);
-        const bgH = (516 * size / 86);
-        
-        const sprite = '<div class="sprite-icon" style="' +
-            'width:' + size + 'px;height:' + size + 'px;' +
-            'background:url(' + SPRITE_URL + ') -' + (col * size) + 'px -' + (row * size) + 'px/' + bgW + 'px ' + bgH + 'px no-repeat;' +
-            'filter:' + cssFilter + ';' +
-            (spriteInfo.noRotate ? '' : 'transform:rotate(' + rot + 'deg);') +
-            '"></div>';
+        const sprite = aircraftSpriteSvg(ac, { size, rotation: rot, filter: cssFilter });
         
         const className = 'aircraft-marker' + 
             (sel ? ' selected' : '') + 

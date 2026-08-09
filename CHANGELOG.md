@@ -33,6 +33,10 @@ All notable changes to SkyTrack will be documented in this file.
   New York, and Oakland oceanic FIR boundaries from the current Open Aviation
   CC BY 4.0 dataset, with labeled popups, zoom-aware visibility, and IndexedDB
   caching.
+- **Category-specific aircraft sprites.** The 2D map now uses an inline SVG
+  symbol sheet with distinct ADS-B silhouettes for light, small, large, heavy,
+  rotorcraft, glider, balloon, UAV, and space categories, while retaining
+  altitude coloring, heading rotation, labels, badges, and selection filters.
 
 ## [v0.24.3] - 2026-05-01
 

@@ -36,9 +36,10 @@
         .leaflet-top.leaflet-left { top: auto !important; bottom: 145px !important; left: auto !important; right: 15px !important; }
         .leaflet-control-zoom { margin-bottom: 0 !important; }
         .leaflet-control-zoom a { background: var(--bg-panel) !important; color: var(--text) !important; border: 1px solid var(--border) !important; }
+        .aircraft-sprite-sheet { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
         .aircraft-marker { transition: none; }
         .aircraft-marker.selected { z-index: 10000 !important; }
-        .aircraft-marker .sprite-icon { image-rendering: auto; }
+        .aircraft-marker .sprite-icon { display: block; image-rendering: auto; overflow: visible; pointer-events: none; }
         .aircraft-marker.interesting { z-index: 5000 !important; }
         .aircraft-marker.vip { z-index: 6000 !important; }
         .aircraft-marker.vip .sprite-icon { filter: brightness(0) invert(1) sepia(1) saturate(10) hue-rotate(35deg) brightness(1.3) drop-shadow(0 0 8px #ffd700) drop-shadow(0 0 4px #ffd700) !important; }
