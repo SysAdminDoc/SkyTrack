@@ -1544,6 +1544,7 @@
             
             // Records
             this.updateRecords(aircraft);
+            try { trafficAnalytics.updateDashboard(aircraftCache); } catch (_) {}
         },
         
         updateTypeChart(aircraft) {
@@ -3041,6 +3042,7 @@
         
         // Phase 6: Update mini-map aircraft positions
         miniMap.updateAircraft();
+        try { trafficVectors.update(aircraftCache); altitudeMesh.update(aircraftCache); } catch (_) {}
         
         // Phase 9: Record statistics
         statsSystem.recordRefresh(aircraft);
@@ -4270,6 +4272,8 @@
         document.getElementById('heatmapBtn')?.addEventListener('click', () => heatmapLayer.toggle());
         document.getElementById('densityBtn')?.addEventListener('click', () => hexDensity.toggle());
         document.getElementById('flowMapBtn')?.addEventListener('click', () => flowMap.toggle());
+        document.getElementById('vectorsBtn')?.addEventListener('click', () => trafficVectors.toggle());
+        document.getElementById('altitudeMeshBtn')?.addEventListener('click', () => altitudeMesh.toggle());
         document.getElementById('airspaceBtn')?.addEventListener('click', () => airspaceLayer.toggle());
         document.getElementById('view3DBtn')?.addEventListener('click', () => view3D.toggle());
         document.getElementById('showBoardBtn')?.addEventListener('click', () => {

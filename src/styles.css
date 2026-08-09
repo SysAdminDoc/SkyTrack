@@ -1257,6 +1257,11 @@
             opacity: 0.1;
             background: repeating-linear-gradient(0deg, rgba(66, 255, 116, 0.18) 0, rgba(66, 255, 116, 0.18) 1px, transparent 1px, transparent 4px);
         }
+        .analytics-subtitle { margin: 10px 0 6px; color: var(--text-muted); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; }
+        .analytics-histogram { display: flex; align-items: flex-end; gap: 2px; height: 46px; padding: 4px 0 0; }
+        .analytics-histogram-bar { flex: 1; min-height: 3px; border-radius: 2px 2px 0 0; background: linear-gradient(180deg, #22d3ee, #2563eb); }
+        .analytics-hour-labels { margin-top: 2px; }
+        .analytics-route-note { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); color: var(--text-dim); font-size: 10px; }
         
         /* Tablet adjustments */
         @media (min-width: 768px) and (max-width: 1024px) {

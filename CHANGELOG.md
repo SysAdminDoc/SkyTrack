@@ -5,6 +5,9 @@ All notable changes to SkyTrack will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Viewport traffic analytics.** Added flow-vector and average-altitude mesh
+  overlays plus a stats dashboard for visible airline flight levels, observed
+  arrival hours, and route-divergence anomalies.
 - **Operational map context.** Airport panels can render a 10 nm approach
   cone with an FAF marker, military targets use an amber/olive ramp with CPA
   conflict pulses, and an optional CRT Radar theme adds phosphor scanlines.
