@@ -74,6 +74,7 @@ step is only needed when you want to ship a fresh single-file `index.html`.
 | History Trails | Altitude-colored flight paths with local history and OpenSky trajectory data |
 | Aircraft Photos | Auto-fetched from planespotters.net with preloaded image database |
 | Category SVG Sprites | Inline top-down silhouettes distinguish light, small, large, heavy, rotorcraft, glider, balloon, UAV, and space categories |
+| High-Volume Rendering | Canvas-backed points for ordinary traffic at 800+ aircraft; selected and priority aircraft keep detailed icons |
 | Trail Export | Export flight paths as KML or GeoJSON |
 | Share Flight | Generate shareable links for specific aircraft |
 | Historical Playback | Scrub through recorded flight paths with playback controls |

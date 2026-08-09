@@ -37,6 +37,9 @@ All notable changes to SkyTrack will be documented in this file.
   symbol sheet with distinct ADS-B silhouettes for light, small, large, heavy,
   rotorcraft, glider, balloon, UAV, and space categories, while retaining
   altitude coloring, heading rotation, labels, badges, and selection filters.
+- **High-volume canvas rendering.** Once the live cache reaches 800 aircraft,
+  ordinary traffic moves to a canvas-backed point layer while selected, VIP,
+  military, interesting, and PIA aircraft retain detailed interactive icons.
 
 ## [v0.24.3] - 2026-05-01
 

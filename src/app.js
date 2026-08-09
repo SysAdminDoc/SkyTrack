@@ -2837,6 +2837,21 @@
         if (!map) return;
         const bounds = map.getBounds();
         const zoom = map.getZoom();
+        const highVolume = highVolumeRenderer.begin(Object.keys(aircraftCache).length);
+
+        // A mode transition can leave detailed markers from the previous
+        // pass. Remove ordinary DivIcons before the new pass rebuilds them as
+        // canvas points; priority aircraft remain detailed and interactive.
+        if (highVolume.changed && highVolume.active) {
+            Object.keys(markers).forEach(hex => {
+                const ac = aircraftCache[hex];
+                if (ac && !isPriorityAircraft(ac)) {
+                    map.removeLayer(markers[hex]);
+                    delete markers[hex];
+                    delete aircraftAnimation[hex];
+                }
+            });
+        }
         
         // Grid-based decimation at low zoom to prevent rendering thousands of markers
         let decimationGrid = null;
@@ -2887,15 +2902,44 @@
                     return;
                 }
             }
+            if (highVolume.active && !isPriorityAircraft(ac)) {
+                if (markers[ac.hex]) {
+                    map.removeLayer(markers[ac.hex]);
+                    delete markers[ac.hex];
+                    delete aircraftAnimation[ac.hex];
+                }
+                highVolumeRenderer.upsert(ac, {
+                    color: getAltitudeColor(ac.alt_baro),
+                    radius: ac.hex === selectedHex ? 6 : 4
+                });
+                return;
+            }
+            highVolumeRenderer.remove(ac.hex);
             if (markers[ac.hex]) updateMarker(ac); else createMarker(ac);
         });
+        highVolumeRenderer.end();
     }
     // Coalesced wrapper: multiple rapid calls collapse to one rAF
     function updateMarkers() { if (_updateMarkersRaf) return; _updateMarkersRaf = requestAnimationFrame(() => { _updateMarkersRaf = 0; _updateMarkersCore(); }); }
     // Synchronous version for processAircraftData (needs immediate update after new data)
     function updateMarkersSync() { if (_updateMarkersRaf) { cancelAnimationFrame(_updateMarkersRaf); _updateMarkersRaf = 0; } _updateMarkersCore(); }
 
-    function createMarker(ac) { const marker = L.marker([ac.lat, ac.lon], { icon: createIcon(ac), zIndexOffset: getZIndex(ac) }); marker.on('click', e => { L.DomEvent.stopPropagation(e); if (e.originalEvent?.ctrlKey || e.originalEvent?.metaKey) { if (!multiSelect.enabled) { multiSelect.enabled = true; document.getElementById('multiSelectBtn')?.classList.add('active'); document.body.classList.add('multi-select-mode'); multiSelect.showToolbar(); toast('Multi-select ON - Ctrl+click to select more'); } multiSelect.toggleSelection(ac.hex); return; } selectAircraft(ac.hex); }); marker.addTo(map); markers[ac.hex] = marker; }
+    function isPriorityAircraft(ac) { return ac?.hex === selectedHex || !!(ac?.isVIP || ac?.interesting || ac?.militaryInfo || ac?.piaInfo); }
+    function handleAircraftSelection(hex, event) {
+        if (event?.originalEvent?.ctrlKey || event?.originalEvent?.metaKey) {
+            if (!multiSelect.enabled) {
+                multiSelect.enabled = true;
+                document.getElementById('multiSelectBtn')?.classList.add('active');
+                document.body.classList.add('multi-select-mode');
+                multiSelect.showToolbar();
+                toast('Multi-select ON - Ctrl+click to select more');
+            }
+            multiSelect.toggleSelection(hex);
+            return;
+        }
+        selectAircraft(hex);
+    }
+    function createMarker(ac) { const marker = L.marker([ac.lat, ac.lon], { icon: createIcon(ac), zIndexOffset: getZIndex(ac) }); marker.on('click', e => { L.DomEvent.stopPropagation(e); handleAircraftSelection(ac.hex, e); }); marker.addTo(map); markers[ac.hex] = marker; }
     function updateMarker(ac) { const marker = markers[ac.hex]; if (!marker) return; const hash = _iconHash(ac); const cached = _iconCache[ac.hex]; const iconChanged = !cached || cached.hash !== hash; const pos = marker.getLatLng(); if (Math.abs(pos.lat - ac.lat) + Math.abs(pos.lng - ac.lon) < 0.00001) { if (iconChanged) { marker.setIcon(createIcon(ac)); marker.setZIndexOffset(getZIndex(ac)); } return; } aircraftAnimation[ac.hex] = { startLat: pos.lat, startLon: pos.lng, targetLat: ac.lat, targetLon: ac.lon, startTime: performance.now(), duration: CONFIG.refreshInterval * 0.95 }; if (iconChanged) { marker.setIcon(createIcon(ac)); marker.setZIndexOffset(getZIndex(ac)); } if (!animationRunning) { animationRunning = true; requestAnimationFrame(animateAircraft); } }
     function animateAircraft(ts) { let active = false; Object.entries(aircraftAnimation).forEach(([hex, a]) => { const m = markers[hex]; if (!m) { delete aircraftAnimation[hex]; return; } const p = Math.min((ts - a.startTime) / a.duration, 1); if (p < 1) { active = true; const lat = a.startLat + (a.targetLat - a.startLat) * p, lon = a.startLon + (a.targetLon - a.startLon) * p; m.setLatLng([lat, lon]); if (hex === selectedHex && trailLine?._lastSegment) { const ll = trailLine._lastSegment.getLatLngs(); if (ll.length) { ll[ll.length - 1] = L.latLng(lat, lon); trailLine._lastSegment.setLatLngs(ll); } } } else { m.setLatLng([a.targetLat, a.targetLon]); delete aircraftAnimation[hex]; } }); if (active) requestAnimationFrame(animateAircraft); else animationRunning = false; }
     function getAltitudeCSSFilter(alt, selected) {
