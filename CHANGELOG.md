@@ -14,6 +14,9 @@ All notable changes to SkyTrack will be documented in this file.
 - **GPU traffic rendering.** Added an opt-in WebGL point-sprite layer that
   replaces ordinary map markers at 800+ aircraft while retaining filters and
   click-to-select behavior, with the existing renderer as the fallback.
+- **Offline demo kiosk.** Added a deterministic 24-hour continental replay at
+  `?demo=1` (or Tools → Offline Demo), with synthetic data clearly labeled and
+  all live source checks bypassed while the mode is active.
 - **Storytelling and local analysis tools.** Added plain-English METAR and
   ATC phrase explanations, an alert event ticker, pattern-work detection,
   Flight-of-the-Day cards, printable aircraft dossiers, and annotated trail

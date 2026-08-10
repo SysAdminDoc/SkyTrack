@@ -2845,6 +2845,7 @@
     };
     async function loadAircraft() {
         if(!map)return; // Guard: map not yet initialized
+        if (typeof demoMode !== 'undefined' && demoMode.enabled) { demoMode.tick(); return; }
         if (!tabLeader.isLeader) { await tabLeader.syncFromStore(); return; }
         if(gridFetch.inProgress){if(gridFetch.abortController)gridFetch.abortController.abort();return;}
         if(Date.now()-lastFetchTime<2000)return;

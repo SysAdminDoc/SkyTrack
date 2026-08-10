@@ -114,6 +114,7 @@
         },
         
         async checkConnection() {
+            if (typeof demoMode !== 'undefined' && demoMode.enabled) return;
             try {
                 const response = await fetchWithProxy('https://api.adsb.one/v2/point/0/0/1', {}, true);
 
@@ -281,10 +282,11 @@
         
         init() {
             this.healthCheckInterval = setInterval(() => this.checkAllSources(), 60000);
-            setTimeout(() => this.checkAllSources(), 5000);
+            if (!(typeof demoMode !== 'undefined' && demoMode.enabled)) setTimeout(() => this.checkAllSources(), 5000);
         },
         
         async checkAllSources() {
+            if (typeof demoMode !== 'undefined' && demoMode.enabled) return;
             for (const source of this.sources) {
                 // On GitHub Pages, cors:false sources can't be direct-tested — let actual fetches determine health
                 if (source.cors === false && location.hostname.includes('github.io')) { source.status = 'degraded'; source.latency = 9999; continue; }

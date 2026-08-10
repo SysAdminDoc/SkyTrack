@@ -1317,6 +1317,24 @@
         body.widget-mode #map {
             inset: 0 !important;
         }
+        body.demo-mode::before {
+            content: 'OFFLINE DEMO · 24H CONTINENTAL REPLAY';
+            position: fixed;
+            top: 0;
+            left: 50%;
+            z-index: 3100;
+            transform: translateX(-50%);
+            padding: 5px 14px;
+            border-radius: 0 0 10px 10px;
+            background: #0f766e;
+            color: #ecfeff;
+            font: 700 10px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+            letter-spacing: 0.08em;
+            pointer-events: none;
+        }
+        body.demo-mode .data-source-indicator .source-name {
+            color: #5eead4;
+        }
         @media (max-width: 480px) {
             .nearest-widget {
                 top: 8px;
@@ -3718,6 +3736,7 @@ if ('serviceWorker' in navigator) {
                 <div class="hv2-item" data-btn="gamepadBtn"><div class="hv2-item-icon"><button class="header-btn" id="gamepadBtn" title="Gamepad camera" aria-label="Toggle gamepad camera control"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9h12a4 4 0 0 1 3.8 5.2l-1.1 3.6a2.5 2.5 0 0 1-4.6.4l-1.1-2.2H9l-1.1 2.2a2.5 2.5 0 0 1-4.6-.4l-1.1-3.6A4 4 0 0 1 6 9z"/><path d="M7 12v4M5 14h4M16 13h.01M19 15h.01"/></svg></button></div><div class="hv2-item-label">Gamepad Camera</div></div>
                 <div class="hv2-item" data-btn="streamerBtn"><div class="hv2-item-icon"><button class="header-btn" id="streamerBtn" title="Streamer overlay" aria-label="Toggle chroma-key streamer overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 15l3-3 2 2 3-4 3 5"/><circle cx="8" cy="8" r="1"/></svg></button></div><div class="hv2-item-label">Streamer Overlay</div></div>
                 <div class="hv2-item" data-btn="webglMarkersBtn"><div class="hv2-item-icon"><button class="header-btn" id="webglMarkersBtn" title="GPU marker layer" aria-label="Toggle GPU aircraft marker layer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M8 9h.01M12 9h.01M16 9h.01M8 14h.01M12 14h.01M16 14h.01" stroke-width="3"/></svg></button></div><div class="hv2-item-label">GPU Markers</div></div>
+                <div class="hv2-item" data-btn="demoModeBtn"><div class="hv2-item-icon"><button class="header-btn" id="demoModeBtn" title="Offline demo kiosk" aria-label="Toggle self-contained offline demo kiosk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h10M7 13h5M16 13h.01"/><path d="M8 3v2M16 3v2"/></svg></button></div><div class="hv2-item-label">Offline Demo</div></div>
                 <div class="hv2-item" data-btn="cpaBtn"><div class="hv2-item-icon"><button class="header-btn active" id="cpaBtn" title="Toggle closest point of approach warnings" aria-label="Toggle CPA conflict warnings" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><path d="M9 12h6" stroke-dasharray="2 2"/><path d="M12 4v4m0 8v4"/></svg></button></div><div class="hv2-item-label">CPA Warnings</div></div>
                 <div class="hv2-item" data-btn="multiSelectBtn"><div class="hv2-item-icon"><button class="header-btn" id="multiSelectBtn" title="Multi-Select" aria-label="Multi-Select Mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button></div><div class="hv2-item-label">Multi-Select</div></div>
             <div class="hv2-item" data-btn="geofenceBtn"><div class="hv2-item-icon"><button class="header-btn" id="geofenceBtn" title="Geofence" aria-label="Open Geofencing Tools" aria-expanded="false" aria-controls="geofenceList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><circle cx="12" cy="12" r="3"/></svg></button></div><div class="hv2-item-label">Geofencing</div></div>
@@ -5365,6 +5384,7 @@ if ('serviceWorker' in navigator) {
         },
         
         async checkConnection() {
+            if (typeof demoMode !== 'undefined' && demoMode.enabled) return;
             try {
                 const response = await fetchWithProxy('https://api.adsb.one/v2/point/0/0/1', {}, true);
 
@@ -5532,10 +5552,11 @@ if ('serviceWorker' in navigator) {
         
         init() {
             this.healthCheckInterval = setInterval(() => this.checkAllSources(), 60000);
-            setTimeout(() => this.checkAllSources(), 5000);
+            if (!(typeof demoMode !== 'undefined' && demoMode.enabled)) setTimeout(() => this.checkAllSources(), 5000);
         },
         
         async checkAllSources() {
+            if (typeof demoMode !== 'undefined' && demoMode.enabled) return;
             for (const source of this.sources) {
                 // On GitHub Pages, cors:false sources can't be direct-tested — let actual fetches determine health
                 if (source.cors === false && location.hostname.includes('github.io')) { source.status = 'degraded'; source.latency = 9999; continue; }
@@ -14607,6 +14628,104 @@ if ('serviceWorker' in navigator) {
         document.addEventListener('skytrack:map-ready', event => webglMarkerLayer.init(event.detail?.map), { once: true });
         document.getElementById('webglMarkersBtn')?.addEventListener('click', () => webglMarkerLayer.toggle());
     }
+    // ─── module: modules/A39-offline-demo.js ───────────────────────────────────────────
+    // ============ OFFLINE CONTINENTAL DEMO / KIOSK MODE ============
+    // The demo bundle is deterministic so the generated single-file build
+    // remains self-contained and produces the same 24-hour replay on every
+    // device. It is intentionally synthetic and clearly labeled as such.
+    const DEMO_FRAME_COUNT = 96;
+    const DEMO_AIRCRAFT_COUNT = 900;
+
+    function demoFrameAt(frameIndex, count = DEMO_AIRCRAFT_COUNT) {
+        const frame = ((Number(frameIndex) || 0) % DEMO_FRAME_COUNT + DEMO_FRAME_COUNT) % DEMO_FRAME_COUNT;
+        const phase = frame / DEMO_FRAME_COUNT;
+        const aircraft = [];
+        for (let i = 0; i < Math.max(1, Math.floor(Number(count) || 1)); i++) {
+            const lane = i % 18;
+            const route = i % 6;
+            const direction = route % 2 ? -1 : 1;
+            const progress = (i * 0.037 + phase * direction + route * 0.11) % 1;
+            const wobble = Math.sin((i + 1) * 0.71 + frame * 0.08) * 0.7;
+            const lat = 35 + lane * 1.45 + Math.sin(progress * Math.PI * 2 + route) * 3.2 + wobble;
+            const lon = -10 + progress * 58 + Math.sin(i * 0.17 + route) * 2.2;
+            const altitude = 4000 + ((i * 173 + frame * 611) % 36000);
+            const track = direction > 0 ? 65 + route * 12 : 245 + route * 9;
+            const type = i % 29 === 0 ? 'B738' : i % 17 === 0 ? 'A359' : i % 13 === 0 ? 'B77W' : 'A320';
+            aircraft.push({
+                hex: 'D' + String(i).padStart(5, '0'),
+                flight: 'DEMO' + String(100 + i).slice(-3),
+                lat: Math.max(30, Math.min(65, lat)),
+                lon: Math.max(-15, Math.min(65, lon)),
+                alt_baro: altitude,
+                gs: 390 + (i % 80),
+                track,
+                category: 'A' + (i % 4),
+                t: type,
+                from: ['EGLL', 'LFPG', 'EDDF', 'EHAM', 'LEMD', 'LIRF'][route],
+                to: ['UUEE', 'LOWW', 'LSZH', 'EKCH', 'LPPT', 'GCTS'][(route + 2) % 6]
+            });
+        }
+        return aircraft;
+    }
+
+    const demoMode = {
+        enabled: false,
+        frame: 0,
+        timer: null,
+        map: null,
+        intervalMs: 6000,
+        init(map) {
+            this.map = map;
+            document.getElementById('demoModeBtn')?.addEventListener('click', () => this.toggle());
+            if (new URLSearchParams(location.search).get('demo') === '1') this.start();
+        },
+        toggle() { return this.enabled ? this.stop() : this.start(); },
+        start() {
+            if (!this.map) { if (typeof toast === 'function') toast('Demo mode is waiting for the map', 'warning'); return false; }
+            this.enabled = true;
+            this.frame = 0;
+            document.body.classList.add('demo-mode');
+            document.getElementById('demoModeBtn')?.classList.add('active');
+            this.map.setView([50, 10], 5, { animate: false });
+            this._clearAircraft();
+            this.tick();
+            if (this.timer) clearInterval(this.timer);
+            this.timer = setInterval(() => this.tick(), this.intervalMs);
+            if (typeof toast === 'function') toast('Offline demo ON · 24-hour continental replay');
+            return true;
+        },
+        stop() {
+            this.enabled = false;
+            if (this.timer) clearInterval(this.timer);
+            this.timer = null;
+            document.body.classList.remove('demo-mode');
+            document.getElementById('demoModeBtn')?.classList.remove('active');
+            this._clearAircraft();
+            if (typeof updateMarkersSync === 'function') updateMarkersSync();
+            if (typeof loadAircraft === 'function') loadAircraft();
+            if (typeof toast === 'function') toast('Offline demo OFF · live sources resumed');
+            return false;
+        },
+        tick() {
+            if (!this.enabled || typeof processAircraftData !== 'function') return;
+            processAircraftData(demoFrameAt(this.frame));
+            this.frame = (this.frame + 1) % DEMO_FRAME_COUNT;
+            const source = document.getElementById('dataSource');
+            if (source) source.textContent = 'Offline Demo · T+' + String(Math.floor(this.frame / 4)).padStart(2, '0') + ':00 · 900 synthetic aircraft';
+        },
+        _clearAircraft() {
+            if (typeof aircraftCache === 'undefined') return;
+            Object.keys(markers || {}).forEach(hex => {
+                try { if (markers[hex] && this.map) this.map.removeLayer(markers[hex]); } catch (_) {}
+                delete markers[hex];
+            });
+            Object.keys(aircraftCache).forEach(hex => delete aircraftCache[hex]);
+        }
+    };
+
+    if (typeof document !== 'undefined') {
+        document.addEventListener('skytrack:map-ready', event => demoMode.init(event.detail?.map), { once: true });
+    }
     // ─── module: modules/A4-oceanic-firs.js ───────────────────────────────────────────
 
     // ============ OCEANIC FIR OVERLAY ============
@@ -18140,6 +18259,7 @@ if ('serviceWorker' in navigator) {
     };
     async function loadAircraft() {
         if(!map)return; // Guard: map not yet initialized
+        if (typeof demoMode !== 'undefined' && demoMode.enabled) { demoMode.tick(); return; }
         if (!tabLeader.isLeader) { await tabLeader.syncFromStore(); return; }
         if(gridFetch.inProgress){if(gridFetch.abortController)gridFetch.abortController.abort();return;}
         if(Date.now()-lastFetchTime<2000)return;

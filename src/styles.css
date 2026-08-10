@@ -1269,6 +1269,24 @@
         body.widget-mode #map {
             inset: 0 !important;
         }
+        body.demo-mode::before {
+            content: 'OFFLINE DEMO · 24H CONTINENTAL REPLAY';
+            position: fixed;
+            top: 0;
+            left: 50%;
+            z-index: 3100;
+            transform: translateX(-50%);
+            padding: 5px 14px;
+            border-radius: 0 0 10px 10px;
+            background: #0f766e;
+            color: #ecfeff;
+            font: 700 10px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+            letter-spacing: 0.08em;
+            pointer-events: none;
+        }
+        body.demo-mode .data-source-indicator .source-name {
+            color: #5eead4;
+        }
         @media (max-width: 480px) {
             .nearest-widget {
                 top: 8px;
