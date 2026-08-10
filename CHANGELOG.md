@@ -624,3 +624,343 @@ and all 14 modules pass `node --check`.
 - Fix crash when saved map style is invalid
 - Change default map to Google Hybrid
 - Port VIPTrack mobile optimizations to SkyTrack
+
+## Roadmap archive — 2026-08-10 — ROADMAP.md
+
+<details>
+<summary>Original roadmap snapshot</summary>
+
+```markdown
+# SkyTrack Roadmap
+
+Living roadmap of what's shipped, what's next, and what's on the bench.
+Updated 2026-04-17 (v0.18.0).
+
+Contents:
+1. [Shipped — v0.18.0](#shipped--v0180)
+2. [Tier 1 — Next (high ROI, low-to-medium effort)](#tier-1--next-high-roi-low-to-medium-effort)
+3. [Tier 2 — Candidate features](#tier-2--candidate-features)
+4. [Tier 3 — Bigger bets](#tier-3--bigger-bets)
+5. [Explicitly not doing](#explicitly-not-doing)
+6. [Data sources — live & verified](#data-sources--live--verified-2026-04)
+7. [Data sources — verified dead / do-not-integrate](#data-sources--verified-dead--do-not-integrate)
+
+---
+
+## Shipped — v0.18.0
+
+### Core
+| Area | Feature |
+|------|---------|
+| Build | Zero-dependency single-file release (`index.html`) built from `src/` by `build.mjs` (no deps, Node stdlib only) |
+| PWA | Service-worker cache (`skytrack-v0.18.0` + `-tiles`), `beforeunload` state persist, installable manifest |
+| Offline | ServiceWorker asset cache, IndexedDB persistence via `skytrackDB`, offline mode manager, sync queue |
+| Reliability | Circuit breaker, auto-retry, error-recovery, connection monitor, `errorHandler` crash log (capped) |
+
+### Position feeds (round-robin with health-scored failover)
+- ADSB One · ADSB.lol (proxied) · ADSB.fi · Airplanes.live
+- `dataSourceManager` health-checks every 60 s and reorders by latency + error count
+- Grid-fetch tiling for viewport-wide coverage; global sweep in ~16 s
+
+### Aircraft intelligence
+- Registrations, types, callsign-prefix, alliances, airlines databases
+- `routesDB` (OpenFlights) + **adsbdb.com / hexdb.io** on-demand callsign→route fallback with cached TTL
+- Military hex ranges + plane-alert-db (mil / gov / pol / PIA / civilian interesting / Badger's Best VIP)
+- Categories DB (51 categories with color map + tooltip descriptions)
+- Preloaded aircraft-image DB (~12K URLs) feeding the photo pipeline (preloaded → self-hosted → Planespotters)
+- Aircraft-type specs (wingspan, length, range, cruise, engines, pax) from `aircraftTypeDB`
+
+### Airports
+- 49K airports (OurAirports), 11K frequencies, runways, navaids, countries/regions
+- Fast airport-coord JSON for route detection
+- Arrival / departure boards (built from live feed)
+- METAR / TAF per-airport via aviationweather.gov
+- NOTAMs per-airport
+- LiveATC link + direct FlightAware / FR24 / ADSBx external deep-links
+
+### Map & viz (2D Leaflet)
+- Multiple basemap styles; Google Hybrid default
+- Altitude-colored aircraft trails (local + API trace)
+- Aircraft clustering, traffic heatmap
+- Mini-map (picture-in-picture)
+- Distance measurement tool
+- Hardcoded Class B airspace + restricted-area circles (placeholder — upgrade planned)
+- **Animated RainViewer radar** (last 10 past + nowcast forecast frames, lower opacity for forecasts)
+
+### Map & viz (3D Cesium)
+- Full 3D Earth, terrain, atmosphere
+- Procedural GLB airplane models (runtime-generated), type-based scale (heavy / medium / GA)
+- Interpolated aircraft motion via `SampledPositionProperty`
+- 3D trails as altitude-accurate polylines
+- Click-selection parity with 2D view
+
+### Weather overlay
+- Open-Meteo wind barbs (surface + FL400)
+- **SIGMETs + G-AIRMETs + CWAs** as polygons, hazard-colored
+- **PIREPs** as cyan/red circle markers (urgent = larger red), viewport-scoped
+
+### Route & flight analysis
+- Route prediction line (heading × speed × minutes)
+- Great-circle origin→destination arc
+- Origin detection from low-altitude trail points
+- Destination inference from airline + origin via routes DB
+- Route API fallback (adsbdb / hexdb) for missing callsigns
+- Live altitude chart (climb/descent phases)
+- Flight progress bar (flown / remaining / ETA)
+
+### Alerting & watch
+- Watchlist with real-time hex/registration alerts
+- Military proximity alerts (user geolocation-gated, `watchPosition`, no unsolicited prompts)
+- Emergency squawk detection (7500 / 7600 / 7700)
+- Per-type alert cooldowns, in-app + browser notifications, audio alerts
+- Notification center with persisted history, XSS-hardened
+- Geofence zones with in-browser drawing
+- Bookmarks (locations)
+
+### Search & comparison
+- Search by hex / reg / callsign / type / airline / airport, with history
+- Multi-select (Ctrl+click), side-by-side comparison panel
+- Advanced filter whitelist (URL-shareable, clamped lat/lon/zoom)
+
+### Playback & export
+- Historical playback with scrubber, play/pause, speed
+- Time Machine (past position browse)
+- Trail export: KML, GPX, GeoJSON, CSV (XML-escaped, filename-sanitized)
+- URL deep-linking: `?hex=A12345&lat=...&lon=...&zoom=...&filter=all`
+- Share link generator
+- Screenshot + screen-recording capture
+
+### UI
+- Themes: Dark / Midnight / Light / High-Contrast / Color-blind
+- Dashboard layout manager (Default / Minimal / Analyst presets)
+- Mobile optimized (touch, swipe, responsive sheets)
+- Compact mode
+- Keyboard shortcuts (press `?` to list)
+
+---
+
+## Tier 1 — Next (high ROI, low-to-medium effort)
+
+### Data / overlays
+| # | Feature | Source | Effort | Rationale |
+|---|---------|--------|--------|-----------|
+
+### UX / viz
+| # | Feature | Effort | Rationale |
+|---|---------|--------|-----------|
+
+### Analytics
+| # | Feature | Effort | Rationale |
+|---|---------|--------|-----------|
+
+### Hardening & platform (round-2 research)
+| # | Feature | Effort | Rationale |
+|---|---------|--------|-----------|
+
+---
+
+## Tier 2 — Candidate features
+
+### Data
+
+### UX
+
+### Analytics
+
+### Storytelling & content creation
+
+### Audio & voice
+
+### Integrations
+
+### Ambient & dashboard modes
+
+---
+
+## Tier 3 — Bigger bets
+
+
+---
+
+## Signature / "wow-factor" candidates
+
+These are the top-ranked differentiating features from round-2 research — each scored high on novelty × implementability × user demand. They cluster here rather than under Tier 1/2 so they can be picked up as **signature projects** when we want to ship something shareable rather than grind through incremental tier work.
+
+| Feature | Why it stands out |
+|---------|------|
+
+---
+
+## Explicitly not doing
+
+Marked with **why** so this doesn't get re-litigated:
+
+| Rejected | Why |
+|----------|-----|
+| **OpenSky `/states/all`** browser-direct | CORS-locked to `https://opensky-network.org` only. Only viable via proxy. |
+| **FAA registry (`registry.faa.gov/.../ReleasableAircraft.zip`)** | Akamai 403 on cross-origin. Must mirror; plane-alert-db and tar1090-db already contain FAA-derived data. |
+| **FR24 `data-live.flightradar24.com/zones/fcgi/feed.js`** | Deprecated redirect since late 2024 + Cloudflare challenge. |
+| **FlightAware public ajax endpoints** | Cloudflare-gated; no unauth JSON surface. |
+| **GeoFS / VirtualSkies public ADS-B feed** | No public ADS-B surface exposed. GeoFS multiplayer feed is sim players — toggle possible but novelty only. |
+| **Airframes.org / airnav.com / airliners.net APIs** | HTML-only, CORS-blocked, or hotlink-protected. Planespotters already covers photo lookups. |
+| **ICAO DATA+ / EuroControl B2B / FlightAware AeroAPI paid tiers** | Paywalled — out of scope for a zero-dep client-only app. |
+| **Adsb.lol `/v2/hex/{icao}/archive` historical replay** | Removed Q2 2025 for storage cost reasons. Use OpenSky `/tracks/all` instead. |
+| **Backend server / user accounts** | Project identity is "single HTML file, GitHub Pages." If a feature needs a server, it belongs in a different project. |
+| **Tests** | Explicit scope choice (per CLAUDE.md). |
+| **Dynamic Open Graph images per aircraft** | Needs SSR / Cloudflare-Worker backend. Static OG tags only. |
+| **Hosted RSS/Atom feed of alerts** | Needs a backend. Could ship as File System Access API → local serve, but niche. |
+| **Discord Rich Presence** | Needs native helper (web cannot talk to the Discord RPC named pipe). |
+| **VATSIM / IVAO overlay** (re-evaluated) | Still requires WebSocket client with authenticated tier; not zero-dep friendly. Deferred to Tier 3. |
+| **sitemap.xml** | Aircraft/airport data isn't crawlable content, it's just filter state. No SEO value. |
+| **SharedArrayBuffer / COOP-COEP threading** | GitHub Pages does not send the required COOP/COEP headers. Worker + transferable `ArrayBuffer` is the right tool instead. |
+| **In-repo stdlib-only JS minifier** | No safe stdlib path exists for 12k-line minification. Only real option is vendoring `terser` at build time, which violates the zero-devDep principle. Ship pre-gzipped `index.html.gz` instead if transfer size becomes a concern. |
+| **Protobuf / FlatBuffers for bundled DBs** | Overkill for a one-shot 34 MB download that's IDB-cached after first parse. |
+| **VR / WebXR Cesium mode** | Cesium WebXR is experimental, headset users are a rounding error, and the weight budget matters. |
+| **n2yo.com / OpenSky `/states/all` / FR24 `feed.js` / FlightAware ajax** | CORS-locked, paywalled, or deprecated. See "Data sources — verified dead" below. |
+
+---
+
+## Data sources — live & verified (2026-04)
+
+### Position feeds
+| Source | Endpoint | CORS | Notes |
+|--------|----------|------|-------|
+| ADSB One | `api.adsb.one/v2/point/{lat}/{lon}/{r}` | ❌ (proxy) | In use |
+| ADSB.lol | `api.adsb.lol/v2/point/{lat}/{lon}/{r}` | ❌ (proxy) | In use |
+| ADSB.fi | `opendata.adsb.fi/api/v2/lat/{lat}/lon/{lon}/dist/{r}` | ✅ | In use (v0.18.0) |
+| Airplanes.live | `api.airplanes.live/v2/point/{lat}/{lon}/{r}` | ✅ | In use |
+| theairtraffic.com | `api.theairtraffic.com/v1/...` | ✅ | 2025 entrant, candidate |
+
+### Enrichment & lookup
+| Source | Endpoint | CORS | Notes |
+|--------|----------|------|-------|
+| adsbdb.com v2 | `api.adsbdb.com/v2/callsign/{cs}` · `/aircraft/{hex}` | ✅ | In use for route fallback |
+| hexdb.io | `hexdb.io/api/v1/{aircraft,airport,route}/...` | ✅ | In use as secondary fallback |
+| Planespotters | `api.planespotters.net/pub/photos/hex/{hex}` | ✅ | In use for photos |
+| Wikipedia REST | `en.wikipedia.org/api/rest_v1/page/summary/{title}` | ✅ | In use for airport summaries |
+
+### Weather & hazards
+| Source | Endpoint | CORS | Notes |
+|--------|----------|------|-------|
+| AviationWeather.gov | `/api/data/{metar,taf,isigmet,gairmet,cwa,pirep,notam}` | ✅ | In use |
+| Open-Meteo | `api.open-meteo.com/v1/forecast?...` | ✅ | Wind barbs |
+| RainViewer | `api.rainviewer.com/public/weather-maps.json` | ✅ | Animated radar (v0.18.0) |
+| NIFC active fires | `services3.arcgis.com/.../WFIGS_Incident_Locations_Current/FeatureServer/0/query?f=geojson` | ✅ | Tier 1 candidate |
+| NHC hurricane | `nhc.noaa.gov/gis/CurrentStorms.json` | ✅ | Tier 1 candidate |
+| BirdCast | `birdcast.info/assets/...` tiles | ✅ | Tier 2 candidate |
+
+### Airspace & navigation
+| Source | Endpoint | CORS | Notes |
+|--------|----------|------|-------|
+| OpenAIP core v2 | `api.core.openaip.net/api/{airspaces,navaids,obstacles,hotspots,reporting-points}?bbox=...` | ✅ (API key) | Tier 1 — replace hardcoded Class B circles |
+| FAA ARTCC / airways | `adds-faa.opendata.arcgis.com/datasets/faa::{artcc-boundaries,low/high-altitude-airways}.geojson` | ✅ | Tier 1 |
+| mwgg/FIRs | GitHub raw `fir-boundaries.geojson` | ✅ | Tier 1 (oceanic) |
+
+### Satellites
+| Source | Endpoint | CORS | Notes |
+|--------|----------|------|-------|
+| CelesTrak | `celestrak.org/NORAD/elements/gp.php?GROUP={stations,starlink}&FORMAT=json` | ✅ | Tier 1 (3D only) |
+
+### Historical
+| Source | Endpoint | CORS | Notes |
+|--------|----------|------|-------|
+| OpenSky v2 REST | `opensky-network.org/api/tracks/all?icao24=...&time=...` (OAuth2) | ✅ | Tier 1 — replaces dead adsb.lol archive |
+
+### Non-aviation overlays (candidate)
+| Source | Endpoint | CORS | Notes |
+|--------|----------|------|-------|
+| AISStream.io | `wss://stream.aisstream.io/v0/stream` (free key) | ✅ (WebSocket) | Tier 2 — marine AIS toggle |
+| OpenSeaMap | `tiles.openseamap.org/seamark/{z}/{x}/{y}.png` | ✅ | Tier 2 — nav-aids tile overlay |
+| BirdCast | `birdcast.info/assets/…` tiles | ✅ | Tier 2 — spring/fall migration intensity |
+| GeoFS multiplayer | `mps.geo-fs.com/map` | ✅ | Novelty-only toggle — sim players, not real traffic |
+
+---
+
+## Data sources — verified dead / do-not-integrate
+
+See the **Explicitly not doing** section above. Each rejection includes the *why* so we don't re-evaluate them on every review cycle.
+
+**Proxy status (2026-04):**
+- `api.codetabs.com` — sporadic, slow; drop from hot path
+- `corsproxy.io` — requires paid key for heavy use; drop from hot path
+- `api.allorigins.win` — rate-limited; last-resort only
+
+Since three of four position feeds are now CORS-native (ADSB One, ADSB.fi, Airplanes.live), the proxy chain can be demoted to "fallback only for ADSB.lol."
+
+---
+
+## Ground rules for picking what to build next
+
+1. **Zero-dependency, single-file discipline.** If it needs npm, a build step, or a server, it's in Tier 3 or rejected.
+2. **Every new feature has a kill switch.** Toggle in settings or the feature button fails soft.
+3. **Every new data source fails quietly.** Primary → fallback → empty. No broken UI when a third-party is down.
+4. **No telemetry, no accounts, no tracking.** User data stays in `localStorage` / IndexedDB on their device.
+5. **Dark theme is the default.** New UI must look good in Midnight before anywhere else.
+6. **Version bump on every ship.** `package.json`, title-bar span, SW `CACHE_NAME`, README badge all move together.
+
+## Open-Source Research (Round 2)
+
+### Related OSS Projects
+- **FlightAirMap (Ysurac)** — https://github.com/Ysurac/FlightAirMap — AGPLv3 PHP/JS; 2D/3D maps, SBS1/VRS/VATSIM/IVAO/APRS/AIS sources, statistics, per-aircraft/airline/airport drilldowns
+- **readsb** — https://github.com/wiedehopf/readsb — Mode-S/ADSB decoder with TypeScript + Leaflet + IndexedDB frontend
+- **tar1090** — https://github.com/wiedehopf/tar1090 — hugely-popular dump1090 web frontend; feature-rich map UI
+- **dump1090-fa (FlightAware)** — https://github.com/flightaware/dump1090 — canonical ADSB decoder with web viewer
+- **Thom-x/docker-fr24feed-piaware-dump1090** — https://github.com/Thom-x/docker-fr24feed-piaware-dump1090 — all-in-one multi-feeder Docker image
+- **ketilmo/balena-ads-b** — https://github.com/ketilmo/balena-ads-b — 15+ feed targets (FlightAware, FR24, OpenSky, adsb.fi, airplanes.live, Wingbits…); reference for multi-feeder config UX
+- **awesome-adsb (rickstaa)** — https://github.com/rickstaa/awesome-adsb — curated index; tile sources, registration DBs, historical feeds
+- **OpenSky Network API** — https://github.com/openskynetwork/opensky-api — free-tier global ADS-B feed; good public fallback when local SDR not available
+
+### Features to Borrow
+- Multi-source fusion: OpenSky + local dump1090 + adsb.fi + VATSIM/IVAO overlay toggles (FlightAirMap, balena-ads-b)
+- Aircraft detail panel with registration, operator, type, photos from Planespotters.net + history from ADSBExchange (awesome-adsb indexes)
+- 3D globe mode with altitude extrusion using Cesium (you already have Cesium — add flight-path extrusion and time-scrubber) (FlightAirMap 3D)
+- Alert rules: notify when a specific tail/callsign/ICAO is within N nm of a point or at altitude < X (community pattern)
+- Emergency-squawk-code highlight (7500/7600/7700) with audio chime (tar1090 feature)
+- Dark-mode basemap swap + optional MRMS radar overlay for weather-vs-flight correlation (FlightAirMap)
+- Per-flight trail coloring by altitude, speed, or climb rate with legend (tar1090)
+- "Playback" mode that replays last N minutes using IndexedDB ring buffer (readsb already does this)
+- SBS1-over-network input so power users can point SkyTrack at their Pi's 30003 port (FlightAirMap, tar1090)
+- VATSIM/IVAO pilot overlay with distinct icon and "sim" badge (FlightAirMap)
+- "Feed back" mode: if SkyTrack has a local receiver, opt-in to forward to adsb.fi/airplanes.live/adsbhub for community benefit (balena-ads-b)
+
+### Patterns & Architectures Worth Studying
+- IndexedDB ring buffer for N-minute history without hammering memory (readsb) — 1 row per aircraft per tick, auto-expire
+- Source plugin pattern: each feed type (SBS1/JSON/API/VATSIM) implements a normalize() to a common AircraftState schema (FlightAirMap)
+- Tile-server abstraction: user can swap OSM/Carto/MapTiler/Stadia keys without code changes (tar1090, FlightAirMap)
+- Multi-feeder container: one decoder, fan-out to many upstreams via standard formats (balena-ads-b, Thom-x docker)
+- Offline-first mode where the browser drives everything from IndexedDB while the network tab shows "waiting for SBS1…" (readsb)
+
+## Implementation Deep Dive (Round 3)
+
+### Reference Implementations to Study
+- **Ycarus/FlightAirMap** — https://github.com/Ycarus/FlightAirMap — mature open-source 2D+3D flight tracker; ingests ADS-B SBS1 (dump1090), VRS, VATSIM, ACARS; use as the gold reference for multi-source ingestion architecture.
+- **srothst1/cesium_flight_tracker** — https://github.com/srothst1/cesium_flight_tracker — quick-start CesiumJS flight tracker; good minimal reference for entity creation + interpolation.
+- **itanand/Flight-Tracker-with-CesiumJs** — https://github.com/itanand/Flight-Tracker-with-CesiumJs — Cesium Ion + 3D aircraft models (glTF); how to load binary glTF and orient by heading.
+- **WilliamAvHolmberg/cesium-flight-simulator** — https://github.com/WilliamAvHolmberg/cesium-flight-simulator — camera control patterns for following an entity in Cesium; useful for our "follow aircraft" mode.
+- **CesiumJS official repo** — https://github.com/CesiumGS/cesium — sandcastle examples for `SampledPositionProperty` + `CallbackProperty` interpolation (the right way to do smooth motion between ADS-B updates ~1Hz).
+- **OpenSky Network API** — https://openskynetwork.github.io/opensky-api/ — free live ADS-B feed; rate-limited, requires fallback to paid feeds (ADSBExchange, FlightAware Firehose) for production.
+- **RadrView** (weather overlay pattern) — https://github.com/cwdaniel/RadrView — WebSocket push for real-time frame notifications; pattern we'd reuse if we add NEXRAD overlay.
+- **rainviewer-api-example** — https://github.com/rainviewer/rainviewer-api-example — animated radar overlay on Leaflet/Mapbox; directly reusable for weather layer.
+
+### Known Pitfalls from Similar Projects
+- **ADS-B update rate is 1Hz, not 60Hz** — naive `entity.position = newPos` creates jerky animation; use `SampledPositionProperty` with `InterpolationAlgorithm.LAGRANGE` for smooth paths. Ref: CesiumJS sandcastle `Interpolation`.
+- **Entity count scaling** — 5K+ live aircraft tanks Cesium's picking; use `PointPrimitiveCollection` for dots and swap to full glTF model only when camera is close. See FlightAirMap perf threads.
+- **OpenSky rate limits** — 400 anonymous credits, 4000 w/ account; implement client-side cache + gracefully degrade to lower refresh rate on throttling.
+- **Coordinate system gotchas** — ADS-B gives WGS84 lat/lon/alt; Cesium wants radians or `Cartesian3.fromDegrees`. Document unit everywhere in code.
+- **Heading != course** — ADS-B `track` field is ground course, not aircraft heading (magnetic). For 3D model orientation this is "good enough" in still air; document the approximation.
+- **Terrain clipping** — aircraft at low altitude can render below Cesium terrain with default `heightReference`; use `HeightReference.NONE` + clamp-to-height only on ground trail.
+- **WebGL2 required for Cesium 1.100+** — older mobile GPUs fall back and fail silently; detect `WEBGL_CONTEXT_VERSION` up front.
+- **Tile cache eviction** — Cesium's default tile cache grows unbounded in long sessions; set `TileProviderCollection.maximumCacheSize` on each imagery layer.
+
+### Library Integration Checklist
+- **cesium** pin `>=1.120`; entrypoint `new Viewer("container", { terrain: Terrain.fromWorldTerrain() })`; gotcha: requires `CESIUM_BASE_URL` set + static assets copied to public — Vite plugin helps.
+- **@cesium/vite-plugin** or manual `vite-plugin-static-copy` for Cesium assets; gotcha: 45MB asset copy — exclude from dev HMR.
+- **leaflet** pin `>=1.9.4`; entrypoint `L.map`; gotcha: for dual 2D/3D UI, keep separate DOM containers and sync viewstate via shared store.
+- **rainviewer-api** (if weather) — free, public; entrypoint `https://api.rainviewer.com/public/weather-maps.json`; gotcha: URL format changed in v2 — check for `host` field.
+- **opensky-network client** — no official package; entrypoint `GET /api/states/all`; gotcha: auth via HTTP Basic; respect 5-10s polling floor.
+- **socket.io / native WebSocket** for push updates; entrypoint native `WebSocket`; gotcha: reconnect/backoff exponential + jitter to avoid thundering herds after upstream hiccups.
+- **glTF aircraft models** — CesiumJS has free FA18 / 707 in sandcastle; licensed commercial models via Cesium ion; gotcha: check license before shipping.
+- **Turf.js** pin `>=7.x` (if we do great-circle paths or waypoint calc); entrypoint `turf.greatCircle`; gotcha: returns GeoJSON, convert to Cesium positions.
+```
+
+</details>
