@@ -12,6 +12,65 @@
     // refresh cycle; no extra network traffic. Ticks are registered via
     // `_setPausableInterval` when available so it naturally pauses along
     // with the rest of the app when the tab is backgrounded.
+
+    function _solarDayOfYear(date) {
+        const start = Date.UTC(date.getUTCFullYear(), 0, 0);
+        return Math.floor((date.getTime() - start) / 86400000);
+    }
+
+    // NOAA's compact solar-position approximation is accurate enough for a
+    // visual shadow marker and keeps the feature dependency-free.
+    function sunPosition(now = Date.now(), latitude = 0, longitude = 0) {
+        const date = new Date(now);
+        if (!Number.isFinite(date.getTime())) return { azimuth: 0, elevation: -90 };
+        const lat = Math.max(-90, Math.min(90, Number(latitude) || 0));
+        const lon = Math.max(-180, Math.min(180, Number(longitude) || 0));
+        const minutes = date.getUTCHours() * 60 + date.getUTCMinutes() + date.getUTCSeconds() / 60;
+        const gamma = 2 * Math.PI / 365 * (_solarDayOfYear(date) - 1 + (minutes / 60 - 12) / 24);
+        const equationOfTime = 229.18 * (0.000075 + 0.001868 * Math.cos(gamma) - 0.032077 * Math.sin(gamma) - 0.014615 * Math.cos(2 * gamma) - 0.040849 * Math.sin(2 * gamma));
+        const declination = 0.006918 - 0.399912 * Math.cos(gamma) + 0.070257 * Math.sin(gamma) - 0.006758 * Math.cos(2 * gamma) + 0.000907 * Math.sin(2 * gamma) - 0.002697 * Math.cos(3 * gamma) + 0.00148 * Math.sin(3 * gamma);
+        const trueSolarMinutes = (minutes + equationOfTime + 4 * lon) % 1440;
+        let hourAngle = trueSolarMinutes / 4 - 180;
+        if (hourAngle < -180) hourAngle += 360;
+        const latRad = lat * Math.PI / 180;
+        const hourRad = hourAngle * Math.PI / 180;
+        const cosZenith = Math.max(-1, Math.min(1, Math.sin(latRad) * Math.sin(declination) + Math.cos(latRad) * Math.cos(declination) * Math.cos(hourRad)));
+        const elevation = 90 - Math.acos(cosZenith) * 180 / Math.PI;
+        let azimuth = Math.atan2(Math.sin(hourRad), Math.cos(hourRad) * Math.sin(latRad) - Math.tan(declination) * Math.cos(latRad)) * 180 / Math.PI + 180;
+        azimuth = (azimuth + 360) % 360;
+        return { azimuth, elevation, equationOfTime, declination: declination * 180 / Math.PI };
+    }
+
+    function shadowEndpoint(aircraft = {}, solar = null, now = Date.now()) {
+        const lat = Number(aircraft.lat);
+        const lon = Number(aircraft.lon);
+        const altitudeFeet = Number(aircraft.alt_baro ?? aircraft.alt_geom);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon) || !Number.isFinite(altitudeFeet) || altitudeFeet <= 0) return null;
+        const sun = solar || sunPosition(now, lat, lon);
+        if (!sun || !Number.isFinite(sun.elevation) || sun.elevation <= 0.5) return null;
+        const rawDistanceM = altitudeFeet * 0.3048 / Math.tan(sun.elevation * Math.PI / 180);
+        if (!Number.isFinite(rawDistanceM) || rawDistanceM <= 0) return null;
+        const distanceM = Math.min(rawDistanceM, 500000);
+        const bearing = (Number(sun.azimuth) + 180) % 360;
+        const earthRadiusM = 6371008.8;
+        const angularDistance = distanceM / earthRadiusM;
+        const latRad = lat * Math.PI / 180;
+        const lonRad = lon * Math.PI / 180;
+        const bearingRad = bearing * Math.PI / 180;
+        const targetLat = Math.asin(Math.sin(latRad) * Math.cos(angularDistance) + Math.cos(latRad) * Math.sin(angularDistance) * Math.cos(bearingRad));
+        const targetLon = lonRad + Math.atan2(Math.sin(bearingRad) * Math.sin(angularDistance) * Math.cos(latRad), Math.cos(angularDistance) - Math.sin(latRad) * Math.sin(targetLat));
+        return {
+            lat: targetLat * 180 / Math.PI,
+            lon: ((targetLon * 180 / Math.PI + 540) % 360) - 180,
+            distanceM,
+            rawDistanceM,
+            bearing,
+            elevation: sun.elevation,
+            azimuth: sun.azimuth,
+            capped: distanceM !== rawDistanceM
+        };
+    }
+
     const planeOverHome = {
         _inited: false,
         enabled: false,
@@ -29,6 +88,8 @@
         lastClosestHex: null,
         _suppressNextDing: false,
         map: null,
+        shadowLine: null,
+        shadowMarker: null,
 
         // Radius cycle, in nautical miles.
         RADIUS_OPTIONS: [2, 5, 10, 20, 50],
@@ -91,6 +152,7 @@
         hide() {
             this.enabled = false;
             this._stopTicker();
+            this._clearShadow();
             if (this.containerEl) {
                 try { this.containerEl.remove(); } catch (_) {}
                 this.containerEl = null;
@@ -130,6 +192,43 @@
             this._suppressNextDing = true;
             this.save();
             if (this.enabled) this._render();
+        },
+
+        _clearShadow() {
+            if (this.map?.removeLayer) {
+                if (this.shadowLine) this.map.removeLayer(this.shadowLine);
+                if (this.shadowMarker) this.map.removeLayer(this.shadowMarker);
+            }
+            this.shadowLine = null;
+            this.shadowMarker = null;
+        },
+
+        _renderShadow(ac, now) {
+            if (!this.map || typeof L === 'undefined' || !ac || !this.home) {
+                this._clearShadow();
+                return null;
+            }
+            const solar = sunPosition(now, this.home.lat, this.home.lon);
+            const target = shadowEndpoint(ac, solar, now);
+            if (!target) {
+                this._clearShadow();
+                return null;
+            }
+            const start = [Number(ac.lat), Number(ac.lon)];
+            const end = [target.lat, target.lon];
+            if (!this.shadowLine) {
+                this.shadowLine = L.polyline([start, end], { color: '#fbbf24', weight: 2, opacity: 0.8, dashArray: '5 5', interactive: false }).addTo(this.map);
+            } else {
+                this.shadowLine.setLatLngs([start, end]);
+            }
+            if (!this.shadowMarker) {
+                this.shadowMarker = L.circleMarker(end, { radius: 5, color: '#fef08a', weight: 2, fillColor: '#f59e0b', fillOpacity: 0.9, interactive: false }).addTo(this.map);
+                this.shadowMarker.bindTooltip('', { direction: 'top', permanent: false, opacity: 0.9 });
+            } else {
+                this.shadowMarker.setLatLng(end);
+            }
+            this.shadowMarker.setTooltipContent('Shadow · ' + (target.distanceM / 1000).toFixed(1) + ' km · sun ' + Math.round(solar.elevation) + '°');
+            return { solar, target };
         },
 
         useMapCenter() {
@@ -194,6 +293,7 @@
             if (!this.containerEl) return;
             const h = this.home;
             if (!h) {
+                this._clearShadow();
                 this.containerEl.innerHTML =
                     '<div class="home-widget-header">' +
                         '<span class="home-widget-title">✈️ Over my house</span>' +
@@ -218,6 +318,7 @@
             }
             nearby.sort((a, b) => a.d - b.d);
             const now = Date.now();
+            const shadow = nearby[0] ? this._renderShadow(nearby[0].ac, now) : (this._clearShadow(), null);
             // Update recent history.
             for (const { ac, d } of nearby) {
                 const prev = this.recent.get(ac.hex);
@@ -265,6 +366,9 @@
                 rows = '<div class="home-widget-empty-row">No aircraft within ' + this.radiusNm + ' nm.</div>';
             }
             const labelTxt = h.label ? h.label : h.lat.toFixed(3) + ', ' + h.lon.toFixed(3);
+            const solar = sunPosition(now, h.lat, h.lon);
+            const sunTxt = solar.elevation > 0.5 ? 'sun ' + Math.round(solar.elevation) + '°' : 'sun below horizon';
+            const shadowTxt = shadow ? ' · shadow ' + (shadow.target.distanceM / 1000).toFixed(1) + ' km' : '';
             this.containerEl.innerHTML =
                 '<div class="home-widget-header">' +
                     '<span class="home-widget-title">✈️ Over my house</span>' +
@@ -272,7 +376,7 @@
                     '<button class="home-widget-btn ghost" data-action="set-here" title="Reset home to map center" aria-label="Reset home to map center">⌖</button>' +
                     '<button class="home-widget-x" data-action="hide" title="Hide widget" aria-label="Hide widget">×</button>' +
                 '</div>' +
-                '<div class="home-widget-sub">' + _escHtml(labelTxt) + ' · recent: ' + this.recent.size + '</div>' +
+                '<div class="home-widget-sub">' + _escHtml(labelTxt) + ' · recent: ' + this.recent.size + ' · ' + sunTxt + shadowTxt + '</div>' +
                 '<div class="home-widget-rows">' + rows + '</div>';
         },
 
@@ -298,7 +402,7 @@
         }
     };
 
-    document.addEventListener('skytrack:map-ready', (e) => {
+    if (typeof document !== 'undefined') document.addEventListener('skytrack:map-ready', (e) => {
         const map = e?.detail?.map;
         if (map) planeOverHome.init(map);
     });

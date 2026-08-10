@@ -6785,6 +6785,15 @@ ${trailData.map(p => {
                 textDim: '#78bd85',
                 accent: '#42ff74',
                 selected: '#e7ff60'
+            },
+            cockpit: {
+                name: 'Cockpit OLED',
+                bg: '#000000',
+                bgPanel: 'rgba(2, 8, 12, 0.96)',
+                text: '#d7fff0',
+                textDim: '#71cfae',
+                accent: '#00ff9d',
+                selected: '#00e5ff'
             }
         },
         
@@ -6852,6 +6861,7 @@ ${trailData.map(p => {
             
             document.body.classList.toggle('day-mode', themeName === 'light');
             document.body.classList.toggle('crt-theme', themeName === 'crt');
+            document.body.classList.toggle('cockpit-theme', themeName === 'cockpit');
             
             // Update minimap theme
             const isDark = themeName !== 'light';

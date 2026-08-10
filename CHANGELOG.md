@@ -9,6 +9,8 @@ All notable changes to SkyTrack will be documented in this file.
   aircraft sonification with viewport blips, printable Sky Postcards, retained
   airport operations replay, user-configured alert webhooks, Gamepad camera
   control, chroma-key streamer mode, and the `?widget=nearest` docking view.
+- **Cockpit and home-context polish.** Added an OLED-safe Cockpit theme and a
+  live solar-position shadow projection to the Over My House aircraft widget.
 - **Storytelling and local analysis tools.** Added plain-English METAR and
   ATC phrase explanations, an alert event ticker, pattern-work detection,
   Flight-of-the-Day cards, printable aircraft dossiers, and annotated trail

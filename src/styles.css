@@ -1378,6 +1378,53 @@
             opacity: 0.1;
             background: repeating-linear-gradient(0deg, rgba(66, 255, 116, 0.18) 0, rgba(66, 255, 116, 0.18) 1px, transparent 1px, transparent 4px);
         }
+        /* OLED-safe cockpit mode: black pixels, restrained neon, and no
+           large translucent surfaces that would unnecessarily light a panel. */
+        body.cockpit-theme {
+            background: #000;
+            color: #d7fff0;
+        }
+        body.cockpit-theme #map {
+            filter: saturate(0.8) contrast(1.08);
+        }
+        body.cockpit-theme .header,
+        body.cockpit-theme .filter-bar,
+        body.cockpit-theme .info-panel,
+        body.cockpit-theme .airport-panel,
+        body.cockpit-theme .settings-panel,
+        body.cockpit-theme .stats-panel,
+        body.cockpit-theme .notification-center,
+        body.cockpit-theme .comparison-panel,
+        body.cockpit-theme .time-machine-controls,
+        body.cockpit-theme .capture-menu,
+        body.cockpit-theme .watchlist-panel,
+        body.cockpit-theme .bookmarks-panel,
+        body.cockpit-theme .airport-board,
+        body.cockpit-theme .status-dock,
+        body.cockpit-theme .hud-3d {
+            background: rgba(0, 8, 12, 0.96) !important;
+            border-color: rgba(0, 255, 157, 0.28) !important;
+            box-shadow: 0 0 18px rgba(0, 255, 157, 0.08) !important;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+        body.cockpit-theme .header-btn,
+        body.cockpit-theme .hv2-dropdown-trigger,
+        body.cockpit-theme .filter-btn {
+            color: #9fffd5;
+        }
+        body.cockpit-theme .header-btn.active,
+        body.cockpit-theme .theme-option.active {
+            color: #00ff9d;
+            border-color: #00ff9d !important;
+            box-shadow: 0 0 12px rgba(0, 255, 157, 0.2) !important;
+        }
+        body.cockpit-theme .nearest-widget,
+        body.cockpit-theme .streamer-status {
+            border-color: rgba(0, 229, 255, 0.5);
+            background: rgba(0, 4, 8, 0.96);
+            box-shadow: 0 0 18px rgba(0, 229, 255, 0.12);
+        }
         .analytics-subtitle { margin: 10px 0 6px; color: var(--text-muted); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; }
         .analytics-histogram { display: flex; align-items: flex-end; gap: 2px; height: 46px; padding: 4px 0 0; }
         .analytics-histogram-bar { flex: 1; min-height: 3px; border-radius: 2px 2px 0 0; background: linear-gradient(180deg, #22d3ee, #2563eb); }
