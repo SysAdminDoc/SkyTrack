@@ -5,6 +5,10 @@ All notable changes to SkyTrack will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Ambient, sharing, and local integration tools.** Added opt-in voice alerts,
+  aircraft sonification with viewport blips, printable Sky Postcards, retained
+  airport operations replay, user-configured alert webhooks, Gamepad camera
+  control, chroma-key streamer mode, and the `?widget=nearest` docking view.
 - **Storytelling and local analysis tools.** Added plain-English METAR and
   ATC phrase explanations, an alert event ticker, pattern-work detection,
   Flight-of-the-Day cards, printable aircraft dossiers, and annotated trail

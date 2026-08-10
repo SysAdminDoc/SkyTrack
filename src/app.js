@@ -3058,6 +3058,8 @@
         // Phase 6: Update mini-map aircraft positions
         miniMap.updateAircraft();
         try { trafficVectors.update(aircraftCache); altitudeMesh.update(aircraftCache); } catch (_) {}
+        try { sonification.update(aircraftCache); } catch (_) {}
+        try { streamerOverlay.update(aircraftCache); nearestWidget.update(aircraftCache); } catch (_) {}
         
         // Phase 9: Record statistics
         statsSystem.recordRefresh(aircraft);
@@ -4312,6 +4314,12 @@
             const enabled = approachCones.toggle(panel._airport);
             toast(enabled ? 'Approach cone ON · 10 nm' : 'Approach cone OFF');
         });
+        document.getElementById('airportReplayBtn')?.addEventListener('click', () => {
+            const panel = _el('airportPanel');
+            if (panel._airport) airportReplay.show(panel._airport);
+            else toast('Select an airport first', 'warning');
+        });
+        document.getElementById('postcardBtn')?.addEventListener('click', () => skyPostcard.print(aircraftCache));
     }
     function changeBasemap(style) { Object.values(baseMaps).forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); }); baseMaps[style].addTo(map); currentBaseMap = style; settings.mapStyle = style; document.getElementById('mapStyleSelect').value = style; saveSettings(); updateMarkers(); if (typeof miniMap !== 'undefined' && miniMap.updateMapStyle) miniMap.updateMapStyle(style); }
     // Animated RainViewer radar: cycles past frames + short-term nowcast.

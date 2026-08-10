@@ -1202,6 +1202,127 @@
             }
         }
 
+        /* ============ LOCAL INTEGRATION AND AMBIENT MODES ============ */
+        .webhook-setting-row {
+            align-items: center;
+            gap: 8px;
+        }
+        .webhook-setting-row .setting-input {
+            min-width: 0;
+            width: 170px;
+            padding: 7px 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-input, rgba(255, 255, 255, 0.06));
+            color: var(--text);
+            font-size: 11px;
+        }
+        .streamer-status {
+            position: fixed;
+            left: 18px;
+            bottom: 18px;
+            z-index: 1100;
+            padding: 10px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.82);
+            color: #fff;
+            font: 700 12px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+        body.streamer {
+            background: #00ff00 !important;
+        }
+        body.streamer .header,
+        body.streamer .filter-bar,
+        body.streamer .legend,
+        body.streamer .data-source-indicator,
+        body.streamer .sync-indicator,
+        body.streamer .circuit-breaker-warning,
+        body.streamer .status-dock,
+        body.streamer .bottom-nav,
+        body.streamer .mobile-bottom-nav,
+        body.streamer .hv2-dropdown,
+        body.streamer .toast,
+        body.streamer .loading-overlay,
+        body.streamer .streamer-status ~ * {
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        body.streamer #map {
+            background: #00ff00 !important;
+        }
+        body.streamer .streamer-status {
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .nearest-widget {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 1200;
+            width: 300px;
+            padding: 14px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 16px;
+            background: rgba(8, 14, 25, 0.92);
+            color: #e5edf8;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(16px);
+        }
+        .nearest-widget-title {
+            margin-bottom: 8px;
+            color: #7dd3fc;
+            font: 700 10px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+            letter-spacing: 0.16em;
+        }
+        #nearestWidgetContent {
+            display: grid;
+            gap: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        #nearestWidgetContent strong {
+            color: #fef08a;
+            font: 700 18px/1.1 ui-monospace, SFMono-Regular, Consolas, monospace;
+        }
+        #nearestWidgetContent span {
+            color: #a8b7ca;
+        }
+        body.widget-mode .header,
+        body.widget-mode .filter-bar,
+        body.widget-mode .legend,
+        body.widget-mode .data-source-indicator,
+        body.widget-mode .sync-indicator,
+        body.widget-mode .circuit-breaker-warning,
+        body.widget-mode .status-dock,
+        body.widget-mode .bottom-nav,
+        body.widget-mode .mobile-bottom-nav,
+        body.widget-mode .hv2-dropdown,
+        body.widget-mode .toast {
+            display: none !important;
+        }
+        body.widget-mode #map {
+            inset: 0 !important;
+        }
+        @media (max-width: 480px) {
+            .nearest-widget {
+                top: 8px;
+                right: 8px;
+                left: 8px;
+                width: auto;
+            }
+            .webhook-setting-row {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            .webhook-setting-row .setting-input {
+                width: 100%;
+            }
+        }
+
         /* Broadcast mode is a self-contained presentation layer for kiosks,
            livestreams, and public displays. */
         .broadcast-overlay {
@@ -1327,6 +1448,17 @@
         @media (max-width: 600px) { .event-ticker { bottom: 68px; width: calc(100vw - 16px); } }
         .annotation-marker { display: flex; align-items: center; justify-content: center; border: 2px solid #fbbf24; border-radius: 50%; color: #111827; background: #fef3c7; box-shadow: 0 0 10px rgba(251, 191, 36, 0.75); font-size: 14px; }
         body.annotation-mode #map { cursor: crosshair; }
+        .airport-replay-panel { position: fixed; top: 78px; left: 50%; z-index: 2100; width: min(440px, calc(100vw - 28px)); padding: 16px; transform: translateX(-50%); color: var(--text); background: var(--bg-panel); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 18px 48px rgba(0,0,0,0.4); }
+        .airport-replay-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+        .airport-replay-header button { border: 0; color: var(--text-muted); background: transparent; cursor: pointer; font-size: 20px; }
+        .airport-replay-time { margin-top: 14px; color: var(--accent); font: 12px ui-monospace, SFMono-Regular, Consolas, monospace; }
+        .airport-replay-metrics { display: flex; gap: 14px; margin: 10px 0; color: var(--text-dim); font-size: 11px; }
+        .airport-replay-list { display: flex; flex-wrap: wrap; gap: 5px; max-height: 100px; overflow: auto; }
+        .airport-replay-list button { padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; color: var(--text-dim); background: var(--bg-darker); cursor: pointer; font-size: 10px; }
+        .airport-replay-controls { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px; }
+        .airport-replay-controls button { min-width: 32px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 5px; color: var(--text); background: var(--bg-darker); cursor: pointer; }
+        .airport-replay-controls span { color: var(--text-muted); font-size: 10px; }
+        .airport-replay-empty { padding: 24px 0; color: var(--text-muted); font-size: 12px; text-align: center; }
         
         /* Tablet adjustments */
         @media (min-width: 768px) and (max-width: 1024px) {
@@ -3517,12 +3649,17 @@ if ('serviceWorker' in navigator) {
                 <div class="hv2-item" data-btn="flightCardBtn"><div class="hv2-item-icon"><button class="header-btn" id="flightCardBtn" title="Copy Flight Card" aria-label="Copy flight card image of selected aircraft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M7 15h4"/></svg></button></div><div class="hv2-item-label">Flight Card</div></div>
                 <div class="hv2-item" data-btn="flightOfDayBtn"><div class="hv2-item-icon"><button class="header-btn" id="flightOfDayBtn" title="Share Flight of the Day" aria-label="Copy the flight of the day card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3z"/></svg></button></div><div class="hv2-item-label">Flight of Day</div></div>
                 <div class="hv2-item" data-btn="dossierBtn"><div class="hv2-item-icon"><button class="header-btn" id="dossierBtn" title="Download aircraft dossier" aria-label="Download printable aircraft dossier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h10l4 4v14H5z"/><path d="M15 3v5h5M8 13h8M8 17h6"/></svg></button></div><div class="hv2-item-label">Dossier</div></div>
+                <div class="hv2-item" data-btn="postcardBtn"><div class="hv2-item-icon"><button class="header-btn" id="postcardBtn" title="Print sky postcard" aria-label="Print My Sky Today postcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M7 14h4"/><circle cx="16" cy="14" r="2"/></svg></button></div><div class="hv2-item-label">Sky Postcard</div></div>
                 <div class="hv2-item" data-btn="sceneUrlBtn"><div class="hv2-item-icon"><button class="header-btn" id="sceneUrlBtn" title="Copy Scene URL" aria-label="Copy link that restores this exact view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button></div><div class="hv2-item-label">Scene URL</div></div>
                 <div class="hv2-item" data-btn="diagnosticsBtn"><div class="hv2-item-icon"><button class="header-btn" id="diagnosticsBtn" title="Copy Diagnostics" aria-label="Copy diagnostic report to clipboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7 7 1-5 4 2 8-7-4-7 4 2-8-5-4 7-1z"/></svg></button></div><div class="hv2-item-label">Diagnostics</div></div>
                 <div class="hv2-item" data-btn="followBtn"><div class="hv2-item-icon"><button class="header-btn" id="followBtn" title="Follow" aria-label="Follow Aircraft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><path d="M12 8v8M8 12h8" stroke-dasharray="2 2"/></svg></button></div><div class="hv2-item-label">Follow Aircraft</div></div>
                 <div class="hv2-item" data-btn="randomFollowBtn"><div class="hv2-item-icon"><button class="header-btn" id="randomFollowBtn" title="Cycle through random aircraft" aria-label="Toggle Random Follow mode" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h4c4 0 5 10 10 10h4"/><path d="M17 14l4 3-4 3"/><path d="M3 17h4c1.5 0 2.6-1.3 3.6-2.8M17 4l4 3-4 3"/><path d="M7 7c1.4 0 2.4 1.1 3.4 2.6"/></svg></button></div><div class="hv2-item-label">Random Follow</div></div>
                 <div class="hv2-item" data-btn="broadcastBtn"><div class="hv2-item-icon"><button class="header-btn" id="broadcastBtn" title="Broadcast mode" aria-label="Toggle broadcast mode" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 9h8M8 13h5"/><path d="M8 3v2M16 3v2"/></svg></button></div><div class="hv2-item-label">Broadcast Mode</div></div>
                 <div class="hv2-item" data-btn="eventTickerToggleBtn"><div class="hv2-item-icon"><button class="header-btn" id="eventTickerToggleBtn" title="Event ticker" aria-label="Toggle alert event ticker" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h10M4 17h16"/><circle cx="18" cy="12" r="2"/></svg></button></div><div class="hv2-item-label">Event Ticker</div></div>
+                <div class="hv2-item" data-btn="sonificationBtn"><div class="hv2-item-icon"><button class="header-btn" id="sonificationBtn" title="Ambient sonification" aria-label="Toggle ambient aircraft sonification"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg></button></div><div class="hv2-item-label">Ambient Sound</div></div>
+                <div class="hv2-item" data-btn="blipsBtn"><div class="hv2-item-icon"><button class="header-btn" id="blipsBtn" title="Viewport blips" aria-label="Toggle viewport entry blip sounds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="7" stroke-dasharray="2 3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button></div><div class="hv2-item-label">Viewport Blips</div></div>
+                <div class="hv2-item" data-btn="gamepadBtn"><div class="hv2-item-icon"><button class="header-btn" id="gamepadBtn" title="Gamepad camera" aria-label="Toggle gamepad camera control"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9h12a4 4 0 0 1 3.8 5.2l-1.1 3.6a2.5 2.5 0 0 1-4.6.4l-1.1-2.2H9l-1.1 2.2a2.5 2.5 0 0 1-4.6-.4l-1.1-3.6A4 4 0 0 1 6 9z"/><path d="M7 12v4M5 14h4M16 13h.01M19 15h.01"/></svg></button></div><div class="hv2-item-label">Gamepad Camera</div></div>
+                <div class="hv2-item" data-btn="streamerBtn"><div class="hv2-item-icon"><button class="header-btn" id="streamerBtn" title="Streamer overlay" aria-label="Toggle chroma-key streamer overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 15l3-3 2 2 3-4 3 5"/><circle cx="8" cy="8" r="1"/></svg></button></div><div class="hv2-item-label">Streamer Overlay</div></div>
                 <div class="hv2-item" data-btn="cpaBtn"><div class="hv2-item-icon"><button class="header-btn active" id="cpaBtn" title="Toggle closest point of approach warnings" aria-label="Toggle CPA conflict warnings" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><path d="M9 12h6" stroke-dasharray="2 2"/><path d="M12 4v4m0 8v4"/></svg></button></div><div class="hv2-item-label">CPA Warnings</div></div>
                 <div class="hv2-item" data-btn="multiSelectBtn"><div class="hv2-item-icon"><button class="header-btn" id="multiSelectBtn" title="Multi-Select" aria-label="Multi-Select Mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button></div><div class="hv2-item-label">Multi-Select</div></div>
             <div class="hv2-item" data-btn="geofenceBtn"><div class="hv2-item-icon"><button class="header-btn" id="geofenceBtn" title="Geofence" aria-label="Open Geofencing Tools" aria-expanded="false" aria-controls="geofenceList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><circle cx="12" cy="12" r="3"/></svg></button></div><div class="hv2-item-label">Geofencing</div></div>
@@ -3947,6 +4084,7 @@ if ('serviceWorker' in navigator) {
             <button class="airport-action-btn" id="btnShowArrivals">Arrivals</button>
             <button class="airport-action-btn" id="showBoardBtn">Flight Board</button>
             <button class="airport-action-btn" id="approachConeBtn" aria-pressed="false">Approach Cone</button>
+            <button class="airport-action-btn" id="airportReplayBtn">Ops Replay</button>
             <button class="airport-action-btn" id="btnZoomAirport">Zoom To</button>
         </div>
     </div>
@@ -4070,7 +4208,11 @@ if ('serviceWorker' in navigator) {
             <div class="settings-section-title">Alerts</div>
             <div class="setting-row"><span class="setting-label">Enable Alerts</span><button type="button" class="toggle on" id="toggleAlerts" role="switch" aria-label="Enable Alerts" aria-checked="true"></button></div>
             <div class="setting-row"><span class="setting-label">Sound Effects</span><button type="button" class="toggle on" id="toggleAlertSounds" role="switch" aria-label="Sound Effects" aria-checked="true"></button></div>
+            <div class="setting-row"><span class="setting-label">Voice Alerts</span><button type="button" class="toggle" id="toggleVoiceAlerts" role="switch" aria-label="Voice Alerts" aria-checked="false"></button></div>
             <div class="setting-row"><span class="setting-label">Browser Notifications</span><button type="button" class="toggle" id="toggleNotifications" role="switch" aria-label="Browser Notifications" aria-checked="false"></button></div>
+            <div class="setting-row webhook-setting-row"><label class="setting-label" for="webhookUrlInput">Event Webhook</label><input type="url" id="webhookUrlInput" class="setting-input" placeholder="https://example.com/hook" autocomplete="off" spellcheck="false"></div>
+            <button class="settings-btn secondary" id="saveWebhookBtn" type="button">Save Webhook URL</button>
+            <div class="setting-row"><span class="setting-label">Enable Webhook</span><button type="button" class="toggle" id="toggleWebhook" role="switch" aria-label="Enable Event Webhook" aria-checked="false"></button></div>
             <div class="setting-row">
                 <span class="setting-label">Military Alert Radius</span>
                 <select id="militaryAlertRadius" class="setting-select">
@@ -6571,6 +6713,8 @@ if ('serviceWorker' in navigator) {
         showAlert(alert) {
             this.showInAppNotification(alert);
             try { eventTicker.record(alert); } catch (_) {}
+            try { voiceAlerts.speak(alert); } catch (_) {}
+            try { webhookPoster.post(alert); } catch (_) {}
             if (this.soundEnabled) this.playSound(alert.alertType.sound);
             if (this.notificationsEnabled) this.showBrowserNotification(alert);
         },
@@ -13690,6 +13834,436 @@ if ('serviceWorker' in navigator) {
             };
         }
     };
+    // ─── module: modules/A30-voice-alerts.js ───────────────────────────────────────────
+    // ============ VOICE ALERTS ============
+    function voiceAlertText(alert = {}) {
+        const callsign = alert.callsign || alert.aircraft?.flight?.trim() || alert.aircraft?.hex || 'aircraft';
+        const message = String(alert.message || 'notable traffic event').replace(/\b(7500|7600|7700)\b/g, (_, code) => code.split('').join(' '));
+        return 'SkyTrack alert. ' + callsign + '. ' + message;
+    }
+
+    const voiceAlerts = {
+        enabled: false,
+        unlocked: false,
+        init() {
+            try { this.enabled = localStorage.getItem('skytrack_voice_alerts') === '1'; } catch (_) {}
+            const button = document.getElementById('toggleVoiceAlerts');
+            button?.classList.toggle('on', this.enabled);
+            button?.setAttribute('aria-checked', String(this.enabled));
+            button?.addEventListener('click', () => this.toggle());
+        },
+        toggle() {
+            this.enabled = !this.enabled;
+            this.unlocked = true;
+            try { localStorage.setItem('skytrack_voice_alerts', this.enabled ? '1' : '0'); } catch (_) {}
+            const button = document.getElementById('toggleVoiceAlerts');
+            button?.classList.toggle('on', this.enabled);
+            button?.setAttribute('aria-checked', String(this.enabled));
+            if (this.enabled && typeof speechSynthesis === 'undefined') {
+                this.enabled = false;
+                if (typeof toast === 'function') toast('Speech synthesis is not supported', 'warning');
+            } else if (typeof toast === 'function') toast(this.enabled ? 'Voice alerts ON' : 'Voice alerts OFF');
+            return this.enabled;
+        },
+        speak(alert) {
+            if (!this.enabled || !this.unlocked || typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined') return false;
+            try {
+                speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(voiceAlertText(alert));
+                utterance.rate = 1.05;
+                utterance.volume = 0.72;
+                speechSynthesis.speak(utterance);
+                return true;
+            } catch (_) { return false; }
+        }
+    };
+
+    if (typeof document !== 'undefined') {
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => voiceAlerts.init(), { once: true });
+        else voiceAlerts.init();
+    }
+    // ─── module: modules/A31-sonification.js ───────────────────────────────────────────
+    // ============ AMBIENT SONIFICATION ============
+    function sonificationNote(ac = {}, center = { lat: 0, lon: 0 }) {
+        const altitude = Math.max(0, Math.min(50000, Number(ac.alt_baro) || 0));
+        const speed = Math.max(0, Number(ac.gs) || 0);
+        const frequency = 180 + altitude / 50000 * 620 + Math.min(120, speed / 5);
+        const longitudeDelta = (Number(ac.lon) || 0) - (Number(center.lon) || 0);
+        const pan = Math.max(-1, Math.min(1, longitudeDelta * Math.max(0.25, Math.cos((Number(center.lat) || 0) * Math.PI / 180)) / 45));
+        const gain = Math.max(0.008, Math.min(0.055, 0.05 / (1 + Math.abs(Number(ac.lat || 0) - Number(center.lat || 0)) / 8)));
+        return { frequency, pan, gain };
+    }
+
+    const sonification = {
+        map: null,
+        enabled: false,
+        blipsEnabled: false,
+        tones: new Map(),
+        previousVisible: new Set(),
+        lastBlip: 0,
+        init() {
+            document.getElementById('sonificationBtn')?.addEventListener('click', () => this.toggle());
+            document.getElementById('blipsBtn')?.addEventListener('click', () => this.toggleBlips());
+        },
+        _setButtons() {
+            document.getElementById('sonificationBtn')?.classList.toggle('active', this.enabled);
+            document.getElementById('blipsBtn')?.classList.toggle('active', this.blipsEnabled);
+        },
+        toggle() {
+            this.enabled = !this.enabled;
+            this._setButtons();
+            if (!this.enabled) this._stopAll();
+            else {
+                try { _sharedAudio()?.resume?.(); } catch (_) {}
+                if (typeof toast === 'function') toast('Ambient sonification ON · up to 12 nearest aircraft');
+            }
+            return this.enabled;
+        },
+        toggleBlips() {
+            this.blipsEnabled = !this.blipsEnabled;
+            this._setButtons();
+            if (typeof toast === 'function') toast(this.blipsEnabled ? 'Viewport blips ON' : 'Viewport blips OFF');
+            return this.blipsEnabled;
+        },
+        _stopAll() {
+            for (const tone of this.tones.values()) { try { tone.osc.stop(); } catch (_) {} try { tone.gain.disconnect(); } catch (_) {} }
+            this.tones.clear();
+        },
+        _blip() {
+            const ctx = _sharedAudio();
+            if (!ctx) return;
+            try {
+                const osc = ctx.createOscillator(), gain = ctx.createGain();
+                osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime);
+                gain.gain.setValueAtTime(0.035, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+                osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.12);
+            } catch (_) {}
+        },
+        update(aircraft) {
+            if (!this.enabled && !this.blipsEnabled) return;
+            const bounds = this.map?.getBounds?.();
+            const visible = Object.values(aircraft || {}).filter(ac => ac?.hex && Number.isFinite(Number(ac.lat)) && Number.isFinite(Number(ac.lon)) && (!bounds || bounds.contains([Number(ac.lat), Number(ac.lon)]))).sort((a, b) => (Number(a.alt_baro) || 0) - (Number(b.alt_baro) || 0));
+            const active = new Set(visible.slice(0, 12).map(ac => ac.hex));
+            if (this.blipsEnabled && Date.now() - this.lastBlip > 4000 && [...active].some(hex => !this.previousVisible.has(hex))) { this._blip(); this.lastBlip = Date.now(); }
+            this.previousVisible = active;
+            if (!this.enabled) return;
+            const center = this.map?.getCenter?.() || { lat: 0, lng: 0 };
+            for (const ac of visible.slice(0, 12)) {
+                const note = sonificationNote(ac, { lat: center.lat, lon: center.lng });
+                let tone = this.tones.get(ac.hex);
+                if (!tone) {
+                    const ctx = _sharedAudio(); if (!ctx) return;
+                    try {
+                        const osc = ctx.createOscillator(), gain = ctx.createGain(), pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+                        osc.type = 'sine'; osc.connect(gain); if (pan) { gain.connect(pan); pan.connect(ctx.destination); } else gain.connect(ctx.destination);
+                        gain.gain.setValueAtTime(0, ctx.currentTime); osc.start(); tone = { osc, gain, pan }; this.tones.set(ac.hex, tone);
+                    } catch (_) { return; }
+                }
+                const ctx = tone.osc.context;
+                tone.osc.frequency.setTargetAtTime(note.frequency, ctx.currentTime, 0.12);
+                tone.gain.gain.setTargetAtTime(note.gain, ctx.currentTime, 0.18);
+                tone.pan?.pan.setTargetAtTime(note.pan, ctx.currentTime, 0.18);
+            }
+            for (const [hex, tone] of this.tones) if (!active.has(hex)) { try { tone.osc.stop(); } catch (_) {} this.tones.delete(hex); }
+        }
+    };
+
+    if (typeof document !== 'undefined') {
+        sonification.init();
+        document.addEventListener('skytrack:map-ready', event => { sonification.map = event.detail?.map || null; }, { once: true });
+    }
+    // ─── module: modules/A32-postcard.js ───────────────────────────────────────────
+    // ============ SKY POSTCARD ============
+    function postcardData(aircraft, now = Date.now()) {
+        const values = Object.values(aircraft || {}).filter(ac => ac?.hex);
+        const airborne = values.filter(ac => ac.alt_baro !== 'ground' && Number.isFinite(Number(ac.alt_baro)));
+        const highest = airborne.reduce((best, ac) => Number(ac.alt_baro) > Number(best?.alt_baro || 0) ? ac : best, null);
+        const fastest = values.reduce((best, ac) => Number(ac.gs) > Number(best?.gs || 0) ? ac : best, null);
+        return {
+            generated: new Date(now).toISOString(),
+            total: values.length,
+            airborne: airborne.length,
+            interesting: values.filter(ac => ac.isVIP || ac.interesting || ac.militaryInfo || ac.militaryRangeInfo).length,
+            military: values.filter(ac => ac.militaryInfo || ac.militaryRangeInfo).length,
+            highest: highest ? { callsign: highest.flight?.trim() || highest.hex, altitude: Number(highest.alt_baro) } : null,
+            fastest: fastest ? { callsign: fastest.flight?.trim() || fastest.hex, speed: Number(fastest.gs) } : null
+        };
+    }
+
+    function postcardHtml(data) {
+        const escape = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const highest = data.highest ? Math.round(data.highest.altitude).toLocaleString() + ' ft · ' + escape(data.highest.callsign) : '—';
+        const fastest = data.fastest ? Math.round(data.fastest.speed) + ' kt · ' + escape(data.fastest.callsign) : '—';
+        return '<!doctype html><html><head><meta charset="utf-8"><title>SkyTrack · My Sky Today</title><style>@page{size:landscape;margin:0}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#07111f;color:#e2e8f0;font:16px system-ui,sans-serif}.card{width:min(980px,88vw);padding:56px;border:2px solid #38bdf8;border-radius:24px;background:linear-gradient(135deg,#0b1d35,#102b3f);box-shadow:0 24px 70px #0008}.eyebrow{color:#7dd3fc;letter-spacing:.2em;font-size:12px;font-weight:800}.title{font-size:64px;margin:12px 0 34px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}.metric{padding-top:14px;border-top:1px solid #38bdf866}.value{font-size:28px;font-weight:800}.label{color:#94a3b8;font-size:11px;letter-spacing:.12em;text-transform:uppercase}.records{display:flex;gap:30px;margin-top:36px;color:#bae6fd}.footer{margin-top:36px;color:#94a3b8;font-size:12px}@media print{body{background:#07111f}.card{box-shadow:none}}</style></head><body><main class="card"><div class="eyebrow">SKYTRACK · LOCAL OBSERVATIONS</div><h1 class="title">My Sky Today</h1><div class="grid"><div class="metric"><div class="value">' + data.total + '</div><div class="label">Tracked</div></div><div class="metric"><div class="value">' + data.airborne + '</div><div class="label">Airborne</div></div><div class="metric"><div class="value">' + data.interesting + '</div><div class="label">Notable</div></div><div class="metric"><div class="value">' + data.military + '</div><div class="label">Military</div></div></div><div class="records"><span>Highest: ' + highest + '</span><span>Fastest: ' + fastest + '</span></div><div class="footer">Generated ' + escape(data.generated) + ' · Print this page to PDF for a postcard-sized sky report.</div></main></body></html>';
+    }
+
+    const skyPostcard = {
+        data: postcardData,
+        html: postcardHtml,
+        print(aircraft) {
+            const popup = window.open('', '_blank', 'noopener,noreferrer,width=1100,height=800');
+            if (!popup) { if (typeof toast === 'function') toast('Allow pop-ups to print the postcard', 'warning'); return false; }
+            popup.document.write(postcardHtml(postcardData(aircraft)));
+            popup.document.close();
+            popup.addEventListener('load', () => { popup.focus(); popup.print(); }, { once: true });
+            return true;
+        }
+    };
+    // ─── module: modules/A33-airport-replay.js ───────────────────────────────────────────
+    // ============ AIRPORT DAY-IN-THE-LIFE REPLAY ============
+    function replayDistanceNm(first, second) {
+        const radians = Math.PI / 180;
+        const lat1 = Number(first.lat) * radians, lat2 = Number(second.lat) * radians;
+        const dLat = lat2 - lat1, dLon = (Number(second.lon) - Number(first.lon)) * radians;
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+        return 3440.065 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(Math.max(0, 1 - a)));
+    }
+
+    function airportReplayFrames(aircraft, airport, radiusNm = 40, bucketMs = 1800000, now = Date.now()) {
+        if (!airport || !Number.isFinite(Number(airport.lat)) || !Number.isFinite(Number(airport.lon))) return [];
+        const frames = new Map();
+        for (const ac of Object.values(aircraft || {})) {
+            const samples = Array.isArray(ac.history) && ac.history.length ? ac.history : [[ac.lat, ac.lon, ac.alt_baro, ac.lastSeen]];
+            for (const sample of samples) {
+                const point = { lat: Number(sample?.[0]), lon: Number(sample?.[1]) }, timestamp = Number(sample?.[3]);
+                if (!Number.isFinite(point.lat) || !Number.isFinite(point.lon) || !Number.isFinite(timestamp) || timestamp < now - 86400000 || timestamp > now + 300000) continue;
+                if (replayDistanceNm(point, airport) > radiusNm) continue;
+                const start = Math.floor(timestamp / bucketMs) * bucketMs;
+                const frame = frames.get(start) || { start, end: start + bucketMs, aircraft: [], arrivals: 0, departures: 0 };
+                if (!frame.aircraft.some(item => item.hex === ac.hex)) {
+                    frame.aircraft.push({ hex: ac.hex, callsign: ac.flight?.trim() || ac.hex, lat: point.lat, lon: point.lon });
+                    if (ac.to === airport.icao || ac.to === airport.iata) frame.arrivals++;
+                    if (ac.from === airport.icao || ac.from === airport.iata) frame.departures++;
+                }
+                frames.set(start, frame);
+            }
+        }
+        return Array.from(frames.values()).sort((a, b) => a.start - b.start);
+    }
+
+    const airportReplay = {
+        airport: null,
+        frames: [],
+        index: 0,
+        timer: null,
+        playing: false,
+        show(airport) {
+            this.airport = airport;
+            this.frames = airportReplayFrames(typeof aircraftCache !== 'undefined' ? aircraftCache : {}, airport);
+            this.index = 0;
+            this.render();
+        },
+        hide() {
+            this.playing = false;
+            clearInterval(this.timer);
+            this.timer = null;
+            document.getElementById('airportReplayPanel')?.remove();
+        },
+        step(delta = 1) {
+            if (!this.frames.length) return;
+            this.index = (this.index + delta + this.frames.length) % this.frames.length;
+            this.render();
+        },
+        togglePlay() {
+            this.playing = !this.playing;
+            clearInterval(this.timer);
+            if (this.playing) this.timer = setInterval(() => this.step(1), 1400);
+            this.render();
+        },
+        render() {
+            let panel = document.getElementById('airportReplayPanel');
+            if (!panel) { panel = document.createElement('div'); panel.id = 'airportReplayPanel'; panel.className = 'airport-replay-panel'; document.body.appendChild(panel); }
+            const frame = this.frames[this.index];
+            const name = this.airport?.iata || this.airport?.icao || 'airport';
+            panel.innerHTML = '<div class="airport-replay-header"><strong>' + _escHtml(name) + ' · Day in the life</strong><button id="airportReplayClose" aria-label="Close airport replay">×</button></div>' + (frame ? '<div class="airport-replay-time">' + new Date(frame.start).toUTCString() + '</div><div class="airport-replay-metrics"><span>' + frame.aircraft.length + ' traffic</span><span>' + frame.arrivals + ' arrivals</span><span>' + frame.departures + ' departures</span></div><div class="airport-replay-list">' + frame.aircraft.slice(0, 12).map(item => '<button data-replay-hex="' + _escHtml(item.hex) + '">' + _escHtml(item.callsign) + '</button>').join('') + '</div>' : '<div class="airport-replay-empty">No retained traffic history within 40 nm.</div>') + '<div class="airport-replay-controls"><button id="airportReplayPrev">‹</button><button id="airportReplayPlay">' + (this.playing ? 'Pause' : 'Play') + '</button><button id="airportReplayNext">›</button><span>' + (this.frames.length ? (this.index + 1) + ' / ' + this.frames.length : '0 / 0') + '</span></div>';
+            panel.querySelector('#airportReplayClose').onclick = () => this.hide();
+            panel.querySelector('#airportReplayPrev').onclick = () => this.step(-1);
+            panel.querySelector('#airportReplayNext').onclick = () => this.step(1);
+            panel.querySelector('#airportReplayPlay').onclick = () => this.togglePlay();
+            panel.querySelectorAll('[data-replay-hex]').forEach(button => button.onclick = () => { if (typeof selectAircraft === 'function') selectAircraft(button.dataset.replayHex); });
+        }
+    };
+    // ─── module: modules/A34-webhook.js ───────────────────────────────────────────
+    // ============ USER WEBHOOK POSTER ============
+    function webhookUrl(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return '';
+        try {
+            if (typeof URL === 'function') {
+                const url = new URL(raw);
+                return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
+            }
+        } catch (_) { return ''; }
+        return /^https?:\/\/[^\s]+$/i.test(raw) ? raw : '';
+    }
+
+    function webhookPayload(alert = {}, now = Date.now()) {
+        const ac = alert.aircraft || {};
+        return {
+            source: 'skytrack',
+            version: '0.24.3',
+            type: String(alert.type || 'EVENT').toLowerCase(),
+            message: String(alert.message || ''),
+            callsign: alert.callsign || ac.flight?.trim() || ac.hex || '',
+            hex: ac.hex || '',
+            position: Number.isFinite(Number(ac.lat)) && Number.isFinite(Number(ac.lon)) ? { lat: Number(ac.lat), lon: Number(ac.lon) } : null,
+            altitude: Number.isFinite(Number(ac.alt_baro)) ? Number(ac.alt_baro) : null,
+            timestamp: new Date(now).toISOString()
+        };
+    }
+
+    const webhookPoster = {
+        url: '',
+        enabled: false,
+        init() {
+            try { this.url = webhookUrl(localStorage.getItem('skytrack_webhook_url')); this.enabled = localStorage.getItem('skytrack_webhook_enabled') === '1'; } catch (_) {}
+            const input = document.getElementById('webhookUrlInput');
+            if (input) input.value = this.url;
+            const toggle = document.getElementById('toggleWebhook');
+            toggle?.classList.toggle('on', this.enabled);
+            toggle?.setAttribute('aria-checked', String(this.enabled));
+            document.getElementById('saveWebhookBtn')?.addEventListener('click', () => this.save(input?.value));
+            toggle?.addEventListener('click', () => this.toggle());
+        },
+        save(value) {
+            const next = webhookUrl(value);
+            if (String(value || '').trim() && !next) { if (typeof toast === 'function') toast('Use a valid http(s) webhook URL', 'warning'); return false; }
+            this.url = next;
+            try { localStorage.setItem('skytrack_webhook_url', next); } catch (_) {}
+            if (typeof toast === 'function') toast(next ? 'Webhook URL saved' : 'Webhook disabled');
+            return true;
+        },
+        toggle() {
+            this.enabled = !this.enabled;
+            try { localStorage.setItem('skytrack_webhook_enabled', this.enabled ? '1' : '0'); } catch (_) {}
+            document.getElementById('toggleWebhook')?.classList.toggle('on', this.enabled);
+            document.getElementById('toggleWebhook')?.setAttribute('aria-checked', String(this.enabled));
+            if (typeof toast === 'function') toast(this.enabled ? 'Webhook posting ON' : 'Webhook posting OFF');
+            return this.enabled;
+        },
+        async post(alert) {
+            if (!this.enabled || !this.url || typeof fetch !== 'function') return false;
+            try {
+                const response = await fetch(this.url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(webhookPayload(alert)) });
+                return response.ok;
+            } catch (_) { return false; }
+        }
+    };
+
+    if (typeof document !== 'undefined') {
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => webhookPoster.init(), { once: true });
+        else webhookPoster.init();
+    }
+    // ─── module: modules/A35-gamepad.js ───────────────────────────────────────────
+    // ============ GAMEPAD CAMERA CONTROL ============
+    function gamepadInput(gamepad = {}) {
+        const deadzone = value => Math.abs(Number(value) || 0) < 0.14 ? 0 : Math.max(-1, Math.min(1, Number(value) || 0));
+        return { yaw: deadzone(gamepad.axes?.[0]), pitch: deadzone(gamepad.axes?.[1]), zoom: deadzone(gamepad.axes?.[3]), active: !!gamepad.connected };
+    }
+
+    const gamepadCamera = {
+        enabled: false,
+        frame: null,
+        init() { document.getElementById('gamepadBtn')?.addEventListener('click', () => this.toggle()); },
+        toggle() {
+            this.enabled = !this.enabled;
+            document.getElementById('gamepadBtn')?.classList.toggle('active', this.enabled);
+            if (this.enabled) { this._tick(); if (typeof toast === 'function') toast('Gamepad camera ON · select a controller'); }
+            else if (this.frame) cancelAnimationFrame(this.frame);
+            return this.enabled;
+        },
+        _tick() {
+            if (!this.enabled) return;
+            const pad = navigator.getGamepads?.().find(item => item?.connected);
+            const viewer = typeof view3D !== 'undefined' ? view3D.cesiumViewer : null;
+            if (pad && viewer?.camera) {
+                const input = gamepadInput(pad);
+                try {
+                    viewer.camera.rotateLeft(-input.yaw * 0.018);
+                    viewer.camera.rotateUp(input.pitch * 0.012);
+                    viewer.camera.moveForward(input.zoom * 1800);
+                } catch (_) {}
+            }
+            this.frame = requestAnimationFrame(() => this._tick());
+        }
+    };
+
+    if (typeof document !== 'undefined') gamepadCamera.init();
+    // ─── module: modules/A36-streamer-overlay.js ───────────────────────────────────────────
+    // ============ STREAMER / CHROMA-KEY OVERLAY ============
+    function streamerStatus(aircraft = {}) {
+        const values = Object.values(aircraft || {});
+        const notable = values.filter(ac => ac.isVIP || ac.interesting || ac.militaryInfo || ac.militaryRangeInfo).length;
+        return { total: values.length, notable, updated: Date.now() };
+    }
+
+    const streamerOverlay = {
+        enabled: false,
+        panel: null,
+        init() {
+            const params = new URLSearchParams(location.search);
+            if (params.get('streamer') === '1') this.toggle(true);
+            document.getElementById('streamerBtn')?.addEventListener('click', () => this.toggle());
+        },
+        toggle(force) {
+            this.enabled = typeof force === 'boolean' ? force : !this.enabled;
+            document.body.classList.toggle('streamer', this.enabled);
+            document.getElementById('streamerBtn')?.classList.toggle('active', this.enabled);
+            if (this.enabled) this._ensurePanel();
+            else this.panel?.remove();
+            return this.enabled;
+        },
+        _ensurePanel() {
+            if (this.panel) return;
+            this.panel = document.createElement('div');
+            this.panel.className = 'streamer-status';
+            this.panel.setAttribute('aria-live', 'polite');
+            document.body.appendChild(this.panel);
+        },
+        update(aircraft) {
+            if (!this.enabled) return;
+            this._ensurePanel();
+            const status = streamerStatus(aircraft);
+            this.panel.textContent = 'SKYTRACK LIVE · ' + status.total + ' aircraft · ' + status.notable + ' notable';
+        }
+    };
+
+    if (typeof document !== 'undefined') streamerOverlay.init();
+    // ─── module: modules/A37-widget-mode.js ───────────────────────────────────────────
+    // ============ NEAREST-AIRCRAFT WIDGET MODE ============
+    function nearestAircraft(aircraft, center = { lat: 0, lon: 0 }) {
+        return Object.values(aircraft || {}).filter(ac => ac?.hex && Number.isFinite(Number(ac.lat)) && Number.isFinite(Number(ac.lon))).map(ac => {
+            const dLat = Number(ac.lat) - Number(center.lat || 0), dLon = (Number(ac.lon) - Number(center.lon || 0)) * Math.cos(Number(center.lat || 0) * Math.PI / 180);
+            return { ac, distance: Math.hypot(dLat, dLon) };
+        }).sort((a, b) => a.distance - b.distance)[0]?.ac || null;
+    }
+
+    const nearestWidget = {
+        enabled: false,
+        panel: null,
+        init() {
+            const params = new URLSearchParams(location.search);
+            if (params.get('widget') !== 'nearest') return;
+            this.enabled = true;
+            this.panel = document.createElement('aside');
+            this.panel.className = 'nearest-widget';
+            this.panel.innerHTML = '<div class="nearest-widget-title">NEAREST AIRCRAFT</div><div id="nearestWidgetContent">Waiting for traffic…</div>';
+            document.body.appendChild(this.panel);
+            document.body.classList.add('widget-mode');
+        },
+        update(aircraft) {
+            if (!this.enabled || !this.panel) return;
+            const mapCenter = typeof map !== 'undefined' ? map?.getCenter?.() : { lat: 0, lng: 0 };
+            const ac = nearestAircraft(aircraft, { lat: mapCenter?.lat || 0, lon: mapCenter?.lng || 0 });
+            const content = this.panel.querySelector('#nearestWidgetContent');
+            if (!content) return;
+            if (!ac) { content.textContent = 'Waiting for traffic…'; return; }
+            content.innerHTML = '<strong>' + _escHtml(ac.flight?.trim() || ac.hex) + '</strong><span>' + _escHtml(ac.t || 'Aircraft') + '</span><span>' + (Number.isFinite(Number(ac.alt_baro)) ? Math.round(Number(ac.alt_baro)).toLocaleString() + ' ft' : 'GROUND') + ' · ' + (Number.isFinite(Number(ac.gs)) ? Math.round(Number(ac.gs)) + ' kt' : '—') + '</span>';
+            content.onclick = () => { if (typeof selectAircraft === 'function') selectAircraft(ac.hex); };
+        }
+    };
+
+    if (typeof document !== 'undefined') nearestWidget.init();
     // ─── module: modules/A4-oceanic-firs.js ───────────────────────────────────────────
 
     // ============ OCEANIC FIR OVERLAY ============
@@ -17436,6 +18010,8 @@ if ('serviceWorker' in navigator) {
         // Phase 6: Update mini-map aircraft positions
         miniMap.updateAircraft();
         try { trafficVectors.update(aircraftCache); altitudeMesh.update(aircraftCache); } catch (_) {}
+        try { sonification.update(aircraftCache); } catch (_) {}
+        try { streamerOverlay.update(aircraftCache); nearestWidget.update(aircraftCache); } catch (_) {}
         
         // Phase 9: Record statistics
         statsSystem.recordRefresh(aircraft);
@@ -18690,6 +19266,12 @@ if ('serviceWorker' in navigator) {
             const enabled = approachCones.toggle(panel._airport);
             toast(enabled ? 'Approach cone ON · 10 nm' : 'Approach cone OFF');
         });
+        document.getElementById('airportReplayBtn')?.addEventListener('click', () => {
+            const panel = _el('airportPanel');
+            if (panel._airport) airportReplay.show(panel._airport);
+            else toast('Select an airport first', 'warning');
+        });
+        document.getElementById('postcardBtn')?.addEventListener('click', () => skyPostcard.print(aircraftCache));
     }
     function changeBasemap(style) { Object.values(baseMaps).forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); }); baseMaps[style].addTo(map); currentBaseMap = style; settings.mapStyle = style; document.getElementById('mapStyleSelect').value = style; saveSettings(); updateMarkers(); if (typeof miniMap !== 'undefined' && miniMap.updateMapStyle) miniMap.updateMapStyle(style); }
     // Animated RainViewer radar: cycles past frames + short-term nowcast.

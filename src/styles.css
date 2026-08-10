@@ -1154,6 +1154,127 @@
             }
         }
 
+        /* ============ LOCAL INTEGRATION AND AMBIENT MODES ============ */
+        .webhook-setting-row {
+            align-items: center;
+            gap: 8px;
+        }
+        .webhook-setting-row .setting-input {
+            min-width: 0;
+            width: 170px;
+            padding: 7px 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-input, rgba(255, 255, 255, 0.06));
+            color: var(--text);
+            font-size: 11px;
+        }
+        .streamer-status {
+            position: fixed;
+            left: 18px;
+            bottom: 18px;
+            z-index: 1100;
+            padding: 10px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.82);
+            color: #fff;
+            font: 700 12px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+        body.streamer {
+            background: #00ff00 !important;
+        }
+        body.streamer .header,
+        body.streamer .filter-bar,
+        body.streamer .legend,
+        body.streamer .data-source-indicator,
+        body.streamer .sync-indicator,
+        body.streamer .circuit-breaker-warning,
+        body.streamer .status-dock,
+        body.streamer .bottom-nav,
+        body.streamer .mobile-bottom-nav,
+        body.streamer .hv2-dropdown,
+        body.streamer .toast,
+        body.streamer .loading-overlay,
+        body.streamer .streamer-status ~ * {
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        body.streamer #map {
+            background: #00ff00 !important;
+        }
+        body.streamer .streamer-status {
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .nearest-widget {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 1200;
+            width: 300px;
+            padding: 14px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 16px;
+            background: rgba(8, 14, 25, 0.92);
+            color: #e5edf8;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(16px);
+        }
+        .nearest-widget-title {
+            margin-bottom: 8px;
+            color: #7dd3fc;
+            font: 700 10px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+            letter-spacing: 0.16em;
+        }
+        #nearestWidgetContent {
+            display: grid;
+            gap: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        #nearestWidgetContent strong {
+            color: #fef08a;
+            font: 700 18px/1.1 ui-monospace, SFMono-Regular, Consolas, monospace;
+        }
+        #nearestWidgetContent span {
+            color: #a8b7ca;
+        }
+        body.widget-mode .header,
+        body.widget-mode .filter-bar,
+        body.widget-mode .legend,
+        body.widget-mode .data-source-indicator,
+        body.widget-mode .sync-indicator,
+        body.widget-mode .circuit-breaker-warning,
+        body.widget-mode .status-dock,
+        body.widget-mode .bottom-nav,
+        body.widget-mode .mobile-bottom-nav,
+        body.widget-mode .hv2-dropdown,
+        body.widget-mode .toast {
+            display: none !important;
+        }
+        body.widget-mode #map {
+            inset: 0 !important;
+        }
+        @media (max-width: 480px) {
+            .nearest-widget {
+                top: 8px;
+                right: 8px;
+                left: 8px;
+                width: auto;
+            }
+            .webhook-setting-row {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            .webhook-setting-row .setting-input {
+                width: 100%;
+            }
+        }
+
         /* Broadcast mode is a self-contained presentation layer for kiosks,
            livestreams, and public displays. */
         .broadcast-overlay {
@@ -1279,6 +1400,17 @@
         @media (max-width: 600px) { .event-ticker { bottom: 68px; width: calc(100vw - 16px); } }
         .annotation-marker { display: flex; align-items: center; justify-content: center; border: 2px solid #fbbf24; border-radius: 50%; color: #111827; background: #fef3c7; box-shadow: 0 0 10px rgba(251, 191, 36, 0.75); font-size: 14px; }
         body.annotation-mode #map { cursor: crosshair; }
+        .airport-replay-panel { position: fixed; top: 78px; left: 50%; z-index: 2100; width: min(440px, calc(100vw - 28px)); padding: 16px; transform: translateX(-50%); color: var(--text); background: var(--bg-panel); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 18px 48px rgba(0,0,0,0.4); }
+        .airport-replay-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+        .airport-replay-header button { border: 0; color: var(--text-muted); background: transparent; cursor: pointer; font-size: 20px; }
+        .airport-replay-time { margin-top: 14px; color: var(--accent); font: 12px ui-monospace, SFMono-Regular, Consolas, monospace; }
+        .airport-replay-metrics { display: flex; gap: 14px; margin: 10px 0; color: var(--text-dim); font-size: 11px; }
+        .airport-replay-list { display: flex; flex-wrap: wrap; gap: 5px; max-height: 100px; overflow: auto; }
+        .airport-replay-list button { padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; color: var(--text-dim); background: var(--bg-darker); cursor: pointer; font-size: 10px; }
+        .airport-replay-controls { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px; }
+        .airport-replay-controls button { min-width: 32px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 5px; color: var(--text); background: var(--bg-darker); cursor: pointer; }
+        .airport-replay-controls span { color: var(--text-muted); font-size: 10px; }
+        .airport-replay-empty { padding: 24px 0; color: var(--text-muted); font-size: 12px; text-align: center; }
         
         /* Tablet adjustments */
         @media (min-width: 768px) and (max-width: 1024px) {
