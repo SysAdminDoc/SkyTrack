@@ -1,6 +1,6 @@
 # SkyTrack
 
-![Version](https://img.shields.io/badge/version-0.24.3-blue)
+![Version](https://img.shields.io/badge/version-0.25.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-Web-4285F4)
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES2020+-F7DF1E?logo=javascript&logoColor=black)
@@ -177,11 +177,11 @@ step is only needed when you want to ship a fresh single-file `index.html`.
 
 | Feature | Description |
 |---------|-------------|
-| Themes | Dark, Midnight, Light, High Contrast, Color Blind |
+| Themes | Dark, Midnight, Light, High Contrast, Color Blind, CRT Radar, Cockpit OLED |
 | Compact Mode | Dense layout for smaller screens |
 | Accessible Motion & Dialogs | Alerts expose polite live regions, reduced-motion preferences stop map interpolation, and modals isolate background focus with `inert` |
 | Mobile Optimized | Touch gestures, responsive panels, swipe navigation |
-| Offline Mode | ServiceWorker caching for use without internet |
+| Offline Mode | ServiceWorker caching plus `?demo=1` for a self-contained 24-hour continental replay |
 | Dashboard Layouts | Configurable panel positions — Default, Minimal, Analyst presets |
 | External Links | Quick links to FlightAware, FlightRadar24, ADS-B Exchange, Wikipedia |
 
@@ -315,7 +315,7 @@ Not all aircraft have ADS-B transponders. Military aircraft often don't broadcas
 Click the globe icon to enter 3D mode. Terrain loads automatically using a Cesium Ion token included in the app. For a custom token, sign up free at cesium.com/ion and enter it in Settings.
 
 **Q: Can I run this offline?**
-Yes. After the first load, the ServiceWorker caches core assets. Aircraft data requires an internet connection, but previously loaded databases and map tiles are available offline.
+Yes. After the first load, the ServiceWorker caches core assets. Use `?demo=1` for a self-contained synthetic 24-hour continental replay; live aircraft data still requires an internet connection.
 
 **Q: Why do some planes show as "interesting"?**
 SkyTrack loads curated databases including military, VIP/government, PIA (Privacy ICAO Address), and general "interesting" aircraft. These are flagged with colored markers and badges.

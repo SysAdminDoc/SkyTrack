@@ -2,7 +2,7 @@
 
 All notable changes to SkyTrack will be documented in this file.
 
-## [Unreleased]
+## [v0.25.0] - 2026-08-09
 
 ### Added
 - **Ambient, sharing, and local integration tools.** Added opt-in voice alerts,

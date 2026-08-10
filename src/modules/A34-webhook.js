@@ -15,7 +15,7 @@
         const ac = alert.aircraft || {};
         return {
             source: 'skytrack',
-            version: '0.24.3',
+            version: '0.25.0',
             type: String(alert.type || 'EVENT').toLowerCase(),
             message: String(alert.message || ''),
             callsign: alert.callsign || ac.flight?.trim() || ac.hex || '',
