@@ -11,6 +11,9 @@ All notable changes to SkyTrack will be documented in this file.
   control, chroma-key streamer mode, and the `?widget=nearest` docking view.
 - **Cockpit and home-context polish.** Added an OLED-safe Cockpit theme and a
   live solar-position shadow projection to the Over My House aircraft widget.
+- **GPU traffic rendering.** Added an opt-in WebGL point-sprite layer that
+  replaces ordinary map markers at 800+ aircraft while retaining filters and
+  click-to-select behavior, with the existing renderer as the fallback.
 - **Storytelling and local analysis tools.** Added plain-English METAR and
   ATC phrase explanations, an alert event ticker, pattern-work detection,
   Flight-of-the-Day cards, printable aircraft dossiers, and annotated trail

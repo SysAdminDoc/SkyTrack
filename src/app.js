@@ -3085,9 +3085,35 @@
     function _updateMarkersCore() {
         if (!map) return;
         if (typeof clusterManager !== 'undefined' && clusterManager.enabled) {
+            try { webglMarkerLayer.clear(); } catch (_) {}
             clusterManager.updateClusters();
             return;
         }
+        const aircraftCount = Object.keys(aircraftCache).length;
+        if (typeof webglMarkerLayer !== 'undefined' && webglMarkerLayer.shouldUse(aircraftCount)) {
+            const bounds = map.getBounds().pad(0.2);
+            webglMarkerLayer.render(Object.values(aircraftCache), {
+                selectedHex,
+                onSelect: hex => selectAircraft(hex),
+                predicate: ac => {
+                    if (!bounds.contains([ac.lat, ac.lon])) return false;
+                    if (typeof searchSystem !== 'undefined' && !searchSystem.passesFilters(ac)) return false;
+                    if (settings.filter === 'all') return true;
+                    if (settings.filter === 'vip') return !!(ac.isVIP || badgersBestDB.isVIP(ac.hex));
+                    if (settings.filter === 'interesting') return !!(ac.interesting || ac.militaryInfo || ac.civilianInteresting);
+                    if (settings.filter === 'pia') return !!ac.piaInfo;
+                    return ac.category_type === settings.filter;
+                }
+            });
+            Object.keys(markers).forEach(hex => {
+                if (markers[hex]) map.removeLayer(markers[hex]);
+                delete markers[hex];
+                delete aircraftAnimation[hex];
+            });
+            highVolumeRenderer.clear();
+            return;
+        }
+        try { webglMarkerLayer.clear(); } catch (_) {}
         const bounds = map.getBounds();
         const zoom = map.getZoom();
         const highVolume = highVolumeRenderer.begin(Object.keys(aircraftCache).length);

@@ -1243,6 +1243,16 @@
         #nearestWidgetContent span {
             color: #a8b7ca;
         }
+        .webgl-marker-canvas {
+            position: absolute;
+            inset: 0;
+            z-index: 650;
+            pointer-events: auto;
+            cursor: crosshair;
+        }
+        body.webgl-markers .leaflet-marker-pane {
+            pointer-events: none;
+        }
         body.widget-mode .header,
         body.widget-mode .filter-bar,
         body.widget-mode .legend,

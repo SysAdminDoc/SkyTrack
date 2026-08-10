@@ -1291,6 +1291,16 @@
         #nearestWidgetContent span {
             color: #a8b7ca;
         }
+        .webgl-marker-canvas {
+            position: absolute;
+            inset: 0;
+            z-index: 650;
+            pointer-events: auto;
+            cursor: crosshair;
+        }
+        body.webgl-markers .leaflet-marker-pane {
+            pointer-events: none;
+        }
         body.widget-mode .header,
         body.widget-mode .filter-bar,
         body.widget-mode .legend,
@@ -3707,6 +3717,7 @@ if ('serviceWorker' in navigator) {
                 <div class="hv2-item" data-btn="blipsBtn"><div class="hv2-item-icon"><button class="header-btn" id="blipsBtn" title="Viewport blips" aria-label="Toggle viewport entry blip sounds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="7" stroke-dasharray="2 3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button></div><div class="hv2-item-label">Viewport Blips</div></div>
                 <div class="hv2-item" data-btn="gamepadBtn"><div class="hv2-item-icon"><button class="header-btn" id="gamepadBtn" title="Gamepad camera" aria-label="Toggle gamepad camera control"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9h12a4 4 0 0 1 3.8 5.2l-1.1 3.6a2.5 2.5 0 0 1-4.6.4l-1.1-2.2H9l-1.1 2.2a2.5 2.5 0 0 1-4.6-.4l-1.1-3.6A4 4 0 0 1 6 9z"/><path d="M7 12v4M5 14h4M16 13h.01M19 15h.01"/></svg></button></div><div class="hv2-item-label">Gamepad Camera</div></div>
                 <div class="hv2-item" data-btn="streamerBtn"><div class="hv2-item-icon"><button class="header-btn" id="streamerBtn" title="Streamer overlay" aria-label="Toggle chroma-key streamer overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 15l3-3 2 2 3-4 3 5"/><circle cx="8" cy="8" r="1"/></svg></button></div><div class="hv2-item-label">Streamer Overlay</div></div>
+                <div class="hv2-item" data-btn="webglMarkersBtn"><div class="hv2-item-icon"><button class="header-btn" id="webglMarkersBtn" title="GPU marker layer" aria-label="Toggle GPU aircraft marker layer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M8 9h.01M12 9h.01M16 9h.01M8 14h.01M12 14h.01M16 14h.01" stroke-width="3"/></svg></button></div><div class="hv2-item-label">GPU Markers</div></div>
                 <div class="hv2-item" data-btn="cpaBtn"><div class="hv2-item-icon"><button class="header-btn active" id="cpaBtn" title="Toggle closest point of approach warnings" aria-label="Toggle CPA conflict warnings" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><path d="M9 12h6" stroke-dasharray="2 2"/><path d="M12 4v4m0 8v4"/></svg></button></div><div class="hv2-item-label">CPA Warnings</div></div>
                 <div class="hv2-item" data-btn="multiSelectBtn"><div class="hv2-item-icon"><button class="header-btn" id="multiSelectBtn" title="Multi-Select" aria-label="Multi-Select Mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button></div><div class="hv2-item-label">Multi-Select</div></div>
             <div class="hv2-item" data-btn="geofenceBtn"><div class="hv2-item-icon"><button class="header-btn" id="geofenceBtn" title="Geofence" aria-label="Open Geofencing Tools" aria-expanded="false" aria-controls="geofenceList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><circle cx="12" cy="12" r="3"/></svg></button></div><div class="hv2-item-label">Geofencing</div></div>
@@ -14423,6 +14434,179 @@ if ('serviceWorker' in navigator) {
     };
 
     if (typeof document !== 'undefined') nearestWidget.init();
+    // ─── module: modules/A38-webgl-markers.js ───────────────────────────────────────────
+    // ============ GPU AIRCRAFT MARKER LAYER ============
+    // A small point-sprite renderer keeps the high-volume path dependency-free
+    // while moving ordinary traffic out of Leaflet's DOM/canvas marker work.
+    const WEBGL_MARKER_THRESHOLD = 800;
+
+    function webglPointColor(altitude, selected = false) {
+        if (selected) return [0.05, 0.92, 1, 1];
+        if (altitude === 'ground' || altitude === 0) return [0.35, 0.95, 0.35, 0.95];
+        const feet = Number(altitude);
+        if (!Number.isFinite(feet)) return [0.78, 0.84, 0.9, 0.92];
+        if (feet >= 40000) return [0.58, 0.12, 0.83, 0.95];
+        if (feet >= 30000) return [0.95, 0.08, 0.08, 0.95];
+        if (feet >= 20000) return [1, 0.27, 0.05, 0.95];
+        if (feet >= 10000) return [1, 0.65, 0.05, 0.95];
+        if (feet >= 5000) return [1, 0.95, 0.05, 0.95];
+        return [0.5, 1, 0.05, 0.95];
+    }
+
+    const webglMarkerLayer = {
+        threshold: WEBGL_MARKER_THRESHOLD,
+        enabled: false,
+        supported: false,
+        map: null,
+        canvas: null,
+        gl: null,
+        program: null,
+        positionBuffer: null,
+        colorBuffer: null,
+        sizeBuffer: null,
+        points: [],
+        lastAircraft: [],
+        lastOptions: null,
+        onSelect: null,
+        init(map) {
+            if (this.map || !map || typeof document === 'undefined') return;
+            this.map = map;
+            this.canvas = document.createElement('canvas');
+            this.canvas.className = 'webgl-marker-canvas';
+            this.canvas.setAttribute('aria-hidden', 'true');
+            map.getContainer().appendChild(this.canvas);
+            this.gl = this.canvas.getContext('webgl', { alpha: true, antialias: true }) || this.canvas.getContext('experimental-webgl');
+            this.supported = !!this.gl && this._createProgram();
+            if (!this.supported) {
+                this.canvas.remove();
+                this.canvas = null;
+                return;
+            }
+            this.canvas.addEventListener('click', event => this._pick(event));
+            const saved = localStorage.getItem('skytrack_webgl_markers');
+            if (saved === '1') this.toggle(true);
+        },
+        _createProgram() {
+            const gl = this.gl;
+            const vertexSource = 'attribute vec2 a_position; attribute vec4 a_color; attribute float a_size; uniform vec2 u_resolution; varying vec4 v_color; void main(){ vec2 zeroToOne=a_position/u_resolution; vec2 clip=zeroToOne*2.0-1.0; gl_Position=vec4(clip*vec2(1,-1),0,1); gl_PointSize=a_size; v_color=a_color; }';
+            const fragmentSource = 'precision mediump float; varying vec4 v_color; void main(){ vec2 point=gl_PointCoord-vec2(0.5); if(dot(point,point)>0.25) discard; gl_FragColor=v_color; }';
+            const compile = (type, source) => {
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return null;
+                return shader;
+            };
+            const vertex = compile(gl.VERTEX_SHADER, vertexSource);
+            const fragment = compile(gl.FRAGMENT_SHADER, fragmentSource);
+            if (!vertex || !fragment) return false;
+            const program = gl.createProgram();
+            gl.attachShader(program, vertex);
+            gl.attachShader(program, fragment);
+            gl.linkProgram(program);
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return false;
+            this.program = program;
+            this.positionBuffer = gl.createBuffer();
+            this.colorBuffer = gl.createBuffer();
+            this.sizeBuffer = gl.createBuffer();
+            return true;
+        },
+        shouldUse(count) {
+            return this.enabled && this.supported && Number(count) >= this.threshold;
+        },
+        toggle(force) {
+            if (!this.supported && force !== false) {
+                if (typeof toast === 'function') toast('GPU marker layer is unavailable in this browser', 'warning');
+                return false;
+            }
+            this.enabled = typeof force === 'boolean' ? force : !this.enabled;
+            try { localStorage.setItem('skytrack_webgl_markers', this.enabled ? '1' : '0'); } catch (_) {}
+            document.body.classList.toggle('webgl-markers', this.enabled);
+            document.getElementById('webglMarkersBtn')?.classList.toggle('active', this.enabled);
+            if (!this.enabled) this.clear();
+            if (typeof updateMarkersSync === 'function') updateMarkersSync();
+            if (typeof toast === 'function') toast(this.enabled ? 'GPU markers ON · activates at 800 aircraft' : 'GPU markers OFF');
+            return this.enabled;
+        },
+        _resize() {
+            if (!this.canvas || !this.map) return;
+            const rect = this.map.getContainer().getBoundingClientRect();
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            const width = Math.max(1, Math.round(rect.width * dpr));
+            const height = Math.max(1, Math.round(rect.height * dpr));
+            if (this.canvas.width !== width || this.canvas.height !== height) {
+                this.canvas.width = width;
+                this.canvas.height = height;
+                this.canvas.style.width = rect.width + 'px';
+                this.canvas.style.height = rect.height + 'px';
+            }
+        },
+        render(aircraft = [], options = {}) {
+            if (!this.shouldUse(aircraft.length)) { this.clear(); return; }
+            this.lastAircraft = aircraft;
+            this.lastOptions = options;
+            this._resize();
+            const gl = this.gl;
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            const positions = [], colors = [], sizes = [];
+            this.points = [];
+            for (const ac of aircraft) {
+                if (!ac?.hex || !Number.isFinite(Number(ac.lat)) || !Number.isFinite(Number(ac.lon))) continue;
+                if (typeof options.predicate === 'function' && !options.predicate(ac)) continue;
+                const point = this.map.latLngToContainerPoint([Number(ac.lat), Number(ac.lon)]);
+                const color = webglPointColor(ac.alt_baro, ac.hex === options.selectedHex);
+                positions.push(point.x * dpr, point.y * dpr);
+                colors.push(...color);
+                sizes.push((ac.hex === options.selectedHex ? 12 : 7) * dpr);
+                this.points.push({ hex: ac.hex, x: point.x, y: point.y });
+            }
+            gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.useProgram(this.program);
+            gl.uniform2f(gl.getUniformLocation(this.program, 'u_resolution'), this.canvas.width, this.canvas.height);
+            this._buffer( this.positionBuffer, gl.ARRAY_BUFFER, positions, 2, 'a_position');
+            this._buffer( this.colorBuffer, gl.ARRAY_BUFFER, colors, 4, 'a_color');
+            this._buffer( this.sizeBuffer, gl.ARRAY_BUFFER, sizes, 1, 'a_size');
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+            gl.drawArrays(gl.POINTS, 0, sizes.length);
+            this.canvas.style.display = sizes.length ? 'block' : 'none';
+        },
+        _buffer(buffer, target, values, size, attribute) {
+            const gl = this.gl;
+            gl.bindBuffer(target, buffer);
+            gl.bufferData(target, new Float32Array(values), gl.DYNAMIC_DRAW);
+            const location = gl.getAttribLocation(this.program, attribute);
+            gl.enableVertexAttribArray(location);
+            gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
+        },
+        _pick(event) {
+            if (!this.enabled || !this.points.length || !this.canvas) return;
+            const rect = this.canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            let best = null;
+            for (const point of this.points) {
+                const distance = Math.hypot(point.x - x, point.y - y);
+                if (distance <= 16 && (!best || distance < best.distance)) best = { ...point, distance };
+            }
+            if (best && typeof this.lastOptions?.onSelect === 'function') this.lastOptions.onSelect(best.hex);
+        },
+        clear() {
+            this.points = [];
+            if (this.canvas && this.gl) {
+                this.gl.clearColor(0, 0, 0, 0);
+                this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+                this.canvas.style.display = 'none';
+            }
+        }
+    };
+
+    if (typeof document !== 'undefined') {
+        document.addEventListener('skytrack:map-ready', event => webglMarkerLayer.init(event.detail?.map), { once: true });
+        document.getElementById('webglMarkersBtn')?.addEventListener('click', () => webglMarkerLayer.toggle());
+    }
     // ─── module: modules/A4-oceanic-firs.js ───────────────────────────────────────────
 
     // ============ OCEANIC FIR OVERLAY ============
@@ -18196,9 +18380,35 @@ if ('serviceWorker' in navigator) {
     function _updateMarkersCore() {
         if (!map) return;
         if (typeof clusterManager !== 'undefined' && clusterManager.enabled) {
+            try { webglMarkerLayer.clear(); } catch (_) {}
             clusterManager.updateClusters();
             return;
         }
+        const aircraftCount = Object.keys(aircraftCache).length;
+        if (typeof webglMarkerLayer !== 'undefined' && webglMarkerLayer.shouldUse(aircraftCount)) {
+            const bounds = map.getBounds().pad(0.2);
+            webglMarkerLayer.render(Object.values(aircraftCache), {
+                selectedHex,
+                onSelect: hex => selectAircraft(hex),
+                predicate: ac => {
+                    if (!bounds.contains([ac.lat, ac.lon])) return false;
+                    if (typeof searchSystem !== 'undefined' && !searchSystem.passesFilters(ac)) return false;
+                    if (settings.filter === 'all') return true;
+                    if (settings.filter === 'vip') return !!(ac.isVIP || badgersBestDB.isVIP(ac.hex));
+                    if (settings.filter === 'interesting') return !!(ac.interesting || ac.militaryInfo || ac.civilianInteresting);
+                    if (settings.filter === 'pia') return !!ac.piaInfo;
+                    return ac.category_type === settings.filter;
+                }
+            });
+            Object.keys(markers).forEach(hex => {
+                if (markers[hex]) map.removeLayer(markers[hex]);
+                delete markers[hex];
+                delete aircraftAnimation[hex];
+            });
+            highVolumeRenderer.clear();
+            return;
+        }
+        try { webglMarkerLayer.clear(); } catch (_) {}
         const bounds = map.getBounds();
         const zoom = map.getZoom();
         const highVolume = highVolumeRenderer.begin(Object.keys(aircraftCache).length);
